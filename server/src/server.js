@@ -1,10 +1,20 @@
 ﻿import fs from "node:fs";
 import path from "node:path";
+import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import multer from "multer";
 import bcrypt from "bcryptjs";
 import { run, get, all, initDb } from "./db.js";
+
+const envLocalPath = path.resolve(".env.local");
+const envPath = path.resolve(".env");
+
+if (fs.existsSync(envLocalPath)) {
+  dotenv.config({ path: envLocalPath });
+} else if (fs.existsSync(envPath)) {
+  dotenv.config({ path: envPath });
+}
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 4000);
