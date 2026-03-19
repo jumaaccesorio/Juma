@@ -7,6 +7,9 @@ import {
   CART_GUEST_KEY,
 } from "./constants";
 import AdminHomePanel from "./features/admin/AdminHomePanel";
+import AdminDashboard from "./features/admin/AdminDashboard";
+import AdminSidebar from "./features/admin/AdminSidebar";
+import AdminTopNav from "./features/admin/AdminTopNav";
 import QuickSalePanel from "./features/admin/QuickSalePanel";
 import CartPanel from "./features/cart/CartPanel";
 import CatalogPanel from "./features/catalog/CatalogPanel";
@@ -562,7 +565,7 @@ function App() {
     }
     setIsAdminLogged(true);
     setAdminForm({ user: "", password: "" });
-    setActiveTab("inicio_admin");
+    setActiveTab("dashboard");
   };
 
   const logoutAdmin = () => {
@@ -594,6 +597,146 @@ function App() {
       setError("Error al procesar el pedido.");
     }
   };
+
+  const isAdminTab = isAdminLogged && ["dashboard", "venta_rapida", "inicio_admin", "categorias", "productos", "clientes", "inventario", "pedidos", "finanzas"].includes(activeTab);
+
+  if (isAdminTab) {
+    return (
+      <div className="flex min-h-screen bg-stone-50 dark:bg-stone-950 font-body text-stone-900 dark:text-stone-100">
+        <AdminSidebar activeTab={activeTab} onSetActiveTab={setActiveTab} />
+        <main className="flex-1 ml-64 min-h-screen flex flex-col">
+          <AdminTopNav activeTab={activeTab} onLogout={logoutAdmin} />
+          
+          <div className="flex-1">
+            {error ? (
+              <div className="pt-20 px-10">
+                <div className="bg-red-50 text-red-500 p-4 rounded-xl text-center text-sm font-bold tracking-widest uppercase flex items-center justify-center gap-2 border border-red-100">
+                  <span className="material-symbols-outlined text-lg">error</span>
+                  {error}
+                </div>
+              </div>
+            ) : null}
+
+            {activeTab === "dashboard" && (
+              <AdminDashboard 
+                orders={orders} 
+                products={products} 
+                clients={clients} 
+                lowStockProducts={lowStockProducts}
+                onSetActiveTab={setActiveTab}
+              />
+            )}
+
+            {activeTab === "venta_rapida" && (
+              <div className="pt-20 px-10 pb-10">
+                <QuickSalePanel
+                  products={products}
+                  categories={categories}
+                  clients={clients}
+                  onOrderPlaced={(order) => setOrders(prev => [order, ...prev])}
+                  onUpdateStock={(productId, newStock) => setProducts(prev => prev.map(p => p.id === productId ? { ...p, stock: newStock } : p))}
+                />
+              </div>
+            )}
+
+            {activeTab === "inicio_admin" && (
+              <div className="pt-20 px-10 pb-10">
+                <AdminHomePanel
+                  heroBanner={heroBanner}
+                  featuredPanels={featuredPanels}
+                  categories={categories}
+                  canAddMorePanels={featuredPanels.length < PANEL_SLOTS.length}
+                  onUpdateHeroText={updateHeroText}
+                  onUpdateHeroImage={updateHeroImage}
+                  onUpdateFeaturedPanelText={updateFeaturedPanelText}
+                  onUpdateFeaturedPanelImage={updateFeaturedPanelImage}
+                  onUpdateFeaturedPanelCategory={(id, categoryId, categoryName) =>
+                    setFeaturedPanels(prev => prev.map(p => p.id === id ? { ...p, categoryId, title: categoryName ?? p.title } : p))
+                  }
+                  onAddFeaturedPanel={addFeaturedPanel}
+                  onRemoveFeaturedPanel={removeFeaturedPanel}
+                />
+              </div>
+            )}
+
+            {activeTab === "categorias" && (
+              <div className="pt-20 px-10 pb-10">
+                <CategoriesPanel
+                  categories={categories}
+                  onAddCategory={addCategory}
+                  onDeleteCategory={deleteCategory}
+                />
+              </div>
+            )}
+
+            {activeTab === "productos" && (
+              <div className="pt-20 px-10 pb-10">
+                <ProductsPanel
+                  products={products}
+                  categories={categories}
+                  productForm={productForm}
+                  productImageData={productImageData}
+                  onProductFormChange={setProductForm}
+                  onProductImageChange={updateProductImage}
+                  onAddProduct={addProduct}
+                  onToggleProductEnabled={toggleProductEnabled}
+                  onUpdateExistingProductImage={updateExistingProductImage}
+                />
+              </div>
+            )}
+
+            {activeTab === "clientes" && (
+              <div className="pt-20 px-10 pb-10">
+                <ClientsPanel
+                  clientForm={clientForm}
+                  clientStats={clientStats}
+                  onClientFormChange={setClientForm}
+                  onAddClient={addClient}
+                />
+              </div>
+            )}
+
+            {activeTab === "inventario" && (
+              <div className="pt-20 px-10 pb-10">
+                <InventoryPanel
+                  products={products}
+                  lowStockProducts={lowStockProducts}
+                  onUpdateStock={updateStock}
+                />
+              </div>
+            )}
+
+            {activeTab === "pedidos" && (
+              <div className="pt-20 px-10 pb-10">
+                <OrdersPanel
+                  clients={clients}
+                  products={products}
+                  orders={orders}
+                  orderForm={orderForm}
+                  pendingOrdersCount={pendingOrders.length}
+                  completedOrdersCount={completedOrders.length}
+                  onOrderFormChange={setOrderForm}
+                  onAddOrder={addOrder}
+                  onAddProductToOrder={addProductToOrder}
+                  onRemoveOrderItemRow={removeOrderItemRow}
+                  onUpdateOrderItemRow={updateOrderItemRow}
+                  onMarkOrderAsRealized={markOrderAsRealized}
+                  getClientName={(clientId) => clientMap.get(clientId)?.name ?? "-"}
+                  getOrderTotal={orderTotal}
+                />
+              </div>
+            )}
+
+            {activeTab === "finanzas" && (
+              <div className="pt-20 px-10 pb-10">
+                <FinancePanel finance={finance} />
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="layout-container flex min-h-screen flex-col">
@@ -657,48 +800,6 @@ function App() {
         />
       ) : null}
 
-      {activeTab === "venta_rapida" ? (
-        <div className="admin-scope flex flex-1 overflow-hidden">
-          <QuickSalePanel
-            products={products}
-            categories={categories}
-            clients={clients}
-            onOrderPlaced={(order) => setOrders(prev => [order, ...prev])}
-            onUpdateStock={(productId, newStock) => setProducts(prev => prev.map(p => p.id === productId ? { ...p, stock: newStock } : p))}
-          />
-        </div>
-      ) : null}
-
-      {activeTab === "inicio_admin" ? (
-        <div className="admin-scope">
-          <AdminHomePanel
-            heroBanner={heroBanner}
-            featuredPanels={featuredPanels}
-            categories={categories}
-            canAddMorePanels={featuredPanels.length < PANEL_SLOTS.length}
-            onUpdateHeroText={updateHeroText}
-            onUpdateHeroImage={updateHeroImage}
-            onUpdateFeaturedPanelText={updateFeaturedPanelText}
-            onUpdateFeaturedPanelImage={updateFeaturedPanelImage}
-            onUpdateFeaturedPanelCategory={(id, categoryId, categoryName) =>
-              setFeaturedPanels(prev => prev.map(p => p.id === id ? { ...p, categoryId, title: categoryName ?? p.title } : p))
-            }
-            onAddFeaturedPanel={addFeaturedPanel}
-            onRemoveFeaturedPanel={removeFeaturedPanel}
-          />
-        </div>
-      ) : null}
-
-      {activeTab === "categorias" ? (
-        <div className="admin-scope">
-          <CategoriesPanel
-            categories={categories}
-            onAddCategory={addCategory}
-            onDeleteCategory={deleteCategory}
-          />
-        </div>
-      ) : null}
-
       {activeTab === "carrito" ? (
         <CartPanel
           cartRows={cartRows}
@@ -731,66 +832,6 @@ function App() {
           }}
         />
       ) : null}
-
-      {activeTab === "productos" ? (
-        <div className="admin-scope">
-          <ProductsPanel
-            products={products}
-            categories={categories}
-            productForm={productForm}
-            productImageData={productImageData}
-            onProductFormChange={setProductForm}
-            onProductImageChange={updateProductImage}
-            onAddProduct={addProduct}
-            onToggleProductEnabled={toggleProductEnabled}
-            onUpdateExistingProductImage={updateExistingProductImage}
-          />
-        </div>
-      ) : null}
-
-      {activeTab === "clientes" ? (
-        <div className="admin-scope">
-          <ClientsPanel
-            clientForm={clientForm}
-            clientStats={clientStats}
-            onClientFormChange={setClientForm}
-            onAddClient={addClient}
-          />
-        </div>
-      ) : null}
-
-      {activeTab === "inventario" ? (
-        <div className="admin-scope">
-          <InventoryPanel
-            products={products}
-            lowStockProducts={lowStockProducts}
-            onUpdateStock={updateStock}
-          />
-        </div>
-      ) : null}
-
-      {activeTab === "pedidos" ? (
-        <div className="admin-scope">
-          <OrdersPanel
-            clients={clients}
-            products={products}
-            orders={orders}
-            orderForm={orderForm}
-            pendingOrdersCount={pendingOrders.length}
-            completedOrdersCount={completedOrders.length}
-            onOrderFormChange={setOrderForm}
-            onAddOrder={addOrder}
-            onAddProductToOrder={addProductToOrder}
-            onRemoveOrderItemRow={removeOrderItemRow}
-            onUpdateOrderItemRow={updateOrderItemRow}
-            onMarkOrderAsRealized={markOrderAsRealized}
-            getClientName={(clientId) => clientMap.get(clientId)?.name ?? "-"}
-            getOrderTotal={orderTotal}
-          />
-        </div>
-      ) : null}
-
-      {activeTab === "finanzas" ? <div className="admin-scope"><FinancePanel finance={finance} /></div> : null}
       
       </main>
 
