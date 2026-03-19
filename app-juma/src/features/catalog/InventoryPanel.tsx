@@ -66,7 +66,7 @@ function InventoryPanel({ products, lowStockProducts, onUpdateStock }: Inventory
                       <span className="font-bold text-sm text-slate-900 dark:text-white">{product.name}</span>
                     </div>
                   </td>
-                  <td className="p-4 text-sm text-slate-600 dark:text-slate-400 font-medium">{product.category}</td>
+                  <td className="p-4 text-sm text-slate-600 dark:text-slate-400 font-medium">{product.categoryName ?? "Sin categoria"}</td>
                   <td className="p-4 text-center">
                     <span className={`inline-flex items-center justify-center font-bold px-3 py-1 rounded-full text-xs ${product.stock <= 2 ? 'bg-red-100 text-red-700' : product.stock <= 10 ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-700'}`}>
                       {product.stock}

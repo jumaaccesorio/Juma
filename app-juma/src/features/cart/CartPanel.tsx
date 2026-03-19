@@ -51,7 +51,7 @@ function CartPanel({
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{row.product.name}</h3>
-                        <p className="text-sm text-slate-500">{row.product.category} • {row.product.stock} disp.</p>
+                        <p className="text-sm text-slate-500">{row.product.categoryName ?? "Sin categoria"} • {row.product.stock} disp.</p>
                       </div>
                       <p className="text-lg font-bold text-primary">${row.subtotal.toLocaleString("es-AR")}</p>
                     </div>

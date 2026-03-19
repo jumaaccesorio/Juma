@@ -49,9 +49,9 @@ function OrdersPanel({
   const filteredProducts = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return enabledProducts;
-    return enabledProducts.filter((product) =>
-      [product.name, product.category].some((value) => value.toLowerCase().includes(normalized)),
-    );
+      return enabledProducts.filter((product) =>
+        [product.name, product.categoryName ?? ""].some((value) => value.toLowerCase().includes(normalized)),
+      );
   }, [enabledProducts, query]);
 
   const selectedRows = useMemo(
@@ -276,9 +276,9 @@ function OrdersPanel({
                   <td className="p-4">
                     <div className="flex items-center gap-2">
                       <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase">
-                        {getClientName(order.clientId).substring(0, 2)}
+                        {(order.clientId ? getClientName(order.clientId) : order.guestName ?? "Invitado").substring(0, 2)}
                       </div>
-                      <span className="font-medium text-slate-700 dark:text-slate-300">{getClientName(order.clientId)}</span>
+                      <span className="font-medium text-slate-700 dark:text-slate-300">{order.clientId ? getClientName(order.clientId) : order.guestName ?? "Invitado"}</span>
                     </div>
                   </td>
                   <td className="p-4 text-sm text-slate-600 dark:text-slate-400 font-medium">
