@@ -8,6 +8,7 @@ type AdminSidebarProps = {
 export default function AdminSidebar({ activeTab, onSetActiveTab }: AdminSidebarProps) {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: "dashboard" },
+    { id: "catalogo", label: "Ver Tienda", icon: "visibility" },
     { id: "venta_rapida", label: "Venta Rápida", icon: "bolt" },
     { id: "inventario", label: "Inventario", icon: "inventory_2" },
     { id: "productos", label: "Productos", icon: "layers" },
@@ -19,9 +20,18 @@ export default function AdminSidebar({ activeTab, onSetActiveTab }: AdminSidebar
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-stone-200 dark:bg-stone-900 flex flex-col py-8 px-4 z-50">
-      <div className="mb-12 px-2 cursor-pointer" onClick={() => onSetActiveTab("catalogo")}>
-        <h1 className="font-headline text-2xl italic text-amber-900 dark:text-amber-200">Golden Edition</h1>
-        <p className="font-body font-medium text-xs tracking-widest text-stone-500 uppercase mt-1">Boutique Admin</p>
+      <div className="mb-10 px-2 flex flex-col items-start gap-4">
+        <div>
+          <h1 className="font-headline text-2xl italic text-amber-900 dark:text-amber-200">Golden Edition</h1>
+          <p className="font-body font-medium text-[10px] tracking-widest text-stone-500 uppercase mt-1">Boutique Admin</p>
+        </div>
+        <button 
+          onClick={() => onSetActiveTab("catalogo")}
+          className="flex items-center gap-2 px-3 py-1.5 bg-amber-900/10 hover:bg-amber-900/20 text-amber-900 dark:text-amber-200 text-[10px] font-bold uppercase tracking-widest rounded-full transition-all border border-amber-900/20"
+        >
+          <span className="material-symbols-outlined text-[14px]">visibility</span>
+          Web Preview
+        </button>
       </div>
 
       <nav className="flex-1 space-y-1">

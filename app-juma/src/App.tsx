@@ -598,14 +598,14 @@ function App() {
     }
   };
 
-  const isAdminTab = isAdminLogged && ["dashboard", "venta_rapida", "inicio_admin", "categorias", "productos", "clientes", "inventario", "pedidos", "finanzas"].includes(activeTab);
+  const isAdminTab = isAdminLogged && ["dashboard", "catalogo", "venta_rapida", "inicio_admin", "categorias", "productos", "clientes", "inventario", "pedidos", "finanzas"].includes(activeTab);
 
   if (isAdminTab) {
     return (
       <div className="flex min-h-screen bg-stone-50 dark:bg-stone-950 font-body text-stone-900 dark:text-stone-100">
         <AdminSidebar activeTab={activeTab} onSetActiveTab={setActiveTab} />
         <main className="flex-1 ml-64 min-h-screen flex flex-col">
-          <AdminTopNav activeTab={activeTab} onLogout={logoutAdmin} />
+          <AdminTopNav onLogout={logoutAdmin} />
           
           <div className="flex-1">
             {error ? (
@@ -625,6 +625,22 @@ function App() {
                 lowStockProducts={lowStockProducts}
                 onSetActiveTab={setActiveTab}
               />
+            )}
+
+            {activeTab === "catalogo" && (
+              <div className="pt-20 px-10 pb-10">
+                <CatalogPanel
+                  products={catalogProducts}
+                  onAddToCart={addToCart}
+                  featuredPanels={featuredPanels}
+                  heroBanner={heroBanner}
+                  favoriteProductIds={new Set(favorites.map(f => f.productId))}
+                  onToggleFavorite={toggleFavorite}
+                  initialCategory={catalogCategoryFilter}
+                  onCategoryChange={setCatalogCategoryFilter}
+                  onPanelCategoryClick={navigateToCategoryInCatalog}
+                />
+              </div>
             )}
 
             {activeTab === "venta_rapida" && (
