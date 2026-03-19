@@ -66,6 +66,7 @@ const DEFAULT_HERO_BANNER: HeroBanner = {
 };
 
 function App() {
+  const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("catalogo");
   const [clients, setClients] = useState<Client[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -179,6 +180,10 @@ function App() {
       setActiveTab("catalogo");
     }
   }, [isAdminLogged, isRestrictedTab]);
+
+  useEffect(() => {
+    setIsAdminSidebarOpen(false);
+  }, [activeTab, isAdminLogged]);
 
   const lowStockProducts = useMemo(() => products.filter((product) => product.stock <= 2), [products]);
   const cartRows = useMemo(
@@ -638,13 +643,18 @@ function App() {
   if (isAdminTab) {
     return (
       <div className="flex min-h-screen bg-stone-50 dark:bg-stone-950 font-body text-stone-900 dark:text-stone-100">
-        <AdminSidebar activeTab={activeTab} onSetActiveTab={setActiveTab} />
-        <main className="flex-1 ml-64 min-h-screen flex flex-col">
-          <AdminTopNav onLogout={logoutAdmin} />
+        <AdminSidebar
+          activeTab={activeTab}
+          isOpen={isAdminSidebarOpen}
+          onClose={() => setIsAdminSidebarOpen(false)}
+          onSetActiveTab={setActiveTab}
+        />
+        <main className="flex-1 min-h-screen flex flex-col md:ml-64">
+          <AdminTopNav onLogout={logoutAdmin} onOpenMenu={() => setIsAdminSidebarOpen(true)} />
           
           <div className="flex-1">
             {error ? (
-              <div className="pt-20 px-10">
+              <div className="px-4 pt-20 md:px-10">
                 <div className="bg-red-50 text-red-500 p-4 rounded-xl text-center text-sm font-bold tracking-widest uppercase flex items-center justify-center gap-2 border border-red-100">
                   <span className="material-symbols-outlined text-lg">error</span>
                   {error}
@@ -663,7 +673,7 @@ function App() {
             )}
 
             {activeTab === "catalogo" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-10 pt-20 md:px-10">
                 <CatalogPanel
                   products={catalogProducts}
                   onAddToCart={addToCart}
@@ -679,7 +689,7 @@ function App() {
             )}
 
             {activeTab === "venta_rapida" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-10 pt-20 md:px-10">
                 <QuickSalePanel
                   products={products}
                   categories={categories}
@@ -691,7 +701,7 @@ function App() {
             )}
 
             {activeTab === "inicio_admin" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-10 pt-20 md:px-10">
                 <AdminHomePanel
                   heroBanner={heroBanner}
                   featuredPanels={featuredPanels}
@@ -711,7 +721,7 @@ function App() {
             )}
 
             {activeTab === "categorias" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-10 pt-20 md:px-10">
                 <CategoriesPanel
                   categories={categories}
                   onAddCategory={addCategory}
@@ -721,7 +731,7 @@ function App() {
             )}
 
             {activeTab === "productos" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-10 pt-20 md:px-10">
                 <ProductsPanel
                   products={products}
                   categories={categories}
@@ -737,7 +747,7 @@ function App() {
             )}
 
             {activeTab === "clientes" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-10 pt-20 md:px-10">
                 <ClientsPanel
                   clientForm={clientForm}
                   clientStats={clientStats}
@@ -755,7 +765,7 @@ function App() {
             )}
 
             {activeTab === "inventario" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-10 pt-20 md:px-10">
                 <InventoryPanel
                   products={products}
                   lowStockProducts={lowStockProducts}
@@ -765,7 +775,7 @@ function App() {
             )}
 
             {activeTab === "pedidos" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-10 pt-20 md:px-10">
                 <OrdersPanel
                   clients={clients}
                   products={products}
