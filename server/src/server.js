@@ -107,6 +107,27 @@ app.post("/api/clients", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+app.patch("/api/clients/:id", async (req, res, next) => {
+  try {
+    const { name, email, phone } = req.body;
+    const fields = [], vals = [];
+    if (name !== undefined)  { fields.push("name = ?");  vals.push(name); }
+    if (email !== undefined) { fields.push("email = ?"); vals.push(email); }
+    if (phone !== undefined) { fields.push("phone = ?"); vals.push(phone); }
+    if (!fields.length) return res.status(400).json({ error: "Nada que actualizar." });
+    vals.push(req.params.id);
+    await run(`UPDATE clients SET ${fields.join(", ")} WHERE id = ?`, vals);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+app.delete("/api/clients/:id", async (req, res, next) => {
+  try {
+    await run("DELETE FROM clients WHERE id = ?", [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
 // ============================================================
 // PRODUCTS
 // ============================================================
