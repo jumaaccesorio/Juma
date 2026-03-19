@@ -1,0 +1,9 @@
+node_modules/
+data/
+uploads/
+dist/
+build/
+.env
+.env.local
+.env.*.local
+*.log

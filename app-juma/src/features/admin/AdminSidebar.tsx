@@ -9,13 +9,14 @@ export default function AdminSidebar({ activeTab, onSetActiveTab }: AdminSidebar
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: "dashboard" },
     { id: "catalogo", label: "Ver Tienda", icon: "visibility" },
-    { id: "venta_rapida", label: "Venta Rápida", icon: "bolt" },
+    { id: "venta_rapida", label: "Venta Rapida", icon: "bolt" },
+    { id: "categorias", label: "Categorias", icon: "category" },
     { id: "inventario", label: "Inventario", icon: "inventory_2" },
     { id: "productos", label: "Productos", icon: "layers" },
     { id: "clientes", label: "Usuarios", icon: "group" },
     { id: "pedidos", label: "Pedidos", icon: "shopping_bag" },
     { id: "finanzas", label: "Finanzas", icon: "payments" },
-    { id: "inicio_admin", label: "Configuración", icon: "settings" },
+    { id: "inicio_admin", label: "Configuracion", icon: "settings" },
   ];
 
   return (
@@ -25,7 +26,7 @@ export default function AdminSidebar({ activeTab, onSetActiveTab }: AdminSidebar
           <h1 className="font-headline text-2xl italic text-amber-900 dark:text-amber-200 uppercase tracking-tighter">Juma Accessory</h1>
           <p className="font-body font-medium text-[10px] tracking-widest text-stone-500 uppercase mt-1">Panel de Control</p>
         </div>
-        <button 
+        <button
           onClick={() => onSetActiveTab("catalogo")}
           className="flex items-center gap-2 px-3 py-1.5 bg-amber-900/10 hover:bg-amber-900/20 text-amber-900 dark:text-amber-200 text-[10px] font-bold uppercase tracking-widest rounded-full transition-all border border-amber-900/20"
         >
@@ -45,7 +46,7 @@ export default function AdminSidebar({ activeTab, onSetActiveTab }: AdminSidebar
                 : "text-stone-600 dark:text-stone-400 hover:bg-stone-300/50 dark:hover:bg-stone-800/50"
             }`}
           >
-            <span className={`material-symbols-outlined ${activeTab === item.id ? "text-amber-700 dark:text-amber-500" : ""}`} data-icon={item.icon}>
+            <span className={`material-symbols-outlined ${activeTab === item.id ? "text-amber-700 dark:text-amber-500" : ""}`}>
               {item.icon}
             </span>
             <span className="font-['Inter'] font-medium text-sm tracking-wide">{item.label}</span>

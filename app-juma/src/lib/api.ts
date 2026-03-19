@@ -1,6 +1,6 @@
 import type { Client, Product, Order, OrderItem, HeroBanner, FeaturedPanel, Category, Favorite } from '../types';
 
-const BASE = "http://localhost:4000/api";
+const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
 
 async function http<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
@@ -181,7 +181,7 @@ export const api = {
   async uploadImage(file: File): Promise<string> {
     const form = new FormData();
     form.append("file", file);
-    const res = await fetch(`http://localhost:4000/api/files`, {
+    const res = await fetch(`${BASE}/files`, {
       method: "POST",
       body: form,
     });

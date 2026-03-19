@@ -1,4 +1,4 @@
-import fs from "node:fs";
+﻿import fs from "node:fs";
 import path from "node:path";
 import express from "express";
 import cors from "cors";
@@ -8,6 +8,15 @@ import { run, get, all, initDb } from "./db.js";
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 4000);
+const PUBLIC_APP_URL = (
+  process.env.PUBLIC_APP_URL ??
+  process.env.RENDER_EXTERNAL_URL ??
+  `http://localhost:${PORT}`
+).replace(/\/$/, "");
+const allowedOrigins = (process.env.CORS_ORIGIN ?? "http://localhost:3000")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const uploadsDir = path.resolve("uploads");
 fs.mkdirSync(uploadsDir, { recursive: true });
@@ -24,12 +33,30 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
-app.use(cors());
+app.set("trust proxy", 1);
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error("Origen no permitido por CORS."));
+  },
+}));
 app.use(express.json());
 app.use("/uploads", express.static(uploadsDir));
 
 // -- HEALTH --
 app.get("/health", (_req, res) => res.json({ ok: true, service: "juma-server" }));
+app.get("/", (_req, res) => {
+  res.json({
+    ok: true,
+    service: "juma-server",
+    health: "/health",
+    api: "/api",
+  });
+});
 
 // ============================================================
 // AUTH
@@ -39,7 +66,7 @@ app.post("/api/auth/register", async (req, res, next) => {
     const { name, email, phone, password } = req.body;
     if (!name || !email || !password) return res.status(400).json({ error: "Faltan campos requeridos." });
     const existing = await get("SELECT id FROM clients WHERE email = ?", [email]);
-    if (existing) return res.status(409).json({ error: "El email ya está registrado." });
+    if (existing) return res.status(409).json({ error: "El email ya estÃ¡ registrado." });
     const hash = await bcrypt.hash(password, 10);
     const result = await run(
       "INSERT INTO clients (name, email, phone, password_hash) VALUES (?, ?, ?, ?)",
@@ -54,9 +81,9 @@ app.post("/api/auth/login", async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const client = await get("SELECT * FROM clients WHERE email = ?", [email]);
-    if (!client) return res.status(401).json({ error: "Email o contraseña incorrectos." });
+    if (!client) return res.status(401).json({ error: "Email o contraseÃ±a incorrectos." });
     const valid = await bcrypt.compare(password, client.password_hash || "");
-    if (!valid) return res.status(401).json({ error: "Email o contraseña incorrectos." });
+    if (!valid) return res.status(401).json({ error: "Email o contraseÃ±a incorrectos." });
     const { password_hash, ...safe } = client;
     res.json({ client: safe });
   } catch (e) { next(e); }
@@ -309,8 +336,8 @@ app.delete("/api/featured-panels/:id", async (req, res, next) => {
 // ============================================================
 app.post("/api/files", upload.single("file"), async (req, res, next) => {
   try {
-    if (!req.file) return res.status(400).json({ error: "No se recibió archivo." });
-    const url = `http://localhost:${PORT}/uploads/${req.file.filename}`;
+    if (!req.file) return res.status(400).json({ error: "No se recibiÃ³ archivo." });
+    const url = `${PUBLIC_APP_URL}/uploads/${req.file.filename}`;
     res.status(201).json({ url, filename: req.file.filename });
   } catch (e) { next(e); }
 });
@@ -320,13 +347,18 @@ app.post("/api/files", upload.single("file"), async (req, res, next) => {
 // ============================================================
 app.use((error, _req, res, _next) => {
   console.error(error);
+  if (error?.message === "Origen no permitido por CORS.") {
+    res.status(403).json({ error: error.message });
+    return;
+  }
+
   res.status(500).json({ error: "Error interno del servidor." });
 });
 
 async function start() {
   try {
     await initDb();
-    app.listen(PORT, () => console.log(`✅ Juma Server corriendo en http://localhost:${PORT}`));
+    app.listen(PORT, () => console.log(`Juma Server corriendo en ${PUBLIC_APP_URL}`));
   } catch (error) {
     console.error("No se pudo iniciar el servidor:", error);
     process.exit(1);
@@ -334,3 +366,4 @@ async function start() {
 }
 
 start();
+
