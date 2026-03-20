@@ -28,6 +28,7 @@ export type Client = {
 export type Product = {
   id: number;
   name: string;
+  subName: string;
   categoryId?: number | null;
   categoryName?: string; // Denormalized or joined for UI
   isFeatured: boolean;

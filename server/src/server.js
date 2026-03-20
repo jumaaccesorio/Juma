@@ -182,11 +182,11 @@ app.get("/api/products", async (_req, res, next) => {
 
 app.post("/api/products", async (req, res, next) => {
   try {
-    const { name, categoryId, isFeatured, purchasePrice, salePrice, stock, initialStock, enabled, image, sourceUrl } = req.body;
+    const { name, subName, categoryId, isFeatured, purchasePrice, salePrice, stock, initialStock, enabled, image, sourceUrl } = req.body;
     const result = await run(
-      `INSERT INTO products (name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, source_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, categoryId ?? null, isFeatured ? 1 : 0, purchasePrice, salePrice, stock, initialStock ?? stock, enabled ? 1 : 0, image ?? "", sourceUrl ?? ""]
+      `INSERT INTO products (name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, source_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, subName ?? "", categoryId ?? null, isFeatured ? 1 : 0, purchasePrice, salePrice, stock, initialStock ?? stock, enabled ? 1 : 0, image ?? "", sourceUrl ?? ""]
     );
     const row = await get("SELECT p.*, c.name AS category_name FROM products p LEFT JOIN categories c ON c.id = p.category_id WHERE p.id = ?", [result.lastID]);
     res.status(201).json(row);
@@ -205,6 +205,7 @@ app.patch("/api/products/:id", async (req, res, next) => {
     if (body.isFeatured !== undefined)   { fields.push("is_featured = ?");     vals.push(body.isFeatured ? 1 : 0); }
     if (body.categoryId !== undefined)   { fields.push("category_id = ?");     vals.push(body.categoryId); }
     if (body.name !== undefined)         { fields.push("name = ?");            vals.push(body.name); }
+    if (body.subName !== undefined)      { fields.push("sub_name = ?");        vals.push(body.subName); }
     if (body.salePrice !== undefined)    { fields.push("sale_price = ?");      vals.push(body.salePrice); }
     if (body.purchasePrice !== undefined){ fields.push("purchase_price = ?");  vals.push(body.purchasePrice); }
     if (!fields.length) return res.status(400).json({ error: "Nada que actualizar." });

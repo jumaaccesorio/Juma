@@ -50,7 +50,7 @@ function OrdersPanel({
     const normalized = query.trim().toLowerCase();
     if (!normalized) return enabledProducts;
       return enabledProducts.filter((product) =>
-        [product.name, product.categoryName ?? ""].some((value) => value.toLowerCase().includes(normalized)),
+        [product.name, product.subName, product.categoryName ?? ""].some((value) => value.toLowerCase().includes(normalized)),
       );
   }, [enabledProducts, query]);
 

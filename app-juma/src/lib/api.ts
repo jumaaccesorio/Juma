@@ -212,9 +212,13 @@ function mapCategory(c: any): Category {
 }
 
 function mapProduct(p: any): Product {
+  const rawName = typeof p.name === "string" ? p.name.trim() : "";
+  const rawSubName = typeof p.sub_name === "string" ? p.sub_name.trim() : "";
+
   return {
     id: p.id,
-    name: p.name,
+    name: rawName || rawSubName,
+    subName: rawSubName,
     categoryId: p.category_id ?? null,
     categoryName: p.category_name ?? undefined,
     isFeatured: Boolean(p.is_featured),

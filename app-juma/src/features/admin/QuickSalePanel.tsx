@@ -33,7 +33,12 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
     if (selectedCategoryId) list = list.filter(p => p.categoryId === selectedCategoryId);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      list = list.filter(p => p.name.toLowerCase().includes(q) || (p.categoryName || "").toLowerCase().includes(q));
+      list = list.filter(
+        (product) =>
+          product.name.toLowerCase().includes(q) ||
+          product.subName.toLowerCase().includes(q) ||
+          (product.categoryName || "").toLowerCase().includes(q),
+      );
     }
     return list;
   }, [enabledProducts, selectedCategoryId, searchQuery]);

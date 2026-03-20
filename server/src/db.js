@@ -62,6 +62,7 @@ export async function initDb() {
         await run(`CREATE TABLE IF NOT EXISTS products (
           id             INTEGER PRIMARY KEY AUTOINCREMENT,
           name           TEXT NOT NULL,
+          sub_name       TEXT NOT NULL DEFAULT '',
           category_id    INTEGER REFERENCES categories(id) ON DELETE SET NULL,
           is_featured    INTEGER NOT NULL DEFAULT 0,
           purchase_price REAL NOT NULL DEFAULT 0,
@@ -73,6 +74,12 @@ export async function initDb() {
           source_url     TEXT NOT NULL DEFAULT '',
           created_at     TEXT NOT NULL DEFAULT (datetime('now'))
         )`);
+
+        const productColumns = await all("PRAGMA table_info(products)");
+        const hasSubName = productColumns.some((column) => column.name === "sub_name");
+        if (!hasSubName) {
+          await run(`ALTER TABLE products ADD COLUMN sub_name TEXT NOT NULL DEFAULT ''`);
+        }
 
         await run(`CREATE TABLE IF NOT EXISTS orders (
           id           INTEGER PRIMARY KEY AUTOINCREMENT,

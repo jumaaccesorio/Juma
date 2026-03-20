@@ -65,6 +65,157 @@ const DEFAULT_HERO_BANNER: HeroBanner = {
   image: "https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=1800&q=80",
 };
 
+type ImportedProductRow = {
+  name: string;
+  subName: string;
+  purchasePrice: number;
+  salePrice: number;
+  stock: number;
+  categoryName: string;
+};
+
+type FinanceMonthOption = {
+  key: string;
+  label: string;
+};
+
+type FinanceDayPoint = {
+  day: number;
+  label: string;
+  income: number;
+  expense: number;
+  salesCount: number;
+};
+
+type FinanceMonthSummary = {
+  key: string;
+  label: string;
+  incomeMonth: number;
+  expenseMonth: number;
+  salesCountMonth: number;
+  balanceMonth: number;
+  averageTicket: number;
+  bestDayLabel: string;
+  bestDayIncome: number;
+  dailyBreakdown: FinanceDayPoint[];
+  chartMax: number;
+};
+
+function normalizeImportHeader(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function parseImportNumber(value: string) {
+  const normalized = value.trim().replace(/\./g, "").replace(",", ".");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : NaN;
+}
+
+function detectDelimiter(headerLine: string) {
+  const candidates = [",", ";", "\t"];
+  return candidates.sort((a, b) => headerLine.split(b).length - headerLine.split(a).length)[0] ?? ",";
+}
+
+function parseDelimitedText(text: string) {
+  const sanitized = text.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
+  const firstLine = sanitized.split("\n")[0] ?? "";
+  const delimiter = detectDelimiter(firstLine);
+  const rows: string[][] = [];
+  let currentCell = "";
+  let currentRow: string[] = [];
+  let inQuotes = false;
+
+  for (let index = 0; index < sanitized.length; index += 1) {
+    const char = sanitized[index];
+    const nextChar = sanitized[index + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        currentCell += '"';
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (!inQuotes && char === delimiter) {
+      currentRow.push(currentCell.trim());
+      currentCell = "";
+      continue;
+    }
+
+    if (!inQuotes && char === "\n") {
+      currentRow.push(currentCell.trim());
+      rows.push(currentRow);
+      currentRow = [];
+      currentCell = "";
+      continue;
+    }
+
+    currentCell += char;
+  }
+
+  if (currentCell.length > 0 || currentRow.length > 0) {
+    currentRow.push(currentCell.trim());
+    rows.push(currentRow);
+  }
+
+  return rows.filter((row) => row.some((cell) => cell.length > 0));
+}
+
+function parseImportedProducts(text: string): ImportedProductRow[] {
+  const rows = parseDelimitedText(text);
+  if (rows.length < 2) return [];
+
+  const headers = rows[0].map(normalizeImportHeader);
+  const findIndex = (...aliases: string[]) => headers.findIndex((header) => aliases.includes(header));
+
+  const nameIndex = findIndex("nombre", "name");
+  const subNameIndex = findIndex("subnombre", "subname");
+  const purchasePriceIndex = findIndex("preciocompra", "precio_compra", "purchaseprice");
+  const salePriceIndex = findIndex("precioventa", "precio_venta", "saleprice");
+  const stockIndex = findIndex("stock");
+  const categoryIndex = findIndex("categoria", "category");
+
+  if (subNameIndex === -1 || purchasePriceIndex === -1 || salePriceIndex === -1 || stockIndex === -1 || categoryIndex === -1) {
+    throw new Error("El archivo debe incluir: Nombre, subnombre, precio_compra, precio_venta, stock y categoria.");
+  }
+
+  return rows.slice(1).map((row, rowIndex) => {
+    const name = nameIndex >= 0 ? row[nameIndex]?.trim() ?? "" : "";
+    const subName = row[subNameIndex]?.trim() ?? "";
+    const purchasePrice = parseImportNumber(row[purchasePriceIndex] ?? "");
+    const salePrice = parseImportNumber(row[salePriceIndex] ?? "");
+    const stock = Number(row[stockIndex] ?? "");
+    const categoryName = row[categoryIndex]?.trim() ?? "";
+
+    if (!name && !subName) {
+      throw new Error(`Fila ${rowIndex + 2}: debe tener nombre o subnombre.`);
+    }
+    if (!categoryName) {
+      throw new Error(`Fila ${rowIndex + 2}: la categoria es obligatoria.`);
+    }
+    if (Number.isNaN(purchasePrice) || Number.isNaN(salePrice) || Number.isNaN(stock)) {
+      throw new Error(`Fila ${rowIndex + 2}: precios y stock deben ser numericos.`);
+    }
+
+    return {
+      name,
+      subName,
+      purchasePrice,
+      salePrice,
+      stock,
+      categoryName,
+    };
+  });
+}
+
 function App() {
   const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("catalogo");
@@ -89,6 +240,7 @@ function App() {
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [productForm, setProductForm] = useState({
     name: "",
+    subName: "",
     categoryId: "",
     purchasePrice: "",
     salePrice: "",
@@ -284,13 +436,14 @@ function App() {
   const addProduct = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
-    if (!productForm.name.trim() || !productForm.purchasePrice || !productForm.salePrice || !productForm.stock) return;
+    if ((!productForm.name.trim() && !productForm.subName.trim()) || !productForm.purchasePrice || !productForm.salePrice || !productForm.stock) return;
     const stock = Number(productForm.stock);
     if (Number.isNaN(stock) || stock < 0) return;
     
     try {
       const newProduct = await api.addProduct({
         name: productForm.name.trim(),
+        subName: productForm.subName.trim(),
         categoryId: Number(productForm.categoryId) || undefined,
         isFeatured: productForm.isFeatured,
         purchasePrice: Number(productForm.purchasePrice),
@@ -303,7 +456,7 @@ function App() {
       });
       setProducts((prev) => [newProduct, ...prev]);
       
-      setProductForm({ name: "", categoryId: "", purchasePrice: "", salePrice: "", stock: "", sourceUrl: "", isFeatured: false });
+      setProductForm({ name: "", subName: "", categoryId: "", purchasePrice: "", salePrice: "", stock: "", sourceUrl: "", isFeatured: false });
       setProductImageData("");
       setActiveTab("catalogo");
     } catch (err) {
@@ -457,29 +610,102 @@ function App() {
   const completedOrders = useMemo(() => orders.filter((order) => order.status === "REALIZADO"), [orders]);
 
   const finance = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    const investedThisMonth = products
-      .filter((product) => {
-        const created = new Date(product.createdAt);
-        return created.getMonth() === currentMonth && created.getFullYear() === currentYear;
-      })
-      .reduce((acc, product) => acc + product.purchasePrice * product.initialStock, 0);
+    const monthFormatter = new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric" });
+    const monthsMap = new Map<string, { year: number; month: number; date: Date }>();
+
+    const registerMonth = (dateValue: string | undefined) => {
+      if (!dateValue) return;
+      const date = new Date(dateValue);
+      if (Number.isNaN(date.getTime())) return;
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      if (!monthsMap.has(key)) {
+        monthsMap.set(key, { year: date.getFullYear(), month: date.getMonth(), date });
+      }
+    };
+
+    products.forEach((product) => registerMonth(product.createdAt));
+    completedOrders.forEach((order) => registerMonth(order.date));
+
+    if (monthsMap.size === 0) {
+      const now = new Date();
+      registerMonth(now.toISOString());
+    }
+
+    const months = Array.from(monthsMap.entries())
+      .sort((a, b) => b[1].date.getTime() - a[1].date.getTime())
+      .map(([key, value]) => ({
+        key,
+        label: monthFormatter.format(new Date(value.year, value.month, 1)),
+        year: value.year,
+        month: value.month,
+      }));
+
     const totalInvestment = products.reduce((acc, product) => acc + product.purchasePrice * product.stock, 0);
     const totalAccessoriesPrice = products.reduce((acc, product) => acc + product.salePrice * product.stock, 0);
-    const lastDay = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const dailySales = Array.from({ length: lastDay }, (_, i) => ({ day: i + 1, total: 0 }));
-    for (const order of completedOrders) {
-      const date = new Date(order.date);
-      if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
-        const day = date.getDate();
-        const orderTotal = order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0);
-        dailySales[day - 1].total += orderTotal;
+    const monthlySummaries: FinanceMonthSummary[] = months.map((month) => {
+      const daysInMonth = new Date(month.year, month.month + 1, 0).getDate();
+      const dailyBreakdown: FinanceDayPoint[] = Array.from({ length: daysInMonth }, (_, index) => ({
+        day: index + 1,
+        label: String(index + 1).padStart(2, "0"),
+        income: 0,
+        expense: 0,
+        salesCount: 0,
+      }));
+
+      const isInMonth = (dateValue: string) => {
+        const date = new Date(dateValue);
+        return date.getFullYear() === month.year && date.getMonth() === month.month;
+      };
+
+      const monthOrders = completedOrders.filter((order) => isInMonth(order.date));
+      const monthProducts = products.filter((product) => isInMonth(product.createdAt));
+
+      for (const order of monthOrders) {
+        const date = new Date(order.date);
+        const row = dailyBreakdown[date.getDate() - 1];
+        const income = order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0);
+        const expense = order.items.reduce((acc, item) => acc + item.quantity * item.unitPurchasePrice, 0);
+        row.income += income;
+        row.expense += expense;
+        row.salesCount += 1;
       }
-    }
-    const maxSale = Math.max(...dailySales.map((row) => row.total), 1);
-    return { investedThisMonth, totalInvestment, totalAccessoriesPrice, dailySales, maxSale };
+
+      for (const product of monthProducts) {
+        const date = new Date(product.createdAt);
+        const row = dailyBreakdown[date.getDate() - 1];
+        row.expense += product.purchasePrice * product.initialStock;
+      }
+
+      const incomeMonth = dailyBreakdown.reduce((acc, row) => acc + row.income, 0);
+      const expenseMonth = dailyBreakdown.reduce((acc, row) => acc + row.expense, 0);
+      const salesCountMonth = dailyBreakdown.reduce((acc, row) => acc + row.salesCount, 0);
+      const balanceMonth = incomeMonth - expenseMonth;
+      const averageTicket = salesCountMonth > 0 ? incomeMonth / salesCountMonth : 0;
+      const bestDay = dailyBreakdown.reduce((best, row) => (row.income > best.income ? row : best), dailyBreakdown[0]);
+      const chartMax = Math.max(...dailyBreakdown.flatMap((row) => [row.income, row.expense]), 1);
+
+      return {
+        key: month.key,
+        label: month.label,
+        incomeMonth,
+        expenseMonth,
+        salesCountMonth,
+        balanceMonth,
+        averageTicket,
+        bestDayLabel: bestDay?.label ?? "--",
+        bestDayIncome: bestDay?.income ?? 0,
+        dailyBreakdown,
+        chartMax,
+      };
+    });
+
+    return {
+      months: months.map(({ key, label }) => ({ key, label })) as FinanceMonthOption[],
+      selectedMonthKey: months[0].key,
+      monthlySummaries,
+      totalInvestment,
+      totalAccessoriesPrice,
+    };
   }, [products, completedOrders]);
 
   const orderTotal = (order: Order) => order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0);
@@ -638,6 +864,52 @@ function App() {
     }
   };
 
+  const importProducts = async (file: File) => {
+    const text = await file.text();
+    const rows = parseImportedProducts(text);
+    if (rows.length === 0) {
+      throw new Error("El archivo no contiene productos para importar.");
+    }
+
+    const categoriesByName = new Map(categories.map((category) => [category.name.trim().toLowerCase(), category]));
+    const importedProducts: Product[] = [];
+    let createdCategories = 0;
+
+    for (const row of rows) {
+      const categoryKey = row.categoryName.trim().toLowerCase();
+      let category = categoriesByName.get(categoryKey) ?? null;
+
+      if (!category) {
+        category = await api.addCategory(row.categoryName.trim());
+        categoriesByName.set(categoryKey, category);
+        createdCategories += 1;
+      }
+
+      const newProduct = await api.addProduct({
+        name: row.name,
+        subName: row.subName,
+        categoryId: category.id,
+        purchasePrice: row.purchasePrice,
+        salePrice: row.salePrice,
+        stock: row.stock,
+        initialStock: row.stock,
+        enabled: true,
+        image: "",
+        sourceUrl: "",
+        isFeatured: false,
+      });
+
+      importedProducts.push(newProduct);
+    }
+
+    if (createdCategories > 0) {
+      setCategories(Array.from(categoriesByName.values()).sort((a, b) => a.name.localeCompare(b.name)));
+    }
+
+    setProducts((prev) => [...importedProducts, ...prev]);
+    return { created: importedProducts.length, categories: createdCategories };
+  };
+
   const isAdminTab = isAdminLogged && ["dashboard", "catalogo", "venta_rapida", "inicio_admin", "categorias", "productos", "clientes", "inventario", "pedidos", "finanzas"].includes(activeTab);
 
   if (isAdminTab) {
@@ -737,6 +1009,7 @@ function App() {
                   categories={categories}
                   productForm={productForm}
                   productImageData={productImageData}
+                  onImportProducts={importProducts}
                   onProductFormChange={setProductForm}
                   onProductImageChange={updateProductImage}
                   onAddProduct={addProduct}
@@ -796,7 +1069,7 @@ function App() {
             )}
 
             {activeTab === "finanzas" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-10 pt-20 md:px-10">
                 <FinancePanel finance={finance} />
               </div>
             )}
