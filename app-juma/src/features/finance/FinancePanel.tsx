@@ -109,7 +109,7 @@ function FinancePanel({ finance }: FinancePanelProps) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-neutral-soft bg-white p-5 shadow-sm md:p-8 dark:border-slate-800 dark:bg-slate-900">
+      <div className="rounded-xl border border-neutral-soft bg-white p-4 shadow-sm md:p-8 dark:border-slate-800 dark:bg-slate-900">
         <div className="mb-8 flex flex-col gap-4 border-b border-neutral-soft pb-4 dark:border-slate-800 md:flex-row md:items-end md:justify-between">
           <div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">Grafico mensual</h3>
@@ -123,7 +123,7 @@ function FinancePanel({ finance }: FinancePanelProps) {
         </div>
 
         <div className="w-full overflow-x-auto pb-4">
-          <div className="flex min-w-[720px] items-end gap-3 md:min-w-[960px]">
+          <div className="flex min-w-[640px] items-end gap-3 md:min-w-[960px]">
             {visibleFinance.dailyBreakdown.map((row) => {
               const incomeHeight = visibleFinance.chartMax > 0 ? Math.max(4, (row.income / visibleFinance.chartMax) * 100) : 4;
               const expenseHeight = visibleFinance.chartMax > 0 ? Math.max(4, (row.expense / visibleFinance.chartMax) * 100) : 4;
@@ -152,7 +152,7 @@ function FinancePanel({ finance }: FinancePanelProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
         <div className="rounded-xl border border-neutral-soft bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <p className="text-sm font-medium text-slate-500">Resumen de ventas</p>
           <div className="mt-5 space-y-4">

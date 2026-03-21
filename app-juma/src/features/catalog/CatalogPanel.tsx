@@ -177,18 +177,20 @@ function CatalogPanel({
                       favorite
                     </span>
                   </button>
-                  {product.stock <= 0 && <span className="absolute top-3 left-3 bg-carbon text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Sin Stock</span>}
+                  {product.stock <= 0 && <span className="absolute top-3 left-3 rounded bg-carbon px-2 py-1 text-[10px] font-bold uppercase text-white">Por encargo</span>}
                 </div>
                 <p className="text-primary/70 text-[10px] font-bold uppercase tracking-[0.24em] mb-2 text-center">{product.categoryName || "Categoria"}</p>
                 <h4 className="font-headline text-carbon text-center text-[1.35rem] leading-tight">{getProductDisplayName(product)}</h4>
                 <p className="text-carbon font-semibold mt-2 text-lg text-center">${product.salePrice.toLocaleString("es-AR")}</p>
+                <p className="mt-2 text-center text-xs text-muted">
+                  {product.stock > 0 ? `${product.stock} disponibles` : "Sin stock inmediato. Se puede pedir por encargo."}
+                </p>
                 <button
                   onClick={() => onAddToCart(product.id)}
-                  disabled={product.stock <= 0}
-                  className={`mt-5 w-full py-3 rounded font-bold text-sm uppercase tracking-[0.18em] transition-all flex items-center justify-center gap-2 ${product.stock <= 0 ? "bg-slate-200 text-slate-400 cursor-not-allowed" : "bg-primary text-white hover:opacity-90"}`}
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded bg-primary py-3 text-sm font-bold uppercase tracking-[0.18em] text-white transition-all hover:opacity-90"
                 >
-                  <span className="material-symbols-outlined text-sm">{product.stock <= 0 ? "remove_shopping_cart" : "add_shopping_cart"}</span>
-                  {product.stock <= 0 ? "Sin stock" : "Agregar al carrito"}
+                  <span className="material-symbols-outlined text-sm">{product.stock <= 0 ? "inventory_2" : "add_shopping_cart"}</span>
+                  {product.stock <= 0 ? "Pedir por encargo" : "Agregar al carrito"}
                 </button>
               </div>
             ))

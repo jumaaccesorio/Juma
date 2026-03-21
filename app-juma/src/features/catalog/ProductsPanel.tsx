@@ -158,7 +158,7 @@ function ProductsPanel({
   const editingDraft = editingProduct ? drafts[editingProduct.id] ?? buildDraft(editingProduct) : null;
 
   return (
-    <div className="flex-1 p-6 md:p-10 space-y-12 bg-secondary min-h-screen text-ink">
+    <div className="min-h-screen flex-1 space-y-8 bg-secondary p-4 text-ink md:space-y-12 md:p-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 className="font-serif text-3xl font-bold text-slate-900 dark:text-white">Admin Productos</h2>
@@ -173,7 +173,7 @@ function ProductsPanel({
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:gap-6">
         <div className="bg-background p-6 rounded-xl border border-line flex items-center gap-4 shadow-sm">
           <div className="p-3 bg-tertiary/18 text-[#4f6780] rounded-lg">
             <span className="material-symbols-outlined text-3xl">inventory</span>
@@ -212,7 +212,7 @@ function ProductsPanel({
         </div>
       </div>
 
-      <div className="bg-background rounded-xl border border-line shadow-sm p-6">
+      <div className="rounded-xl border border-line bg-background p-5 shadow-sm md:p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h3 className="text-lg font-bold text-ink">Importar productos</h3>
@@ -228,14 +228,14 @@ function ProductsPanel({
 
       {showForm && (
         <form
-          className="bg-background p-8 rounded-xl border border-line shadow-sm animate-fade-in"
+          className="animate-fade-in rounded-xl border border-line bg-background p-5 shadow-sm md:p-8"
           onSubmit={(event) => {
             onAddProduct(event);
             setShowForm(false);
           }}
         >
           <h3 className="text-lg font-bold text-ink mb-6">Agregar Nuevo Producto</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="mb-6 grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">Nombre visible</label>
               <input
@@ -331,8 +331,8 @@ function ProductsPanel({
             </div>
           </div>
 
-          <div className="mb-8 p-4 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 flex items-center gap-6">
-            <div className="h-24 w-24 rounded-lg bg-slate-200 overflow-hidden flex items-center justify-center flex-shrink-0">
+          <div className="mb-8 flex flex-col gap-4 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:gap-6">
+            <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-200">
               {productImageData ? (
                 <img className="h-full w-full object-cover" src={productImageData} alt="Vista previa producto" />
               ) : (
@@ -393,7 +393,82 @@ function ProductsPanel({
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="space-y-3 p-4 md:hidden">
+          {filteredProducts.map((product) => {
+            const displayName = getProductDisplayName(product);
+            return (
+              <div key={`mobile-${product.id}`} className="rounded-xl border border-line bg-white p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
+                    {product.image ? (
+                      <img className="h-full w-full object-cover" src={product.image} alt={displayName} />
+                    ) : (
+                      <span className="material-symbols-outlined text-slate-400">image</span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-ink">{displayName}</p>
+                    <p className="mt-1 text-xs text-slate-500">{product.categoryName || "Sin categoria"}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <span className="rounded-full bg-quaternary px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
+                        ${product.salePrice.toLocaleString("es-AR")}
+                      </span>
+                      <span
+                        className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] ${
+                          product.stock <= 2
+                            ? "bg-warning/30 text-[#9a6d48]"
+                            : product.stock <= 10
+                              ? "bg-quaternary text-primary"
+                              : "bg-tertiary/20 text-[#4f6780]"
+                        }`}
+                      >
+                        {product.stock} units
+                      </span>
+                      <span className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] ${product.enabled ? "bg-success/25 text-[#647554]" : "bg-slate-100 text-slate-500"}`}>
+                        {product.enabled ? "Visible" : "Oculto"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openEditor(product)}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-tertiary/14 px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[#4f6780]"
+                  >
+                    <span className="material-symbols-outlined text-sm">edit</span>
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onToggleProductEnabled(product.id)}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-background px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-muted border border-line"
+                  >
+                    <span className="material-symbols-outlined text-sm">{product.enabled ? "visibility_off" : "visibility"}</span>
+                    {product.enabled ? "Ocultar" : "Mostrar"}
+                  </button>
+                  <label className="inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-line bg-quaternary px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                    <span className="material-symbols-outlined text-sm">add_a_photo</span>
+                    Imagen
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => onUpdateExistingProductImage(product.id, e.target.files?.[0] ?? null)}
+                    />
+                  </label>
+                </div>
+              </div>
+            );
+          })}
+          {filteredProducts.length === 0 ? (
+            <div className="rounded-xl border border-line bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
+              No se encontraron productos.
+            </div>
+          ) : null}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50">
@@ -499,8 +574,8 @@ function ProductsPanel({
       </div>
 
       {editingProduct && editingDraft && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2D2D2D]/35 p-4 backdrop-blur-[2px]">
-          <div className="w-full max-w-3xl rounded-xl border border-line bg-background shadow-[0_24px_80px_rgba(45,45,45,0.16)]">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#2D2D2D]/35 p-0 backdrop-blur-[2px] md:items-center md:p-4">
+          <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-2xl border border-line bg-background shadow-[0_24px_80px_rgba(45,45,45,0.16)] md:max-w-3xl md:rounded-xl">
             <div className="flex items-start justify-between border-b border-line px-6 py-5">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-muted">Editor de producto</p>

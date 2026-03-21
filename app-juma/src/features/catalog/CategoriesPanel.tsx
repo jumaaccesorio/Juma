@@ -136,7 +136,7 @@ function CategoriesPanel({ categories, products, onAddCategory, onUpdateCategory
         <p className="mt-1 text-slate-500">Crea, renombra y organiza las categorias y subcategorias de tu catalogo.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col items-end gap-4 rounded-xl border border-neutral-soft bg-white p-5 shadow-sm sm:flex-row">
+      <form onSubmit={handleSubmit} className="flex flex-col items-stretch gap-4 rounded-xl border border-neutral-soft bg-white p-5 shadow-sm sm:flex-row sm:items-end">
         <div className="w-full flex-1 space-y-2">
           <label className="text-sm font-bold text-slate-700">Nombre de la categoria</label>
           <input
@@ -162,7 +162,7 @@ function CategoriesPanel({ categories, products, onAddCategory, onUpdateCategory
             ))}
           </select>
         </div>
-        <button type="submit" className="flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20">
+        <button type="submit" className="flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 sm:self-auto">
           <span className="material-symbols-outlined">add</span>
           Agregar
         </button>

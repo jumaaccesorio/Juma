@@ -110,10 +110,10 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   };
 
   return (
-    <div className="flex flex-1 overflow-hidden h-full bg-[#f8f6f6]">
+    <div className="flex h-full flex-1 flex-col overflow-hidden bg-[#f8f6f6] xl:flex-row">
 
       {/* Left: Product Selector */}
-      <section className="flex-1 flex flex-col p-6 space-y-5 overflow-hidden">
+      <section className="flex flex-1 flex-col space-y-5 overflow-hidden p-4 md:p-6">
         {successMsg && (
           <div className="bg-green-50 border border-green-200 text-green-700 font-bold text-sm px-5 py-3 rounded-xl flex items-center gap-2">
             <span className="material-symbols-outlined">check_circle</span>{successMsg}
@@ -121,7 +121,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         )}
 
         {/* Search + Client row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary pointer-events-none">person_search</span>
             <select
@@ -173,7 +173,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
               <p className="font-medium">No hay productos en esta categoría</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-4">
               {filteredProducts.map(product => {
                 const inCart = cart.find(i => i.product.id === product.id)?.quantity ?? 0;
                 const lowStock = product.stock <= 3;
@@ -220,8 +220,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
       </section>
 
       {/* Right: Order Summary */}
-      <aside className="w-96 bg-white border-l border-[#F3EDE2] flex flex-col shadow-xl">
-        <div className="p-6 border-b border-[#F3EDE2]">
+      <aside className="flex w-full flex-col border-t border-[#F3EDE2] bg-white shadow-xl xl:w-96 xl:border-l xl:border-t-0">
+        <div className="border-b border-[#F3EDE2] p-4 md:p-6">
           <h3 className="font-serif text-xl font-bold text-slate-800 flex items-center gap-2">
             <span className="material-symbols-outlined text-primary">point_of_sale</span>
             Resumen del Pedido
@@ -229,7 +229,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4" style={{ scrollbarWidth: "thin" }}>
+        <div className="flex-1 overflow-y-auto space-y-4 p-4 md:p-6" style={{ scrollbarWidth: "thin" }}>
           {cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 text-slate-300 gap-3">
               <span className="material-symbols-outlined text-5xl">shopping_cart</span>
@@ -273,7 +273,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         </div>
 
         {/* Totals + Payment */}
-        <div className="p-6 bg-[#F3EDE2] space-y-6">
+        <div className="space-y-6 bg-[#F3EDE2] p-4 md:p-6">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Subtotal</span>
@@ -293,7 +293,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                 <button
                   key={method}
                   onClick={() => setPaymentMethod(method)}
-                  className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-white border-2 transition-all ${paymentMethod === method ? "border-primary text-primary shadow-md" : "border-transparent text-slate-500 hover:border-primary/30 hover:text-primary"}`}
+                  className={`flex min-h-[84px] flex-col items-center justify-center gap-2 rounded-xl border-2 bg-white p-2 text-center transition-all sm:p-3 ${paymentMethod === method ? "border-primary text-primary shadow-md" : "border-transparent text-slate-500 hover:border-primary/30 hover:text-primary"}`}
                 >
                   <span className="material-symbols-outlined">
                     {method === "efectivo" ? "payments" : method === "tarjeta" ? "credit_card" : "account_balance"}

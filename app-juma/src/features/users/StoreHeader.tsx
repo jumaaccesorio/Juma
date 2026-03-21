@@ -39,6 +39,10 @@ export default function StoreHeader({
   const [showLogin, setShowLogin] = useState(false);
   const [showCatalogMenu, setShowCatalogMenu] = useState(false);
 
+  const scrollToPageTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const visibleCategories = useMemo(
     () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
     [categories],
@@ -141,18 +145,20 @@ export default function StoreHeader({
         </div>
 
         {/* Navigation Tabs */}
-        <nav className="w-full overflow-x-auto flex items-center gap-6 py-2 pb-0 mt-2 text-sm uppercase tracking-widest font-bold text-slate-400 whitespace-nowrap scrollbar-hide">
+        <nav className="relative z-20 mt-2 flex w-full flex-wrap items-center gap-x-6 gap-y-3 py-2 pb-0 text-sm font-bold uppercase tracking-widest text-slate-400">
           <button
             className={`hover:text-primary transition-colors pb-2 border-b-2 ${isHomeActive ? "text-primary border-primary" : "border-transparent"}`}
             onClick={() => {
               onSelectCatalogCategory(null);
               onSetActiveTab("catalogo");
+              scrollToPageTop();
             }}
           >
             Inicio
           </button>
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
+              type="button"
               className={`flex items-center gap-1 pb-2 border-b-2 transition-colors ${isCatalogActive ? "text-primary border-primary" : "border-transparent hover:text-primary"}`}
               onClick={() => setShowCatalogMenu((prev) => !prev)}
             >
@@ -160,7 +166,7 @@ export default function StoreHeader({
               <span className={`material-symbols-outlined text-sm transition-transform ${showCatalogMenu ? "rotate-180" : ""}`}>expand_more</span>
             </button>
             {showCatalogMenu && (
-              <div className="absolute left-0 top-full z-[90] mt-3 min-w-[220px] overflow-hidden rounded-sm border border-primary/20 bg-white shadow-xl">
+              <div className="absolute left-0 top-full z-[90] mt-2 min-w-[220px] overflow-hidden rounded-sm border border-primary/20 bg-white shadow-xl">
                 <div className="h-1 bg-primary" />
                 <div className="max-h-[60vh] overflow-y-auto py-3">
                   {visibleCategories.map((category) => (
@@ -171,6 +177,7 @@ export default function StoreHeader({
                         onSelectCatalogCategory(category.id);
                         onSetActiveTab("catalogo");
                         setShowCatalogMenu(false);
+                        scrollToPageTop();
                       }}
                       className="block w-full px-6 py-3 text-left text-[15px] font-medium normal-case tracking-normal text-ink transition-colors hover:bg-secondary/55 hover:text-primary"
                     >
@@ -181,7 +188,15 @@ export default function StoreHeader({
               </div>
             )}
           </div>
-          <button className={`hover:text-primary transition-colors pb-2 border-b-2 ${activeTab === "carrito" ? "text-primary border-primary" : "border-transparent"}`} onClick={() => onSetActiveTab("carrito")}>Carrito</button>
+          <button
+            className={`hover:text-primary transition-colors pb-2 border-b-2 ${activeTab === "carrito" ? "text-primary border-primary" : "border-transparent"}`}
+            onClick={() => {
+              onSetActiveTab("carrito");
+              scrollToPageTop();
+            }}
+          >
+            Carrito
+          </button>
           {isAdminLogged && (
             <>
               <button className={`hover:text-primary transition-colors pb-2 border-b-2 ${activeTab === "venta_rapida" ? "text-primary border-primary" : "border-transparent"}`} onClick={() => onSetActiveTab("venta_rapida")}>Venta Rápida</button>

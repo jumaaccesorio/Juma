@@ -473,6 +473,12 @@ function App() {
     return product != null && product.stock >= item.quantity;
   });
 
+  const hasInsufficientStock = (items: OrderItem[]) =>
+    items.some((item) => {
+      const product = productMap.get(item.productId);
+      return product == null || product.stock < item.quantity;
+    });
+
   const deductStock = (items: OrderItem[]) => {
     setProducts((prev) => prev.map((product) => {
       const row = items.find((item) => item.productId === product.id);
@@ -706,10 +712,7 @@ function App() {
     setError("");
     setLastOrderConfirmation(null);
     const product = productMap.get(productId);
-    if (!product || product.stock <= 0) {
-      setError("No hay stock disponible para ese producto.");
-      return;
-    }
+    if (!product) return;
     setCartItems((prev) => {
       const existing = prev.find((item) => item.productId === productId);
       if (!existing) {
@@ -726,10 +729,6 @@ function App() {
           }, 0) + product.salePrice,
         });
         return [...prev, { productId, quantity: 1 }];
-      }
-      if (existing.quantity >= product.stock) {
-        setError("No puedes agregar mas unidades que el stock disponible.");
-        return prev;
       }
       setCartSuccessToast({
         productId: product.id,
@@ -755,8 +754,7 @@ function App() {
     }
     const product = productMap.get(productId);
     if (!product) return;
-    const safeQuantity = Math.min(quantity, Math.max(0, product.stock));
-    setCartItems((prev) => prev.map((item) => (item.productId === productId ? { ...item, quantity: safeQuantity } : item)));
+    setCartItems((prev) => prev.map((item) => (item.productId === productId ? { ...item, quantity } : item)));
   };
 
   const removeFromCart = (productId: number) => {
@@ -969,7 +967,7 @@ function App() {
         orderId: newOrder.id,
         customerName: currentClient?.name || guestData?.name,
       });
-      setActiveTab("catalogo");
+      setActiveTab("carrito");
     } catch(err) {
       console.error(err);
       setError("Error al procesar el pedido.");
@@ -1133,6 +1131,7 @@ function App() {
                   clients={clients}
                   products={products}
                   orders={orders}
+                  hasInsufficientStock={hasInsufficientStock}
                   orderForm={orderForm}
                   pendingOrdersCount={pendingOrders.length}
                   completedOrdersCount={completedOrders.length}

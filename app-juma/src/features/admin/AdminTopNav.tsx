@@ -6,8 +6,8 @@ export type AdminTopNavProps = {
 
 export default function AdminTopNav({ onOpenMenu, onPreview, onLogout }: AdminTopNavProps) {
   return (
-    <header className="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-line bg-background/90 px-4 backdrop-blur-md md:left-64 md:px-8">
-      <div className="flex flex-1 items-center gap-3 md:gap-4">
+    <header className="fixed left-0 right-0 top-0 z-40 flex min-h-16 items-center justify-between border-b border-line bg-background/90 px-3 py-3 backdrop-blur-md md:left-64 md:px-8">
+      <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-4">
         <button
           type="button"
           onClick={onOpenMenu}
@@ -15,7 +15,7 @@ export default function AdminTopNav({ onOpenMenu, onPreview, onLogout }: AdminTo
         >
           <span className="material-symbols-outlined">menu</span>
         </button>
-        <div className="relative hidden w-full max-w-md group sm:block">
+        <div className="relative hidden w-full max-w-md min-w-0 group sm:block">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm">search</span>
           <input
             className="w-full bg-background border border-line focus:ring-1 focus:ring-primary/30 focus:border-primary/20 py-2 pl-10 text-sm font-body tracking-tight placeholder:text-muted rounded"
@@ -24,9 +24,9 @@ export default function AdminTopNav({ onOpenMenu, onPreview, onLogout }: AdminTo
           />
         </div>
       </div>
-      <div className="flex items-center gap-2 sm:gap-3 md:gap-6">
+      <div className="ml-3 flex shrink-0 items-center gap-2 sm:gap-3 md:gap-6">
         <button
-          className="inline-flex items-center gap-2 rounded-lg border border-line bg-quaternary px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white md:px-4"
+          className="inline-flex items-center gap-2 rounded-lg border border-line bg-quaternary px-2.5 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white md:px-4"
           onClick={onPreview}
         >
           <span className="material-symbols-outlined text-[18px]">preview</span>

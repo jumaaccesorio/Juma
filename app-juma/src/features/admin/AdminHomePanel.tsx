@@ -34,7 +34,7 @@ function AdminHomePanel({
   onSaveConfiguration,
 }: AdminHomePanelProps) {
   return (
-    <div className="flex-1 p-6 md:p-10 space-y-20 bg-secondary dark:bg-carbon min-h-screen">
+    <div className="min-h-screen flex-1 space-y-10 bg-secondary p-4 md:space-y-20 md:p-10 dark:bg-carbon">
       {/* Header Actions */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -58,13 +58,13 @@ function AdminHomePanel({
 
       <div className="space-y-8">
         {/* Hero Editor */}
-        <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-neutral-soft dark:border-slate-800 shadow-sm">
+        <div className="rounded-xl border border-neutral-soft bg-white p-5 shadow-sm md:p-8 dark:border-slate-800 dark:bg-slate-900">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 border-b border-neutral-soft dark:border-slate-800 pb-4 flex items-center gap-2">
             <span className="material-symbols-outlined text-primary">view_carousel</span>
             Editar Banner Principal
           </h3>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700">Etiqueta Sup. (Tag)</label>
@@ -104,7 +104,7 @@ function AdminHomePanel({
         </div>
 
         {/* Featured Panels Editor */}
-        <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-neutral-soft dark:border-slate-800 shadow-sm">
+        <div className="rounded-xl border border-neutral-soft bg-white p-5 shadow-sm md:p-8 dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 border-b border-neutral-soft dark:border-slate-800 pb-4 gap-4">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <span className="material-symbols-outlined text-primary">grid_view</span>
@@ -129,7 +129,7 @@ function AdminHomePanel({
               <p className="text-slate-500 font-medium">No hay carteles destacados configurados.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
               {featuredPanels.map((panel, index) => (
                 <div key={`editor-${panel.id}`} className="p-4 border border-slate-200 rounded-xl bg-slate-50 relative group">
                   <div className="absolute top-2 right-2 z-10">

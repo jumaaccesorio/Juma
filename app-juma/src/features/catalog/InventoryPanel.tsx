@@ -48,7 +48,7 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
   };
 
   return (
-    <div className="flex-1 p-6 md:p-10 space-y-12 bg-secondary min-h-screen text-ink">
+    <div className="min-h-screen flex-1 space-y-8 bg-secondary p-4 text-ink md:space-y-12 md:p-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 className="font-serif text-3xl font-bold text-ink">Control de Inventario</h2>
@@ -102,7 +102,81 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="space-y-3 p-4 md:hidden">
+          {filteredProducts.map((product) => (
+            <div key={`mobile-${product.id}`} className="rounded-xl border border-line bg-white p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded bg-slate-100">
+                  {product.image ? (
+                    <img src={product.image} alt={getProductDisplayName(product)} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="material-symbols-outlined text-slate-300">image</span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-ink">{getProductDisplayName(product)}</p>
+                  <p className="mt-1 text-xs text-slate-500">{product.categoryName || "Sin categoria"}</p>
+                  <span className={`mt-3 inline-flex items-center justify-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] ${product.stock <= 2 ? "bg-warning/30 text-[#9a6d48]" : product.stock <= 10 ? "bg-quaternary text-primary" : "bg-tertiary/20 text-[#4f6780]"}`}>
+                    {product.stock} units
+                  </span>
+                </div>
+              </div>
+              {editingProductId === product.id ? (
+                <div className="mt-4 space-y-2">
+                  <input
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Nombre visible"
+                  />
+                  <input
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                    value={editSubName}
+                    onChange={(e) => setEditSubName(e.target.value)}
+                    placeholder="Subnombre"
+                  />
+                </div>
+              ) : null}
+              <div className="mt-4 flex items-center justify-between gap-3">
+                <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-1 shadow-inner">
+                  <button type="button" onClick={() => onUpdateStock(product.id, Math.max(0, product.stock - 1))} className="flex h-8 w-8 items-center justify-center rounded text-slate-500">
+                    <span className="material-symbols-outlined text-sm">remove</span>
+                  </button>
+                  <input
+                    type="number"
+                    min="0"
+                    value={product.stock}
+                    onChange={(e) => onUpdateStock(product.id, Number(e.target.value))}
+                    className="w-14 border-none bg-transparent p-0 text-center text-sm font-bold text-slate-900 focus:ring-0"
+                  />
+                  <button type="button" onClick={() => onUpdateStock(product.id, product.stock + 1)} className="flex h-8 w-8 items-center justify-center rounded text-slate-500">
+                    <span className="material-symbols-outlined text-sm">add</span>
+                  </button>
+                </div>
+                {editingProductId === product.id ? (
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => saveEdit(product)} className="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-white">
+                      Guardar
+                    </button>
+                    <button type="button" onClick={() => setEditingProductId(null)} className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600">
+                      Cancelar
+                    </button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => startEdit(product)} className="inline-flex items-center gap-1 rounded-lg bg-tertiary/18 px-3 py-2 text-xs font-bold text-[#4f6780]">
+                    <span className="material-symbols-outlined text-sm">edit</span>
+                    Editar
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+          {filteredProducts.length === 0 ? (
+            <div className="rounded-xl border border-line bg-white p-8 text-center text-sm text-slate-500 shadow-sm">No hay productos en el inventario.</div>
+          ) : null}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50">

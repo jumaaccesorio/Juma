@@ -200,7 +200,49 @@ export default function AdminDashboard({ orders, clients, lowStockProducts, onSe
             Ver todos los pedidos
           </button>
         </div>
-        <div className="overflow-x-auto bg-background rounded-xl border border-line shadow-sm">
+        <div className="space-y-3 md:hidden">
+          {recentOrders.length === 0 ? (
+            <div className="rounded-xl border border-line bg-background px-5 py-8 text-center text-sm text-muted shadow-sm">
+              No hay pedidos recientes.
+            </div>
+          ) : (
+            recentOrders.map((order) => (
+              <div key={`mobile-${order.id}`} className="rounded-xl border border-line bg-background p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Pedido</p>
+                    <p className="mt-1 font-['Inter'] text-sm font-bold text-ink">#ORD-{order.id.toString().padStart(5, "0")}</p>
+                  </div>
+                  <span
+                    className={`rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-tighter ${
+                      order.status === "REALIZADO" ? "bg-green-50 text-green-700" : "bg-primary/15 text-primary"
+                    }`}
+                  >
+                    {order.status}
+                  </span>
+                </div>
+                <div className="mt-4 space-y-2 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted">Cliente</span>
+                    <span className="font-bold uppercase text-ink">{getClientName(order)}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted">Total</span>
+                    <span className="font-headline text-xl text-primary">${getOrderTotal(order).toLocaleString("es-AR")}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => onSetActiveTab("pedidos")}
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-quaternary px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-primary"
+                >
+                  Ver pedido
+                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="hidden overflow-x-auto rounded-xl border border-line bg-background shadow-sm md:block">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-secondary/60">

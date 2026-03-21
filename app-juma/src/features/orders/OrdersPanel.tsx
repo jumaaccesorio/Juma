@@ -14,6 +14,7 @@ type OrdersPanelProps = {
   clients: Client[];
   products: Product[];
   orders: Order[];
+  hasInsufficientStock: (items: Order["items"]) => boolean;
   orderForm: OrderForm;
   pendingOrdersCount: number;
   completedOrdersCount: number;
@@ -31,6 +32,7 @@ function OrdersPanel({
   clients,
   products,
   orders,
+  hasInsufficientStock,
   orderForm,
   pendingOrdersCount,
   completedOrdersCount,
@@ -164,8 +166,7 @@ function OrdersPanel({
                   key={product.id}
                   type="button"
                   onClick={() => onAddProductToOrder(product.id)}
-                  disabled={product.stock <= 0}
-                  className={`flex flex-col items-center bg-white p-3 rounded-lg border border-slate-200 shadow-sm text-center transition-all ${product.stock <= 0 ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:border-primary/50 hover:shadow-md active:scale-95 cursor-pointer'}`}
+                  className="flex flex-col items-center rounded-lg border border-slate-200 bg-white p-3 text-center shadow-sm transition-all hover:border-primary/50 hover:shadow-md active:scale-95"
                 >
                   <div className="h-16 w-16 mb-2 rounded bg-slate-100 flex items-center justify-center overflow-hidden">
                     {product.image ? (
@@ -178,7 +179,7 @@ function OrdersPanel({
                   <div className="flex justify-between w-full mt-1 items-center">
                     <span className="text-xs font-bold text-primary">${product.salePrice.toLocaleString("es-AR")}</span>
                     <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${product.stock > 0 ? 'bg-slate-100 text-slate-600' : 'bg-red-100 text-red-600'}`}>
-                      {product.stock > 0 ? `Stock: ${product.stock}` : "Agotado"}
+                      {product.stock > 0 ? `Stock: ${product.stock}` : "Por encargo"}
                     </span>
                   </div>
                 </button>
@@ -218,7 +219,6 @@ function OrdersPanel({
                         <input
                           type="number"
                           min={1}
-                          max={row.product.stock}
                           value={row.item.quantity}
                           onChange={(e) => onUpdateOrderItemRow(row.index, "quantity", e.target.value)}
                           className="w-20 bg-slate-50 border border-slate-200 rounded px-2 py-1 text-center font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none"
@@ -258,7 +258,68 @@ function OrdersPanel({
           <h3 className="font-bold text-lg text-slate-900 dark:text-white">Listado de Pedidos</h3>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="space-y-3 p-4 lg:hidden">
+          {orders.map((order) => {
+            const clientName = order.clientId ? getClientName(order.clientId) : order.guestName || "Invitado";
+            const needsRestock = order.status === "PENDIENTE" && hasInsufficientStock(order.items);
+            return (
+              <div key={`mobile-${order.id}`} className="rounded-xl border border-line bg-background p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Pedido</p>
+                    <p className="mt-1 text-sm font-bold text-slate-900">#{String(order.id).padStart(5, "0")}</p>
+                  </div>
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
+                    order.status === "REALIZADO" ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${order.status === "REALIZADO" ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
+                    {order.status}
+                  </span>
+                </div>
+                <div className="mt-4 space-y-2 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-slate-500">Cliente</span>
+                    <span className="font-medium text-slate-700">{clientName}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-slate-500">Fecha</span>
+                    <span className="font-medium text-slate-700">{new Date(order.date).toLocaleDateString("es-AR", { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-slate-500">Total</span>
+                    <span className="font-bold text-slate-900">${getOrderTotal(order).toLocaleString("es-AR")}</span>
+                  </div>
+                </div>
+                {needsRestock ? (
+                  <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-warning/25 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#9a6d48]">
+                    <span className="material-symbols-outlined text-[14px]">inventory</span>
+                    Requiere reposicion
+                  </div>
+                ) : null}
+                <div className="mt-4">
+                  {order.status === "PENDIENTE" ? (
+                    <button 
+                      type="button" 
+                      onClick={() => onMarkOrderAsRealized(order.id)}
+                      className="inline-flex w-full items-center justify-center gap-1 rounded-lg bg-primary/10 px-3 py-2 text-xs font-bold text-primary"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                      Marcar envio
+                    </button>
+                  ) : (
+                    <span className="inline-flex w-full items-center justify-center gap-1 rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-400">
+                      <span className="material-symbols-outlined text-[16px]">done_all</span>
+                      Completado
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          {orders.length === 0 ? <div className="p-8 text-center text-sm text-slate-500">No se encontraron pedidos registrados.</div> : null}
+        </div>
+
+        <div className="hidden overflow-x-auto lg:block">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50">
@@ -275,6 +336,7 @@ function OrdersPanel({
                 <tr key={order.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                   {(() => {
                     const clientName = order.clientId ? getClientName(order.clientId) : order.guestName || "Invitado";
+                    const needsRestock = order.status === "PENDIENTE" && hasInsufficientStock(order.items);
                     return (
                       <>
                   <td className="p-4 font-bold text-slate-900 dark:text-white">#{String(order.id).padStart(5, '0')}</td>
@@ -290,6 +352,7 @@ function OrdersPanel({
                     {new Date(order.date).toLocaleDateString("es-AR", { year: 'numeric', month: 'short', day: 'numeric' })}
                   </td>
                   <td className="p-4">
+                    <div className="flex flex-col items-start gap-2">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                       order.status === "REALIZADO" 
                         ? 'bg-green-100 text-green-700' 
@@ -298,6 +361,13 @@ function OrdersPanel({
                       <span className={`h-1.5 w-1.5 rounded-full ${order.status === "REALIZADO" ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
                       {order.status}
                     </span>
+                    {needsRestock ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/25 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#9a6d48]">
+                        <span className="material-symbols-outlined text-[14px]">inventory</span>
+                        Requiere reposicion
+                      </span>
+                    ) : null}
+                    </div>
                   </td>
                   <td className="p-4 font-bold text-slate-900 dark:text-white">
                     ${getOrderTotal(order).toLocaleString("es-AR")}
