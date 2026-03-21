@@ -145,7 +145,7 @@ export default function StoreHeader({
         </div>
 
         {/* Navigation Tabs */}
-        <nav className="relative z-20 mt-2 flex w-full flex-wrap items-center gap-x-6 gap-y-3 py-2 pb-0 text-sm font-bold uppercase tracking-widest text-slate-400">
+        <nav className="relative z-20 mt-2 flex w-full items-center gap-8 overflow-visible py-2 pb-0 text-sm font-bold uppercase tracking-widest text-slate-400">
           <button
             className={`hover:text-primary transition-colors pb-2 border-b-2 ${isHomeActive ? "text-primary border-primary" : "border-transparent"}`}
             onClick={() => {
@@ -166,9 +166,9 @@ export default function StoreHeader({
               <span className={`material-symbols-outlined text-sm transition-transform ${showCatalogMenu ? "rotate-180" : ""}`}>expand_more</span>
             </button>
             {showCatalogMenu && (
-              <div className="absolute left-0 top-full z-[90] mt-2 min-w-[220px] overflow-hidden rounded-sm border border-primary/20 bg-white shadow-xl">
-                <div className="h-1 bg-primary" />
-                <div className="max-h-[60vh] overflow-y-auto py-3">
+              <div className="absolute left-0 top-full z-[90] mt-3 min-w-[240px] overflow-hidden border border-primary/20 bg-white shadow-xl">
+                <div className="h-1.5 bg-primary" />
+                <div className="py-4">
                   {visibleCategories.map((category) => (
                     <button
                       key={category.id}
@@ -179,7 +179,7 @@ export default function StoreHeader({
                         setShowCatalogMenu(false);
                         scrollToPageTop();
                       }}
-                      className="block w-full px-6 py-3 text-left text-[15px] font-medium normal-case tracking-normal text-ink transition-colors hover:bg-secondary/55 hover:text-primary"
+                      className="block w-full px-6 py-3 text-left text-[15px] font-medium normal-case tracking-normal text-ink transition-colors hover:bg-secondary/40 hover:text-primary"
                     >
                       {category.name}
                     </button>

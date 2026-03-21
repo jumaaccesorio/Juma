@@ -227,6 +227,15 @@ function App() {
     return () => window.clearTimeout(timeoutId);
   }, [cartSuccessToast]);
 
+  useEffect(() => {
+    if (isAdminLogged) return;
+    if (activeTab !== "catalogo" && activeTab !== "carrito") return;
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }, [activeTab, isAdminLogged]);
+
   // Restore session from localStorage
   useEffect(() => {
     const stored = localStorage.getItem(CLIENT_SESSION_KEY);
