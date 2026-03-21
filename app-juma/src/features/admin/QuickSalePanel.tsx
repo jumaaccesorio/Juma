@@ -28,6 +28,10 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   const [successMsg, setSuccessMsg] = useState("");
 
   const enabledProducts = useMemo(() => products.filter(p => p.enabled && p.stock > 0), [products]);
+  const rootCategories = useMemo(
+    () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
+    [categories],
+  );
 
   const filteredProducts = useMemo(() => {
     let list = enabledProducts;
@@ -69,6 +73,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
 
   const subtotal = useMemo(() => cart.reduce((acc, i) => acc + i.product.salePrice * i.quantity, 0), [cart]);
   const total = subtotal;
+  const selectedClient = selectedClientId ? clients.find((client) => String(client.id) === selectedClientId) : null;
 
   const handleFinalizeSale = async () => {
     if (cart.length === 0) return;
@@ -110,7 +115,259 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   };
 
   return (
-    <div className="flex h-full flex-1 flex-col overflow-hidden bg-[#f8f6f6] xl:flex-row">
+    <>
+      <div className="mx-auto flex max-w-md flex-1 flex-col bg-surface px-6 py-4 pb-32 md:hidden">
+        {successMsg && (
+          <div className="mb-6 rounded-2xl border border-[#C5A37F]/25 bg-[#C5A37F]/10 px-4 py-3 text-sm font-medium text-primary shadow-[0_12px_30px_rgba(117,89,58,0.08)]">
+            {successMsg}
+          </div>
+        )}
+
+        <section className="mb-8">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-headline text-xl italic text-primary">Venta Rápida</h2>
+            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-secondary">Boutique Admin</span>
+          </div>
+
+          <div className="rounded-xl bg-white p-4 shadow-[0_12px_40px_rgba(45,45,45,0.06)]">
+            <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.1em] text-secondary">
+              Seleccionar Cliente
+            </label>
+            <div className="relative flex items-center">
+              <span className="material-symbols-outlined pointer-events-none absolute left-3 text-sm text-secondary">
+                person_search
+              </span>
+              <select
+                className="w-full rounded-lg border-none bg-surface-container-low py-3 pl-10 pr-4 text-sm text-on-surface outline-none ring-1 ring-transparent transition focus:ring-primary"
+                value={selectedClientId}
+                onChange={(e) => setSelectedClientId(e.target.value)}
+              >
+                <option value="">Consumidor Final</option>
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {selectedClient && (
+              <div className="mt-3 flex gap-2">
+                <div className="flex items-center gap-2 rounded-lg border border-primary/10 bg-primary/5 px-3 py-2">
+                  <span className="text-xs font-medium text-primary">{selectedClient.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedClientId("")}
+                    className="material-symbols-outlined text-xs text-primary"
+                  >
+                    close
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="mb-8">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">Catálogo Curado</h3>
+            <span className="material-symbols-outlined text-secondary">filter_list</span>
+          </div>
+
+          <div className="relative mb-4">
+            <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-secondary">
+              search
+            </span>
+            <input
+              className="w-full rounded-xl border border-outline-variant/20 bg-white py-3 pl-10 pr-4 text-sm text-on-surface outline-none transition focus:border-primary"
+              placeholder="Buscar por nombre o categoría..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="mb-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+            <button
+              type="button"
+              onClick={() => setSelectedCategoryId(null)}
+              className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-medium transition-colors ${
+                !selectedCategoryId
+                  ? "bg-primary text-on-primary"
+                  : "bg-surface-container-low text-secondary hover:bg-secondary-container"
+              }`}
+            >
+              All
+            </button>
+            {rootCategories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => setSelectedCategoryId(selectedCategoryId === category.id ? null : category.id)}
+                className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-medium transition-colors ${
+                  selectedCategoryId === category.id
+                    ? "bg-primary text-on-primary"
+                    : "bg-surface-container-low text-secondary hover:bg-secondary-container"
+                }`}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+
+          {filteredProducts.length === 0 ? (
+            <div className="rounded-2xl bg-white px-5 py-10 text-center shadow-[0_12px_40px_rgba(45,45,45,0.04)]">
+              <span className="material-symbols-outlined text-4xl text-secondary">inventory_2</span>
+              <p className="mt-3 text-sm text-secondary">No encontramos productos para ese filtro.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              {filteredProducts.map((product) => {
+                const inCart = cart.find((item) => item.product.id === product.id)?.quantity ?? 0;
+                return (
+                  <button
+                    key={product.id}
+                    type="button"
+                    onClick={() => addToCart(product)}
+                    className={`group overflow-hidden rounded-xl text-left transition ${
+                      inCart > 0 ? "border border-primary/20 bg-primary/5" : "bg-surface-container-low"
+                    }`}
+                  >
+                    <div className="relative aspect-square bg-surface-container-high">
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={getProductDisplayName(product)}
+                          className="h-full w-full object-cover opacity-90 mix-blend-multiply transition-transform duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <span className="material-symbols-outlined text-4xl text-secondary/40">image</span>
+                        </div>
+                      )}
+
+                      {inCart > 0 ? (
+                        <>
+                          <div className="absolute left-2 top-2 rounded-full bg-primary px-2 py-0.5 text-[8px] uppercase tracking-tighter text-on-primary">
+                            {inCart} en bolsa
+                          </div>
+                          <div className="absolute bottom-2 right-2 rounded-full bg-primary p-1.5 shadow-sm">
+                            <span className="material-symbols-outlined text-sm text-on-primary">check</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="absolute bottom-2 right-2 rounded-full bg-surface-container-lowest/80 p-1.5 shadow-sm backdrop-blur-md">
+                          <span className="material-symbols-outlined text-sm text-primary">add</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <h4 className="font-headline text-sm italic text-on-surface">{getProductDisplayName(product)}</h4>
+                      <p className="mt-0.5 text-[11px] font-medium tracking-tight text-secondary">
+                        ${product.salePrice.toLocaleString("es-AR")}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="mb-12">
+          <div className="rounded-2xl bg-surface-container-high/50 p-6">
+            <div className="mb-6 flex items-baseline justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">Resumen de Orden</span>
+              <span className="font-headline text-2xl text-primary">${total.toLocaleString("es-AR")}</span>
+            </div>
+
+            <div className="mb-8 space-y-4">
+              {cart.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-outline-variant/20 px-4 py-5 text-center text-sm text-secondary">
+                  Seleccioná productos para comenzar la venta.
+                </div>
+              ) : (
+                cart.map((item) => (
+                  <div
+                    key={item.product.id}
+                    className="flex items-center justify-between border-b border-outline-variant/10 pb-2 text-sm"
+                  >
+                    <div>
+                      <span className="font-headline italic text-on-surface-variant">
+                        {item.quantity}x {getProductDisplayName(item.product)}
+                      </span>
+                      <div className="mt-1 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => updateQty(item.product.id, -1)}
+                          className="flex h-6 w-6 items-center justify-center rounded-full border border-outline-variant/20 text-primary"
+                        >
+                          <span className="material-symbols-outlined text-sm">remove</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateQty(item.product.id, 1)}
+                          className="flex h-6 w-6 items-center justify-center rounded-full border border-outline-variant/20 text-primary"
+                        >
+                          <span className="material-symbols-outlined text-sm">add</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeFromCart(item.product.id)}
+                          className="text-[10px] font-medium uppercase tracking-[0.1em] text-secondary"
+                        >
+                          quitar
+                        </button>
+                      </div>
+                    </div>
+                    <span className="font-medium">${(item.product.salePrice * item.quantity).toLocaleString("es-AR")}</span>
+                  </div>
+                ))
+              )}
+              <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-secondary/60">
+                <span>Impuestos (Incl.)</span>
+                <span>$0.00</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.1em] text-secondary">
+                Método de Pago
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {(["efectivo", "tarjeta", "transferencia"] as PaymentMethod[]).map((method) => (
+                  <button
+                    key={method}
+                    type="button"
+                    onClick={() => setPaymentMethod(method)}
+                    className={`flex flex-col items-center justify-center rounded-lg border bg-surface-container-lowest p-3 transition-colors ${
+                      paymentMethod === method
+                        ? "border-primary text-primary"
+                        : "border-outline-variant/30 text-secondary hover:border-primary/50"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined mb-1">
+                      {method === "efectivo" ? "payments" : method === "tarjeta" ? "credit_card" : "sync_alt"}
+                    </span>
+                    <span className="text-[9px] font-bold uppercase tracking-tighter">
+                      {method === "efectivo" ? "Cash" : method === "tarjeta" ? "Card" : "Transfer"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleFinalizeSale}
+              disabled={cart.length === 0 || isSubmitting}
+              className="mt-8 w-full rounded-sm bg-gradient-to-br from-[#75593a] to-[#c5a37f] py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-white shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSubmitting ? "Procesando..." : "Finalizar Venta"}
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <div className="hidden h-full flex-1 flex-col overflow-hidden bg-[#f8f6f6] md:flex xl:flex-row">
 
       {/* Left: Product Selector */}
       <section className="flex flex-1 flex-col space-y-5 overflow-hidden p-4 md:p-6">
@@ -154,7 +411,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           >
             Todos
           </button>
-          {categories.filter(c => !c.parentId).map(cat => (
+          {rootCategories.map(cat => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategoryId(selectedCategoryId === cat.id ? null : cat.id)}
@@ -314,7 +571,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           </button>
         </div>
       </aside>
-    </div>
+      </div>
+    </>
   );
 }
 

@@ -47,6 +47,7 @@ function OrdersPanel({
 }: OrdersPanelProps) {
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"ALL" | OrderStatus>("ALL");
 
   const enabledProducts = useMemo(() => products.filter((product) => product.enabled), [products]);
   const filteredProducts = useMemo(() => {
@@ -69,10 +70,307 @@ function OrdersPanel({
     [orderForm.items, products],
   );
 
+  const filteredOrders = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    return orders.filter((order) => {
+      if (statusFilter !== "ALL" && order.status !== statusFilter) return false;
+      if (!normalized) return true;
+
+      const clientName = order.clientId ? getClientName(order.clientId) : order.guestName || "Invitado";
+      const orderId = `#${String(order.id).padStart(5, "0")}`;
+
+      return [clientName, orderId, order.status].some((value) => value.toLowerCase().includes(normalized));
+    });
+  }, [orders, statusFilter, query, getClientName]);
+
+  const statusTabs: Array<{ label: string; value: "ALL" | OrderStatus }> = [
+    { label: "All", value: "ALL" },
+    { label: "Processing", value: "PENDIENTE" },
+    { label: "Delivered", value: "REALIZADO" },
+  ];
+
   return (
     <div className="flex-1 min-h-screen space-y-8 bg-secondary p-4 md:p-8 dark:bg-carbon">
+      <div className="mx-auto max-w-lg space-y-6 md:hidden">
+        <div className="mb-2 flex items-end justify-between">
+          <div>
+            <p className="mb-1 text-xs uppercase tracking-widest text-secondary">Archive</p>
+            <h2 className="font-headline text-4xl font-bold text-on-surface">Orders</h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowForm(!showForm)}
+            className="rounded-sm bg-gradient-to-br from-primary to-primary-container px-4 py-2 text-xs font-bold uppercase tracking-widest text-white shadow-sm transition-opacity hover:opacity-80"
+          >
+            {showForm ? "Close" : "New Order"}
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div className="group relative">
+            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+            <input
+              className="w-full rounded-sm bg-surface-container-lowest py-4 pl-12 pr-4 text-sm shadow-sm transition-all placeholder:text-outline-variant focus:ring-1 focus:ring-primary"
+              placeholder="Search orders..."
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none]">
+            {statusTabs.map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => setStatusFilter(tab.value)}
+                className={`rounded-full px-5 py-2 text-xs font-bold uppercase tracking-widest transition-colors ${
+                  statusFilter === tab.value
+                    ? "bg-primary text-on-primary"
+                    : "bg-surface-container-low text-secondary hover:bg-surface-container-high"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {showForm && (
+          <form
+            className="space-y-5 rounded-sm border border-outline-variant/10 bg-surface-container-lowest p-5 shadow-[0_4px_20px_rgba(45,45,45,0.02)]"
+            onSubmit={(event) => {
+              onAddOrder(event);
+              setShowForm(false);
+            }}
+          >
+            <div className="space-y-3">
+              <div>
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-secondary">Cliente</label>
+                <select
+                  required
+                  className="w-full rounded-sm bg-surface-container-low px-4 py-3 text-sm outline-none focus:ring-1 focus:ring-primary"
+                  value={orderForm.clientId}
+                  onChange={(event) => onOrderFormChange({ ...orderForm, clientId: event.target.value })}
+                >
+                  <option value="">Seleccionar Cliente</option>
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-secondary">Fecha</label>
+                  <input
+                    required
+                    type="date"
+                    className="w-full rounded-sm bg-surface-container-low px-4 py-3 text-sm outline-none focus:ring-1 focus:ring-primary"
+                    value={orderForm.date}
+                    onChange={(event) => onOrderFormChange({ ...orderForm, date: event.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-secondary">Estado</label>
+                  <select
+                    required
+                    className="w-full rounded-sm bg-surface-container-low px-4 py-3 text-sm outline-none focus:ring-1 focus:ring-primary"
+                    value={orderForm.status}
+                    onChange={(event) => onOrderFormChange({ ...orderForm, status: event.target.value as OrderStatus })}
+                  >
+                    <option value="PENDIENTE">Pendiente</option>
+                    <option value="REALIZADO">Realizado</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-3 flex items-center justify-between">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-secondary">Productos</label>
+                <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white">
+                  {selectedRows.length}
+                </span>
+              </div>
+              <div className="grid max-h-56 grid-cols-2 gap-3 overflow-y-auto rounded-sm bg-surface-container-low p-3">
+                {filteredProducts.map((product) => (
+                  <button
+                    key={product.id}
+                    type="button"
+                    onClick={() => onAddProductToOrder(product.id)}
+                    disabled={product.stock <= 0}
+                    className={`rounded-sm bg-white p-3 text-left shadow-sm transition ${
+                      product.stock <= 0 ? "cursor-not-allowed opacity-50 grayscale" : "active:scale-[0.98]"
+                    }`}
+                  >
+                    <p className="line-clamp-1 font-headline text-base italic text-on-surface">
+                      {getProductDisplayName(product)}
+                    </p>
+                    <p className="mt-1 text-[11px] font-medium text-primary">
+                      ${product.salePrice.toLocaleString("es-AR")}
+                    </p>
+                    <p className="mt-1 text-[10px] uppercase tracking-widest text-secondary">
+                      {product.stock > 0 ? `Stock ${product.stock}` : "Agotado"}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {selectedRows.length === 0 ? (
+                <div className="rounded-sm border border-dashed border-outline-variant/20 px-4 py-5 text-center text-sm text-secondary">
+                  Seleccioná productos para el pedido.
+                </div>
+              ) : (
+                selectedRows.map((row) => (
+                  <div key={`mobile-row-${row.index}`} className="flex items-center justify-between rounded-sm bg-surface-container-low p-3">
+                    <div>
+                      <p className="font-headline text-base italic text-on-surface">{getProductDisplayName(row.product)}</p>
+                      <p className="text-[11px] text-secondary">${row.product.salePrice.toLocaleString("es-AR")} c/u</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={1}
+                        max={row.product.stock}
+                        value={row.item.quantity}
+                        onChange={(event) => onUpdateOrderItemRow(row.index, "quantity", event.target.value)}
+                        className="w-16 rounded-sm bg-white px-2 py-1 text-center text-sm font-bold outline-none focus:ring-1 focus:ring-primary"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => onRemoveOrderItemRow(row.index)}
+                        className="text-secondary transition-colors hover:text-error"
+                      >
+                        <span className="material-symbols-outlined">delete</span>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="flex-1 rounded-sm border border-outline-variant/20 px-4 py-3 text-xs font-bold uppercase tracking-widest text-secondary"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={selectedRows.length === 0}
+                className="flex-1 rounded-sm bg-primary px-4 py-3 text-xs font-bold uppercase tracking-widest text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Guardar
+              </button>
+            </div>
+          </form>
+        )}
+
+        <div className="space-y-4">
+          {filteredOrders.map((order, index) => {
+            const clientName = order.clientId ? getClientName(order.clientId) : order.guestName || "Invitado";
+            const total = getOrderTotal(order);
+            const isCompleted = order.status === "REALIZADO";
+            const accent = isCompleted
+              ? "bg-primary-container/20 text-on-primary-container"
+              : "bg-tertiary-container/20 text-on-tertiary-container";
+
+            if (index === 2 && filteredOrders.length > 3) {
+              const nextOrder = filteredOrders[index + 1];
+              if (!nextOrder) return null;
+              const nextClientName = nextOrder.clientId ? getClientName(nextOrder.clientId) : nextOrder.guestName || "Invitado";
+              const nextTotal = getOrderTotal(nextOrder);
+              return (
+                <div key={`pair-${order.id}-${nextOrder.id}`} className="grid grid-cols-2 gap-4">
+                  {[{ order, clientName, total }, { order: nextOrder, clientName: nextClientName, total: nextTotal }].map(
+                    ({ order: currentOrder, clientName: currentClientName, total: currentTotal }, pairIndex) => (
+                      <div
+                        key={currentOrder.id}
+                        className={`flex h-32 flex-col justify-between rounded-sm p-4 ${
+                          pairIndex === 0 ? "bg-surface-container-lowest shadow-sm" : "bg-surface-container-low"
+                        }`}
+                      >
+                        <span className="text-[10px] font-bold uppercase text-outline">
+                          #{String(currentOrder.id).padStart(5, "0")}
+                        </span>
+                        <div>
+                          <h3 className="truncate font-headline text-lg italic">{currentClientName}</h3>
+                          <p className="text-sm font-bold text-primary">${currentTotal.toLocaleString("es-AR")}</p>
+                        </div>
+                      </div>
+                    ),
+                  )}
+                </div>
+              );
+            }
+
+            if (index === 3 && filteredOrders.length > 3) return null;
+
+            return (
+              <div
+                key={order.id}
+                className={`rounded-sm p-5 ${
+                  index % 2 === 1
+                    ? "bg-surface-container-low shadow-none"
+                    : "border-l-4 border-primary/20 bg-surface-container-lowest shadow-[0_4px_20px_rgba(45,45,45,0.02)]"
+                }`}
+              >
+                <div className="mb-4 flex items-start justify-between gap-4">
+                  <div>
+                    <span className="mb-1 block text-[10px] font-bold uppercase tracking-tighter text-outline">
+                      #{String(order.id).padStart(5, "0")}
+                    </span>
+                    <h3 className="font-headline text-xl italic text-on-surface">{clientName}</h3>
+                  </div>
+                  <div className={`rounded-full px-3 py-1 ${accent}`}>
+                    <span className="text-[10px] font-bold uppercase">
+                      {isCompleted ? "Delivered" : "Processing"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <p className="font-headline text-lg text-primary">${total.toLocaleString("es-AR")}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-outline">
+                      {new Date(order.date).toLocaleDateString("es-AR", { year: "numeric", month: "short", day: "numeric" })}
+                    </p>
+                  </div>
+                  {order.status === "PENDIENTE" ? (
+                    <button
+                      type="button"
+                      onClick={() => onMarkOrderAsRealized(order.id)}
+                      className="rounded-full bg-primary px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-white"
+                    >
+                      Enviado
+                    </button>
+                  ) : (
+                    <span className="rounded-full bg-secondary-container px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-on-secondary-container">
+                      Cerrado
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {filteredOrders.length === 0 && (
+            <div className="rounded-sm bg-surface-container-lowest px-5 py-10 text-center shadow-[0_4px_20px_rgba(45,45,45,0.02)]">
+              <p className="font-headline text-xl italic text-on-surface">No hay pedidos</p>
+              <p className="mt-2 text-sm text-secondary">Probá con otro filtro o creá uno nuevo.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="hidden space-y-8 md:block">
       {/* Header Actions */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <h2 className="font-serif text-3xl font-bold text-slate-900 dark:text-white">Admin Pedidos</h2>
           <p className="text-slate-500 mt-1">Gestiona los pedidos de tus clientes y estados de envio.</p>
@@ -332,7 +630,7 @@ function OrdersPanel({
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-soft dark:divide-slate-800">
-              {orders.map((order) => (
+              {filteredOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                   {(() => {
                     const clientName = order.clientId ? getClientName(order.clientId) : order.guestName || "Invitado";
@@ -394,7 +692,7 @@ function OrdersPanel({
                   })()}
                 </tr>
               ))}
-              {orders.length === 0 && (
+              {filteredOrders.length === 0 && (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-slate-500 font-medium">No se encontraron pedidos registrados.</td>
                 </tr>
@@ -402,6 +700,7 @@ function OrdersPanel({
             </tbody>
           </table>
         </div>
+      </div>
       </div>
     </div>
   );
