@@ -2,26 +2,76 @@ import type { Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
 
 type CartRow = { product: Product; quantity: number; subtotal: number };
+type OrderConfirmation = { orderId: number; customerName?: string };
 
 type CartPanelProps = {
   cartRows: CartRow[];
   cartItemsCount: number;
   cartTotal: number;
+  orderConfirmation: OrderConfirmation | null;
   onUpdateCartQuantity: (productId: number, quantity: number) => void;
   onRemoveFromCart: (productId: number) => void;
   onClearCart: () => void;
   onCheckoutClick: () => void;
+  onBackToCatalog: () => void;
 };
 
 function CartPanel({
   cartRows,
   cartItemsCount,
   cartTotal,
+  orderConfirmation,
   onUpdateCartQuantity,
   onRemoveFromCart,
   onClearCart,
   onCheckoutClick,
+  onBackToCatalog,
 }: CartPanelProps) {
+  if (orderConfirmation) {
+    return (
+      <div className="mx-auto w-full max-w-4xl px-6 py-12 md:px-20">
+        <div className="overflow-hidden rounded-xl border border-line bg-white shadow-subtle">
+          <div className="border-b border-line bg-secondary/65 px-8 py-8 text-center">
+            <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-success/25 text-[#647554]">
+              <span className="material-symbols-outlined text-3xl">check</span>
+            </span>
+            <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.28em] text-muted">Pedido confirmado</p>
+            <h1 className="mt-3 font-serif text-4xl text-ink">Gracias por tu compra</h1>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-muted">
+              {orderConfirmation.customerName ? `${orderConfirmation.customerName}, ` : ""}
+              recibimos tu pedido y en breve nos comunicaremos para darte mas informacion sobre el estado, medios de pago y coordinacion de entrega.
+            </p>
+          </div>
+
+          <div className="grid gap-6 px-8 py-8 md:grid-cols-2">
+            <div className="rounded-xl border border-line bg-background p-6">
+              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-muted">Numero de pedido</p>
+              <p className="mt-3 font-serif text-4xl text-primary">#{String(orderConfirmation.orderId).padStart(5, "0")}</p>
+              <p className="mt-3 text-sm text-muted">
+                Guardalo para futuras consultas. Tambien podremos identificar tu compra con este numero si nos escribis.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-line bg-white p-6">
+              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-muted">Proximo paso</p>
+              <p className="mt-3 text-sm leading-6 text-ink">
+                Nuestro equipo va a revisar tu pedido y te contactaremos para confirmar disponibilidad, formas de pago y envio.
+              </p>
+              <button
+                type="button"
+                onClick={onBackToCatalog}
+                className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90"
+              >
+                Seguir viendo productos
+                <span className="material-symbols-outlined text-base">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto w-full px-6 md:px-20 py-10">
       <div className="mb-10">

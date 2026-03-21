@@ -162,6 +162,7 @@ function App() {
   const [currentClient, setCurrentClient] = useState<Client | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<"login" | "checkout">("login");
+  const [lastOrderConfirmation, setLastOrderConfirmation] = useState<{ orderId: number; customerName?: string } | null>(null);
 
   const [clientForm, setClientForm] = useState({ name: "", phone: "", email: "" });
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
@@ -256,7 +257,7 @@ function App() {
 
   useEffect(() => {
     if (!isAdminLogged && isRestrictedTab) {
-      setActiveTab("catalogo");
+      setActiveTab("carrito");
     }
   }, [isAdminLogged, isRestrictedTab]);
 
@@ -671,6 +672,7 @@ function App() {
 
   const addToCart = (productId: number) => {
     setError("");
+    setLastOrderConfirmation(null);
     const product = productMap.get(productId);
     if (!product || product.stock <= 0) {
       setError("No hay stock disponible para ese producto.");
@@ -688,6 +690,7 @@ function App() {
   };
 
   const updateCartQuantity = (productId: number, quantity: number) => {
+    setLastOrderConfirmation(null);
     if (quantity <= 0) {
       setCartItems((prev) => prev.filter((item) => item.productId !== productId));
       return;
@@ -699,10 +702,14 @@ function App() {
   };
 
   const removeFromCart = (productId: number) => {
+    setLastOrderConfirmation(null);
     setCartItems((prev) => prev.filter((item) => item.productId !== productId));
   };
 
-  const clearCart = () => setCartItems([]);
+  const clearCart = () => {
+    setLastOrderConfirmation(null);
+    setCartItems([]);
+  };
 
   const updateFeaturedPanelText = (id: string, field: "title" | "cta", value: string) => {
     setFeaturedPanels((prev) => prev.map((panel) => (panel.id === id ? { ...panel, [field]: value } : panel)));
@@ -878,8 +885,11 @@ function App() {
       });
       
       setOrders(prev => [newOrder, ...prev]);
-      clearCart();
-      alert("¡Pedido realizado con éxito! Nos pondremos en contacto contigo pronto.");
+      setCartItems([]);
+      setLastOrderConfirmation({
+        orderId: newOrder.id,
+        customerName: currentClient?.name || guestData?.name,
+      });
       setActiveTab("catalogo");
     } catch(err) {
       console.error(err);
@@ -894,7 +904,7 @@ function App() {
       <div className="flex min-h-screen bg-background font-body text-ink">
         <AdminSidebar activeTab={activeTab} onSetActiveTab={setActiveTab} />
         <main className="flex-1 ml-64 min-h-screen flex flex-col">
-          <AdminTopNav onLogout={logoutAdmin} />
+          <AdminTopNav onPreview={() => setActiveTab("catalogo")} onLogout={logoutAdmin} />
           
           <div className="flex-1">
             {error ? (
@@ -1121,6 +1131,7 @@ function App() {
           cartRows={cartRows}
           cartItemsCount={cartItemsCount}
           cartTotal={cartTotal}
+          orderConfirmation={lastOrderConfirmation}
           onUpdateCartQuantity={updateCartQuantity}
           onRemoveFromCart={removeFromCart}
           onClearCart={clearCart}
@@ -1131,6 +1142,10 @@ function App() {
               setAuthModalMode("checkout");
               setShowAuthModal(true);
             }
+          }}
+          onBackToCatalog={() => {
+            setLastOrderConfirmation(null);
+            setActiveTab("catalogo");
           }}
         />
       ) : null}
