@@ -8,30 +8,21 @@ type AdminSidebarProps = {
 export default function AdminSidebar({ activeTab, onSetActiveTab }: AdminSidebarProps) {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: "dashboard" },
-    { id: "catalogo", label: "Ver Tienda", icon: "visibility" },
-    { id: "venta_rapida", label: "Venta Rápida", icon: "bolt" },
+    { id: "venta_rapida", label: "Venta Rapida", icon: "bolt" },
+    { id: "categorias", label: "Categorias", icon: "category" },
     { id: "inventario", label: "Inventario", icon: "inventory_2" },
     { id: "productos", label: "Productos", icon: "layers" },
     { id: "clientes", label: "Usuarios", icon: "group" },
     { id: "pedidos", label: "Pedidos", icon: "shopping_bag" },
     { id: "finanzas", label: "Finanzas", icon: "payments" },
-    { id: "inicio_admin", label: "Configuración", icon: "settings" },
+    { id: "inicio_admin", label: "Configuracion", icon: "settings" },
   ];
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-secondary border-r border-line flex flex-col py-8 px-4 z-50">
-      <div className="mb-10 px-2 flex flex-col items-start gap-4">
-        <div>
-          <h1 className="font-headline text-2xl text-primary tracking-tight">Juma Accessory</h1>
-          <p className="font-body font-medium text-[10px] tracking-widest text-muted uppercase mt-1">Panel de Control</p>
-        </div>
-        <button 
-          onClick={() => onSetActiveTab("catalogo")}
-          className="flex items-center gap-2 px-3 py-1.5 bg-background hover:bg-white text-primary text-[10px] font-bold uppercase tracking-widest rounded transition-all border border-primary/20"
-        >
-          <span className="material-symbols-outlined text-[14px]">visibility</span>
-          Web Preview
-        </button>
+      <div className="mb-10 px-2">
+        <h1 className="font-headline text-2xl text-primary tracking-tight">Juma Accessory</h1>
+        <p className="font-body font-medium text-[10px] tracking-widest text-muted uppercase mt-1">Panel de Control</p>
       </div>
 
       <nav className="flex-1 space-y-1.5">
