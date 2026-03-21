@@ -1069,7 +1069,7 @@ function App() {
             )}
 
             {activeTab === "finanzas" && (
-              <div className="px-4 pb-10 pt-20 md:px-10">
+              <div className="pt-20 px-10 pb-10">
                 <FinancePanel finance={finance} />
               </div>
             )}
