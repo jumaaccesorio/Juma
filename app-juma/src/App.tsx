@@ -66,6 +66,77 @@ const DEFAULT_HERO_BANNER: HeroBanner = {
   image: "https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=1800&q=80",
 };
 
+type ImportedProductRow = {
+  name: string;
+  subName: string;
+  purchasePrice: number;
+  salePrice: number;
+  stock: number;
+  categoryName: string;
+};
+
+function splitCsvLine(line: string, delimiter: string) {
+  const values: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    const next = line[index + 1];
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        current += '"';
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+    if (char === delimiter && !inQuotes) {
+      values.push(current.trim());
+      current = "";
+      continue;
+    }
+    current += char;
+  }
+
+  values.push(current.trim());
+  return values;
+}
+
+function parseImportedProducts(csvText: string): ImportedProductRow[] {
+  const lines = csvText
+    .replace(/^\uFEFF/, "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (lines.length <= 1) return [];
+
+  const delimiter = lines[0].includes(";") ? ";" : ",";
+  const headers = splitCsvLine(lines[0], delimiter).map((header) => header.trim().toLowerCase());
+  const headerIndex = new Map(headers.map((header, index) => [header, index]));
+  const getValue = (values: string[], key: string) => {
+    const index = headerIndex.get(key);
+    return index === undefined ? "" : (values[index] ?? "").trim();
+  };
+
+  return lines.slice(1).map((line) => {
+    const values = splitCsvLine(line, delimiter);
+    const purchasePrice = Number(getValue(values, "precio_compra").replace(",", "."));
+    const salePrice = Number(getValue(values, "precio_venta").replace(",", "."));
+    const stock = Number(getValue(values, "stock").replace(",", "."));
+    return {
+      name: getValue(values, "nombre"),
+      subName: getValue(values, "subnombre"),
+      purchasePrice: Number.isFinite(purchasePrice) ? purchasePrice : 0,
+      salePrice: Number.isFinite(salePrice) ? salePrice : 0,
+      stock: Number.isFinite(stock) ? stock : 0,
+      categoryName: getValue(values, "categoria"),
+    };
+  });
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>("catalogo");
   const [clients, setClients] = useState<Client[]>([]);
@@ -616,6 +687,70 @@ function App() {
     reader.readAsDataURL(file);
   };
 
+  const importProducts = async (file: File | null) => {
+    if (!file) return;
+    try {
+      const csvText = await file.text();
+      const rows = parseImportedProducts(csvText).filter(
+        (row) =>
+          (row.name.trim() || row.subName.trim()) &&
+          row.purchasePrice >= 0 &&
+          row.salePrice >= 0 &&
+          row.stock >= 0,
+      );
+
+      if (rows.length === 0) {
+        setError("El archivo no tiene productos validos para importar.");
+        return;
+      }
+
+      const categoryMap = new Map(categories.map((category) => [category.name.trim().toLowerCase(), category]));
+      const importedProducts: Product[] = [];
+      const createdCategories: Category[] = [];
+
+      for (const row of rows) {
+        let categoryId: number | undefined;
+        const normalizedCategory = row.categoryName.trim().toLowerCase();
+        if (normalizedCategory) {
+          let category = categoryMap.get(normalizedCategory);
+          if (!category) {
+            category = await api.addCategory(row.categoryName.trim());
+            categoryMap.set(normalizedCategory, category);
+            createdCategories.push(category);
+          }
+          categoryId = category.id;
+        }
+
+        const product = await api.addProduct({
+          name: row.name.trim() || row.subName.trim(),
+          subName: row.subName.trim(),
+          categoryId,
+          purchasePrice: row.purchasePrice,
+          salePrice: row.salePrice,
+          stock: row.stock,
+          initialStock: row.stock,
+          enabled: true,
+          image: "",
+          sourceUrl: "",
+          isFeatured: false,
+        });
+
+        importedProducts.push(product);
+      }
+
+      if (createdCategories.length > 0) {
+        setCategories((prev) => [...prev, ...createdCategories].sort((a, b) => a.name.localeCompare(b.name)));
+      }
+      if (importedProducts.length > 0) {
+        setProducts((prev) => [...importedProducts, ...prev]);
+      }
+      setError("");
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo importar el archivo.");
+    }
+  };
+
   const loginAdmin = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAdminError("");
@@ -758,6 +893,7 @@ function App() {
                   onToggleProductEnabled={toggleProductEnabled}
                   onUpdateExistingProductImage={updateExistingProductImage}
                   onSaveProductEdits={saveProductEdits}
+                  onImportProducts={importProducts}
                 />
               </div>
             )}

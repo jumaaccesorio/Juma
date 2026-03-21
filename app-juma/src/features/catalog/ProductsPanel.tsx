@@ -34,6 +34,7 @@ type ProductsPanelProps = {
   onToggleProductEnabled: (productId: number) => void;
   onUpdateExistingProductImage: (productId: number, file: File | null) => void;
   onSaveProductEdits: (productId: number, updates: Partial<Product>) => void;
+  onImportProducts: (file: File | null) => void;
 };
 
 function buildDraft(product: Product): ProductDraft {
@@ -58,6 +59,7 @@ function ProductsPanel({
   onToggleProductEnabled,
   onUpdateExistingProductImage,
   onSaveProductEdits,
+  onImportProducts,
 }: ProductsPanelProps) {
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -191,6 +193,20 @@ function ProductsPanel({
             <p className="text-sm font-medium text-slate-500">Ganancia Proy.</p>
             <p className="text-xl font-black text-slate-900 dark:text-white">${stats.projectedProfit.toLocaleString("es-AR")}</p>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-neutral-soft dark:border-slate-800 shadow-sm p-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Importar productos</h3>
+            <p className="text-sm text-slate-500 mt-1">CSV con columnas: `Nombre, subnombre, precio_compra, precio_venta, stock, categoria`.</p>
+          </div>
+          <label className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary hover:text-white text-primary px-4 py-2.5 rounded-lg font-bold text-sm transition-colors cursor-pointer">
+            <span className="material-symbols-outlined text-base">upload_file</span>
+            Importar CSV
+            <input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => onImportProducts(e.target.files?.[0] ?? null)} />
+          </label>
         </div>
       </div>
 
