@@ -82,8 +82,65 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
     }
   }, [finance.months, finance.selectedMonthKey, selectedMonthKey]);
 
+  const monthlyPreviewDays = useMemo(() => {
+    if (!visibleFinance) return [];
+
+    const today = new Date();
+    const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+    if (selectedMonthKey === currentMonthKey) {
+      const endIndex = today.getDate();
+      return visibleFinance.dailyBreakdown.slice(Math.max(0, endIndex - 7), endIndex);
+    }
+
+    const lastDayWithMovement = [...visibleFinance.dailyBreakdown]
+      .reverse()
+      .find((day) => day.income > 0 || day.expense > 0 || day.salesCount > 0);
+
+    if (lastDayWithMovement) {
+      return visibleFinance.dailyBreakdown.slice(Math.max(0, lastDayWithMovement.day - 7), lastDayWithMovement.day);
+    }
+
+    return visibleFinance.dailyBreakdown.slice(-7);
+  }, [selectedMonthKey, visibleFinance]);
+
   const weeklyBreakdown = useMemo(() => {
-    const recentDays = visibleFinance?.dailyBreakdown.slice(-7) ?? [];
+    if (!visibleFinance) {
+      return {
+        days: [] as FinanceDayPoint[],
+        chartMax: 0,
+        incomeTotal: 0,
+        expenseTotal: 0,
+        salesTotal: 0,
+      };
+    }
+
+    const [selectedYear, selectedMonthValue] = selectedMonthKey.split("-").map(Number);
+    const selectedMonthIndex = selectedMonthValue - 1;
+    const today = new Date();
+    const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+    const anchorDate =
+      selectedMonthKey === currentMonthKey
+        ? new Date(today.getFullYear(), today.getMonth(), today.getDate())
+        : new Date(selectedYear, selectedMonthIndex + 1, 0);
+
+    const weekStartsOnMondayOffset = (anchorDate.getDay() + 6) % 7;
+    const weekStart = new Date(anchorDate);
+    weekStart.setDate(anchorDate.getDate() - weekStartsOnMondayOffset);
+
+    const recentDays = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + index);
+      const isSelectedMonth = date.getFullYear() === selectedYear && date.getMonth() === selectedMonthIndex;
+      const dayData = isSelectedMonth ? visibleFinance.dailyBreakdown[date.getDate() - 1] : undefined;
+      return {
+        day: date.getDate(),
+        label: `${date.getDate()}/${date.getMonth() + 1}`,
+        income: dayData?.income ?? 0,
+        expense: dayData?.expense ?? 0,
+        salesCount: dayData?.salesCount ?? 0,
+      };
+    });
+
     const chartMax = recentDays.reduce((max, day) => Math.max(max, day.income, day.expense), 0);
     return {
       days: recentDays,
@@ -92,7 +149,7 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
       expenseTotal: recentDays.reduce((total, day) => total + day.expense, 0),
       salesTotal: recentDays.reduce((total, day) => total + day.salesCount, 0),
     };
-  }, [visibleFinance]);
+  }, [selectedMonthKey, visibleFinance]);
 
   const handleSubmitExpense = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -346,14 +403,18 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
           </div>
 
           <div className="grid grid-cols-7 gap-2 pb-2 md:hidden">
-            {visibleFinance.dailyBreakdown.slice(-7).map((row) => {
+            {monthlyPreviewDays.map((row) => {
               const incomeHeight = visibleFinance.chartMax > 0 ? Math.max(10, (row.income / visibleFinance.chartMax) * 100) : 10;
               const expenseHeight = visibleFinance.chartMax > 0 ? Math.max(10, (row.expense / visibleFinance.chartMax) * 100) : 10;
               return (
                 <div key={`mobile-${row.day}`} className="flex min-w-0 flex-col items-center gap-2">
                   <div className="flex h-32 w-full items-end gap-1 rounded-lg bg-slate-50 px-1 py-2">
-                    <div className="w-1/2 rounded-t-sm bg-green-400/85" style={{ height: `${incomeHeight}%` }} />
-                    <div className="w-1/2 rounded-t-sm bg-red-300" style={{ height: `${expenseHeight}%` }} />
+                    <div className="flex h-full w-1/2 items-end">
+                      <div className="w-full rounded-t-sm bg-green-400/85" style={{ height: `${incomeHeight}%` }} />
+                    </div>
+                    <div className="flex h-full w-1/2 items-end">
+                      <div className="w-full rounded-t-sm bg-red-300" style={{ height: `${expenseHeight}%` }} />
+                    </div>
                   </div>
                   <span className="text-[10px] font-bold text-slate-400">{row.day}</span>
                   <span className="text-[9px] font-bold text-slate-500">{row.salesCount}</span>
@@ -370,10 +431,10 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
                 return (
                   <div key={row.day} className="group relative flex min-w-[32px] flex-1 flex-col items-center justify-end">
                     <div className="mb-2 flex h-64 w-full items-end gap-1">
-                      <div className="relative flex-1">
+                      <div className="relative flex h-full flex-1 items-end">
                         <div className="w-full rounded-t-sm bg-green-400/85 transition-all duration-500 group-hover:bg-green-500" style={{ height: `${incomeHeight}%` }} />
                       </div>
-                      <div className="relative flex-1">
+                      <div className="relative flex h-full flex-1 items-end">
                         <div className="w-full rounded-t-sm bg-red-300 transition-all duration-500 group-hover:bg-red-400" style={{ height: `${expenseHeight}%` }} />
                       </div>
                     </div>
@@ -395,7 +456,7 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
           <div className="mb-5 flex flex-col gap-3 border-b border-neutral-soft pb-4 dark:border-slate-800 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">Grafico semanal</h3>
-              <p className="mt-1 text-sm text-slate-500">Resumen de los ultimos 7 dias del mes filtrado.</p>
+              <p className="mt-1 text-sm text-slate-500">Resumen de la semana calendario del mes filtrado.</p>
             </div>
             <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-widest">
               <span className="rounded-full bg-green-50 px-3 py-1 text-green-600">
@@ -426,12 +487,16 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
                       <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-500">{row.salesCount} vtas</span>
                     </div>
                     <div className="flex h-28 items-end gap-2">
-                      <div className="flex flex-1 flex-col items-center justify-end gap-2">
-                        <div className="w-full rounded-t-md bg-green-400/85" style={{ height: `${incomeHeight}%` }} />
+                      <div className="flex flex-1 flex-col items-center gap-2">
+                        <div className="flex h-full w-full items-end">
+                          <div className="w-full rounded-t-md bg-green-400/85" style={{ height: `${incomeHeight}%` }} />
+                        </div>
                         <span className="text-[10px] font-bold text-green-700">Ing.</span>
                       </div>
-                      <div className="flex flex-1 flex-col items-center justify-end gap-2">
-                        <div className="w-full rounded-t-md bg-red-300" style={{ height: `${expenseHeight}%` }} />
+                      <div className="flex flex-1 flex-col items-center gap-2">
+                        <div className="flex h-full w-full items-end">
+                          <div className="w-full rounded-t-md bg-red-300" style={{ height: `${expenseHeight}%` }} />
+                        </div>
                         <span className="text-[10px] font-bold text-red-700">Egr.</span>
                       </div>
                     </div>

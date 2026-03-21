@@ -5,10 +5,11 @@ type ClientProfilePanelProps = {
   clientName: string;
   myOrders: Order[];
   myFavorites: Product[];
+  products: Product[];
   onLogout: () => void;
 };
 
-export default function ClientProfilePanel({ clientName, myOrders, myFavorites, onLogout }: ClientProfilePanelProps) {
+export default function ClientProfilePanel({ clientName, myOrders, myFavorites, products, onLogout }: ClientProfilePanelProps) {
   return (
     <div className="max-w-5xl mx-auto w-full px-6 md:px-20 py-10 space-y-12 min-h-screen">
       <div className="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-slate-200 pb-10">
@@ -17,6 +18,7 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
           <p className="text-slate-500 dark:text-slate-400 mt-2">¡Hola, {clientName}! Aquí puedes revisar el estado de todos tus pedidos.</p>
         </div>
         <button 
+          id="client-profile-logout"
           onClick={onLogout}
           className="bg-red-50 text-red-600 hover:bg-red-100 px-6 py-2 rounded-md font-bold text-sm transition-colors flex items-center gap-2"
         >
@@ -37,22 +39,57 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
           <div className="grid grid-cols-1 gap-6">
             {myOrders.map(order => (
               <div key={order.id} className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between gap-6">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <span className="font-black text-lg text-slate-900 dark:text-white">Pedido #{String(order.id).padStart(5, '0')}</span>
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${order.status === 'REALIZADO' ? 'bg-green-100 text-green-700' : 'bg-primary/10 text-primary'}`}>
-                      {order.status}
-                    </span>
+                <div className="flex-1 space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className="font-black text-lg text-slate-900 dark:text-white">Pedido #{String(order.id).padStart(5, '0')}</span>
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${order.status === 'REALIZADO' ? 'bg-green-100 text-green-700' : 'bg-primary/10 text-primary'}`}>
+                        {order.status}
+                      </span>
+                    </div>
+                    <p className="text-slate-500 text-sm flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm">calendar_month</span>
+                      {new Date(order.date).toLocaleDateString("es-AR", { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                    <p className="text-slate-500 text-sm flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm">inventory_2</span>
+                      {order.items.reduce((acc, item) => acc + item.quantity, 0)} productos
+                    </p>
                   </div>
-                  <p className="text-slate-500 text-sm flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm">calendar_month</span>
-                    {new Date(order.date).toLocaleDateString("es-AR", { year: 'numeric', month: 'long', day: 'numeric' })}
-                  </p>
-                  <p className="text-slate-500 text-sm flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm">inventory_2</span>
-                    {order.items.reduce((acc, item) => acc + item.quantity, 0)} productos
-                  </p>
+
+                  <div className="rounded-xl bg-slate-50 px-4 py-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Detalle del pedido</p>
+                    <div className="mt-3 space-y-3">
+                      {order.items.map((item) => (
+                        <div key={`${order.id}-${item.productId}`} className="flex items-center justify-between gap-4 border-b border-slate-200/70 pb-3 last:border-b-0 last:pb-0">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-bold text-slate-800">
+                              {item.quantity} x {getProductDisplayName(products.find((product) => product.id === item.productId) ?? {
+                                id: item.productId,
+                                name: `Producto #${item.productId}`,
+                                subName: "",
+                                isFeatured: false,
+                                purchasePrice: 0,
+                                salePrice: item.unitSalePrice,
+                                stock: 0,
+                                initialStock: 0,
+                                enabled: true,
+                                image: "",
+                                sourceUrl: "",
+                                createdAt: "",
+                              })}
+                            </p>
+                            <p className="text-xs text-slate-500">Unitario: ${item.unitSalePrice.toLocaleString("es-AR")}</p>
+                          </div>
+                          <p className="shrink-0 text-sm font-black text-primary">
+                            ${(item.quantity * item.unitSalePrice).toLocaleString("es-AR")}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
+
                 <div className="flex flex-col items-end justify-center">
                   <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Total</span>
                   <span className="text-2xl font-black text-primary">${order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0).toLocaleString("es-AR")}</span>

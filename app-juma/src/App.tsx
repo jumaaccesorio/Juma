@@ -1371,6 +1371,12 @@ function App() {
         onLoginAdmin={loginAdmin}
         onLogoutAdmin={logoutAdmin}
         onLoginClientClick={() => { setAuthModalMode("login"); setShowAuthModal(true); }}
+        onLogoutClient={() => {
+          localStorage.removeItem(CLIENT_SESSION_KEY);
+          setCurrentClient(null);
+          setFavorites([]);
+          setActiveTab("catalogo");
+        }}
       />
 
       {cartSuccessToast ? (
@@ -1500,6 +1506,7 @@ function App() {
           clientName={currentClient.name}
           myOrders={orders.filter(o => o.clientId === currentClient.id)}
           myFavorites={products.filter(p => favorites.some(f => f.productId === p.id))}
+          products={products}
           onLogout={() => {
             localStorage.removeItem(CLIENT_SESSION_KEY);
             setCurrentClient(null);

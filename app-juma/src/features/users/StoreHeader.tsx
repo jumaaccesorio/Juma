@@ -17,6 +17,7 @@ type StoreHeaderProps = {
   onLoginAdmin: (e: React.FormEvent<HTMLFormElement>) => void;
   onLogoutAdmin: () => void;
   onLoginClientClick: () => void;
+  onLogoutClient: () => void;
 };
 
 export default function StoreHeader({
@@ -35,9 +36,11 @@ export default function StoreHeader({
   onLoginAdmin,
   onLogoutAdmin,
   onLoginClientClick,
+  onLogoutClient,
 }: StoreHeaderProps) {
   const [showLogin, setShowLogin] = useState(false);
   const [showCatalogMenu, setShowCatalogMenu] = useState(false);
+  const [showClientMenu, setShowClientMenu] = useState(false);
 
   const scrollToPageTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -59,6 +62,12 @@ export default function StoreHeader({
   useEffect(() => {
     setShowCatalogMenu(false);
   }, [activeTab]);
+
+  useEffect(() => {
+    if (!currentClient) {
+      setShowClientMenu(false);
+    }
+  }, [currentClient]);
 
   return (
     <>
@@ -93,16 +102,46 @@ export default function StoreHeader({
             
             <div className="flex items-center gap-4">
               {currentClient ? (
-                <button 
-                  className={`flex items-center gap-2 rounded-full pl-3 pr-4 py-1.5 transition-colors border ${activeTab === 'perfil' ? 'bg-primary/10 border-primary text-primary' : 'border-slate-200 text-slate-600 hover:border-primary hover:text-primary'} font-bold text-xs uppercase tracking-wider`}
-                  onClick={() => onSetActiveTab("perfil")}
-                  title="Mi Cuenta"
-                >
-                  <div className="size-6 rounded-full bg-primary text-white flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[14px]">person</span>
-                  </div>
-                  {currentClient.name.split(' ')[0]}
-                </button>
+                <div className="relative">
+                  <button 
+                    className={`flex items-center gap-2 rounded-full pl-3 pr-4 py-1.5 transition-colors border ${activeTab === 'perfil' || showClientMenu ? 'bg-primary/10 border-primary text-primary' : 'border-slate-200 text-slate-600 hover:border-primary hover:text-primary'} font-bold text-xs uppercase tracking-wider`}
+                    onClick={() => setShowClientMenu((prev) => !prev)}
+                    title="Mi Cuenta"
+                  >
+                    <div className="size-6 rounded-full bg-primary text-white flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[14px]">person</span>
+                    </div>
+                    {currentClient.name.split(' ')[0]}
+                    <span className={`material-symbols-outlined text-[16px] transition-transform ${showClientMenu ? "rotate-180" : ""}`}>expand_more</span>
+                  </button>
+
+                  {showClientMenu ? (
+                    <div className="absolute right-0 top-full z-[95] mt-3 min-w-[220px] overflow-hidden rounded-xl border border-primary/15 bg-white shadow-xl">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowClientMenu(false);
+                          onSetActiveTab("perfil");
+                        }}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-ink transition-colors hover:bg-secondary/40 hover:text-primary"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+                        Ver historial
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowClientMenu(false);
+                          onLogoutClient();
+                        }}
+                        className="flex w-full items-center gap-3 border-t border-slate-100 px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">logout</span>
+                        Cerrar sesion
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
               ) : (
                 <button 
                   className="flex items-center gap-2 rounded-full px-4 py-2 border border-slate-200 text-slate-500 hover:bg-primary/5 hover:border-primary hover:text-primary transition-colors font-bold text-xs uppercase tracking-wider"
