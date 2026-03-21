@@ -166,6 +166,7 @@ function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<"login" | "checkout">("login");
   const [lastOrderConfirmation, setLastOrderConfirmation] = useState<{ orderId: number; customerName?: string } | null>(null);
+  const [cartSuccessMessage, setCartSuccessMessage] = useState("");
 
   const [clientForm, setClientForm] = useState({ name: "", phone: "", email: "" });
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
@@ -211,6 +212,12 @@ function App() {
     }
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (!cartSuccessMessage) return;
+    const timeoutId = window.setTimeout(() => setCartSuccessMessage(""), 2600);
+    return () => window.clearTimeout(timeoutId);
+  }, [cartSuccessMessage]);
 
   // Restore session from localStorage
   useEffect(() => {
@@ -407,7 +414,7 @@ function App() {
       
       setProductForm({ name: "", subName: "", categoryId: "", purchasePrice: "", salePrice: "", stock: "", sourceUrl: "", isFeatured: false });
       setProductImageData("");
-      setActiveTab("catalogo");
+      setActiveTab("carrito");
     } catch (err) {
       console.error(err);
       setError("Error al guardar producto");
@@ -697,11 +704,15 @@ function App() {
     }
     setCartItems((prev) => {
       const existing = prev.find((item) => item.productId === productId);
-      if (!existing) return [...prev, { productId, quantity: 1 }];
+      if (!existing) {
+        setCartSuccessMessage(`${getProductDisplayName(product)} agregado al carrito.`);
+        return [...prev, { productId, quantity: 1 }];
+      }
       if (existing.quantity >= product.stock) {
         setError("No puedes agregar mas unidades que el stock disponible.");
         return prev;
       }
+      setCartSuccessMessage(`${getProductDisplayName(product)} agregado al carrito.`);
       return prev.map((item) => (item.productId === productId ? { ...item, quantity: item.quantity + 1 } : item));
     });
   };
@@ -1134,6 +1145,18 @@ function App() {
         onLogoutAdmin={logoutAdmin}
         onLoginClientClick={() => { setAuthModalMode("login"); setShowAuthModal(true); }}
       />
+
+      {cartSuccessMessage ? (
+        <div className="pointer-events-none fixed right-4 top-24 z-[120] max-w-sm rounded-xl border border-success/40 bg-white px-4 py-3 shadow-xl shadow-black/10">
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-success">check_circle</span>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-success">Carrito actualizado</p>
+              <p className="mt-1 text-sm text-ink">{cartSuccessMessage}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {error ? (
         <div className="bg-red-50 text-red-500 p-4 text-center text-sm font-bold tracking-widest uppercase flex items-center justify-center gap-2">
