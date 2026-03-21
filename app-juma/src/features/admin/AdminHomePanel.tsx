@@ -5,6 +5,8 @@ type AdminHomePanelProps = {
   featuredPanels: FeaturedPanel[];
   categories: Category[];
   canAddMorePanels: boolean;
+  hasUnsavedChanges: boolean;
+  isSaving: boolean;
   onUpdateHeroText: (field: "tag" | "title" | "subtitle", value: string) => void;
   onUpdateHeroImage: (file: File | null) => void;
   onUpdateFeaturedPanelText: (id: string, field: "title" | "cta", value: string) => void;
@@ -12,6 +14,7 @@ type AdminHomePanelProps = {
   onUpdateFeaturedPanelCategory: (id: string, categoryId: number | null, categoryName: string | null) => void;
   onAddFeaturedPanel: () => void;
   onRemoveFeaturedPanel: (id: string) => void;
+  onSaveConfiguration: () => void;
 };
 
 function AdminHomePanel({
@@ -19,6 +22,8 @@ function AdminHomePanel({
   featuredPanels,
   categories,
   canAddMorePanels,
+  hasUnsavedChanges,
+  isSaving,
   onUpdateHeroText,
   onUpdateHeroImage,
   onUpdateFeaturedPanelText,
@@ -26,6 +31,7 @@ function AdminHomePanel({
   onAddFeaturedPanel,
   onRemoveFeaturedPanel,
   onUpdateFeaturedPanelCategory,
+  onSaveConfiguration,
 }: AdminHomePanelProps) {
   return (
     <div className="flex-1 p-6 md:p-10 space-y-20 bg-secondary dark:bg-carbon min-h-screen">
@@ -35,6 +41,19 @@ function AdminHomePanel({
           <h2 className="font-serif text-3xl font-bold text-slate-900 dark:text-white">Configuración del Inicio</h2>
           <p className="text-slate-500 mt-1">Gestiona los banners y carteles destacados de la tienda.</p>
         </div>
+        <button
+          type="button"
+          onClick={onSaveConfiguration}
+          disabled={!hasUnsavedChanges || isSaving}
+          className={`inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-bold transition-colors ${
+            !hasUnsavedChanges || isSaving
+              ? "cursor-not-allowed bg-slate-200 text-slate-400"
+              : "bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90"
+          }`}
+        >
+          <span className="material-symbols-outlined text-lg">{isSaving ? "progress_activity" : "save"}</span>
+          {isSaving ? "Guardando..." : "Guardar configuracion"}
+        </button>
       </div>
 
       <div className="space-y-8">

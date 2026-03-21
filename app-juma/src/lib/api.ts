@@ -277,6 +277,43 @@ export const api = {
     }));
   },
 
+  async saveHomeConfiguration(heroBanner: HeroBanner, featuredPanels: FeaturedPanel[]): Promise<void> {
+    const heroQuery = await supabase.from("hero_banner").upsert(
+      {
+        id: 1,
+        tag: heroBanner.tag,
+        title: heroBanner.title,
+        subtitle: heroBanner.subtitle,
+        image: heroBanner.image,
+      },
+      { onConflict: "id" },
+    );
+    if (heroQuery.error) throw heroQuery.error;
+
+    if (featuredPanels.length === 0) {
+      const deleteAll = await supabase.from("featured_panels").delete().not("id", "is", null);
+      if (deleteAll.error) throw deleteAll.error;
+      return;
+    }
+
+    const panelIdsSql = `(${featuredPanels.map((panel) => `"${panel.id}"`).join(",")})`;
+    const deleteMissing = await supabase.from("featured_panels").delete().not("id", "in", panelIdsSql);
+    if (deleteMissing.error) throw deleteMissing.error;
+
+    const upsertPanels = await supabase.from("featured_panels").upsert(
+      featuredPanels.map((panel) => ({
+        id: panel.id,
+        title: panel.title,
+        cta: panel.cta,
+        image: panel.image,
+        class_name: panel.className,
+        category_id: panel.categoryId ?? null,
+      })),
+      { onConflict: "id" },
+    );
+    if (upsertPanels.error) throw upsertPanels.error;
+  },
+
   async uploadImage(file: File): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       const reader = new FileReader();

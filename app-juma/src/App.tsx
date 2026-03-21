@@ -155,6 +155,8 @@ function App() {
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<number | null>(null);
   const [featuredPanels, setFeaturedPanels] = useState<FeaturedPanel[]>(DEFAULT_FEATURED_PANELS);
   const [heroBanner, setHeroBanner] = useState<HeroBanner>(DEFAULT_HERO_BANNER);
+  const [homeConfigDirty, setHomeConfigDirty] = useState(false);
+  const [isSavingHomeConfig, setIsSavingHomeConfig] = useState(false);
   const [error, setError] = useState("");
   const [adminError, setAdminError] = useState("");
   const [isAdminLogged, setIsAdminLogged] = useState(false);
@@ -202,6 +204,7 @@ function App() {
         setOrders(o);
         if (fp.length > 0) setFeaturedPanels(fp);
         if (hb) setHeroBanner(hb);
+        setHomeConfigDirty(false);
       } catch (err) {
         console.error("Failed to load initial data from Supabase", err);
       }
@@ -726,11 +729,13 @@ function App() {
   };
 
   const updateFeaturedPanelText = (id: string, field: "title" | "cta", value: string) => {
+    setHomeConfigDirty(true);
     setFeaturedPanels((prev) => prev.map((panel) => (panel.id === id ? { ...panel, [field]: value } : panel)));
   };
 
   const updateFeaturedPanelImage = (id: string, file: File | null) => {
     if (!file) return;
+    setHomeConfigDirty(true);
     const reader = new FileReader();
     reader.onload = () => {
       const dataUrl = typeof reader.result === "string" ? reader.result : "";
@@ -744,6 +749,7 @@ function App() {
     if (featuredPanels.length >= PANEL_SLOTS.length) return;
     const nextSlot = PANEL_SLOTS.find((slot) => !featuredPanels.some((panel) => panel.className === slot));
     if (!nextSlot) return;
+    setHomeConfigDirty(true);
     setFeaturedPanels((prev) => [
       ...prev,
       {
@@ -757,15 +763,18 @@ function App() {
   };
 
   const removeFeaturedPanel = (id: string) => {
+    setHomeConfigDirty(true);
     setFeaturedPanels((prev) => prev.filter((panel) => panel.id !== id));
   };
 
   const updateHeroText = (field: "tag" | "title" | "subtitle", value: string) => {
+    setHomeConfigDirty(true);
     setHeroBanner((prev) => ({ ...prev, [field]: value }));
   };
 
   const updateHeroImage = (file: File | null) => {
     if (!file) return;
+    setHomeConfigDirty(true);
     const reader = new FileReader();
     reader.onload = () => {
       const dataUrl = typeof reader.result === "string" ? reader.result : "";
@@ -773,6 +782,20 @@ function App() {
       setHeroBanner((prev) => ({ ...prev, image: dataUrl }));
     };
     reader.readAsDataURL(file);
+  };
+
+  const saveHomeConfiguration = async () => {
+    try {
+      setError("");
+      setIsSavingHomeConfig(true);
+      await api.saveHomeConfiguration(heroBanner, featuredPanels);
+      setHomeConfigDirty(false);
+    } catch (err) {
+      console.error(err);
+      setError(`No se pudo guardar la configuracion del inicio. ${getErrorMessage(err, "Verifica permisos y conexion con Supabase.")}`);
+    } finally {
+      setIsSavingHomeConfig(false);
+    }
   };
 
   const updateProductImage = (file: File | null) => {
@@ -986,15 +1009,19 @@ function App() {
                   featuredPanels={featuredPanels}
                   categories={categories}
                   canAddMorePanels={featuredPanels.length < PANEL_SLOTS.length}
+                  hasUnsavedChanges={homeConfigDirty}
+                  isSaving={isSavingHomeConfig}
                   onUpdateHeroText={updateHeroText}
                   onUpdateHeroImage={updateHeroImage}
                   onUpdateFeaturedPanelText={updateFeaturedPanelText}
                   onUpdateFeaturedPanelImage={updateFeaturedPanelImage}
-                  onUpdateFeaturedPanelCategory={(id, categoryId, categoryName) =>
-                    setFeaturedPanels(prev => prev.map(p => p.id === id ? { ...p, categoryId, title: categoryName ?? p.title } : p))
-                  }
+                  onUpdateFeaturedPanelCategory={(id, categoryId, categoryName) => {
+                    setHomeConfigDirty(true);
+                    setFeaturedPanels(prev => prev.map(p => p.id === id ? { ...p, categoryId, title: categoryName ?? p.title } : p));
+                  }}
                   onAddFeaturedPanel={addFeaturedPanel}
                   onRemoveFeaturedPanel={removeFeaturedPanel}
+                  onSaveConfiguration={saveHomeConfiguration}
                 />
               </div>
             )}
