@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import type { Tab, Client } from "../../types";
+import { useEffect, useMemo, useState } from "react";
+import type { Tab, Client, Category } from "../../types";
 
 type StoreHeaderProps = {
   activeTab: Tab;
@@ -8,8 +8,10 @@ type StoreHeaderProps = {
   adminError: string;
   cartItemsCount: number;
   cartTotal: number;
+  categories: Category[];
   currentClient: Client | null;
   onSetActiveTab: (tab: Tab) => void;
+  onSelectCatalogCategory: (categoryId: number | null) => void;
   onAdminFormChange: (form: any) => void;
   onLoginAdmin: (e: React.FormEvent<HTMLFormElement>) => void;
   onLogoutAdmin: () => void;
@@ -23,20 +25,32 @@ export default function StoreHeader({
   adminError,
   cartItemsCount,
   cartTotal,
+  categories,
   currentClient,
   onSetActiveTab,
+  onSelectCatalogCategory,
   onAdminFormChange,
   onLoginAdmin,
   onLogoutAdmin,
   onLoginClientClick,
 }: StoreHeaderProps) {
   const [showLogin, setShowLogin] = useState(false);
+  const [showCatalogMenu, setShowCatalogMenu] = useState(false);
+
+  const visibleCategories = useMemo(
+    () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
+    [categories],
+  );
 
   useEffect(() => {
     if (isAdminLogged) {
       setShowLogin(false);
     }
   }, [isAdminLogged]);
+
+  useEffect(() => {
+    setShowCatalogMenu(false);
+  }, [activeTab]);
 
   return (
     <>
@@ -56,7 +70,7 @@ export default function StoreHeader({
         <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex flex-col items-start cursor-pointer group" onClick={() => onSetActiveTab("catalogo")}>
             <h2 className="font-serif text-primary text-3xl font-black leading-tight tracking-tight uppercase group-hover:text-primary/80 transition-colors">Juma Accessory</h2>
-            <p className="text-primary/60 text-[10px] tracking-[0.2em] uppercase font-bold">Plata 925 y accesorios</p>
+            <p className="text-primary/60 text-[10px] tracking-[0.2em] uppercase font-bold">Plata 925, accesorios de acero blanco y dorado</p>
           </div>
           
           <div className="flex flex-1 justify-end items-center gap-4 md:gap-8 w-full md:w-auto">
@@ -125,6 +139,35 @@ export default function StoreHeader({
         {/* Navigation Tabs */}
         <nav className="w-full overflow-x-auto flex items-center gap-6 py-2 pb-0 mt-2 text-sm uppercase tracking-widest font-bold text-slate-400 whitespace-nowrap scrollbar-hide">
           <button className={`hover:text-primary transition-colors pb-2 border-b-2 ${activeTab === "catalogo" ? "text-primary border-primary" : "border-transparent"}`} onClick={() => onSetActiveTab("catalogo")}>Inicio</button>
+          <div className="relative">
+            <button
+              className={`flex items-center gap-1 pb-2 border-b-2 transition-colors ${activeTab === "catalogo" ? "text-primary border-primary" : "border-transparent hover:text-primary"}`}
+              onClick={() => setShowCatalogMenu((prev) => !prev)}
+            >
+              Catalogo
+              <span className={`material-symbols-outlined text-sm transition-transform ${showCatalogMenu ? "rotate-180" : ""}`}>expand_more</span>
+            </button>
+            {showCatalogMenu && (
+              <div className="absolute left-0 top-full z-[90] mt-3 min-w-[220px] overflow-hidden rounded-sm border border-primary/20 bg-white shadow-xl">
+                <div className="h-1 bg-primary" />
+                <div className="max-h-[60vh] overflow-y-auto py-3">
+                  {visibleCategories.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => {
+                        onSelectCatalogCategory(category.id);
+                        setShowCatalogMenu(false);
+                      }}
+                      className="block w-full px-6 py-3 text-left text-[15px] font-medium normal-case tracking-normal text-ink transition-colors hover:bg-secondary/55 hover:text-primary"
+                    >
+                      {category.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           <button className={`hover:text-primary transition-colors pb-2 border-b-2 ${activeTab === "carrito" ? "text-primary border-primary" : "border-transparent"}`} onClick={() => onSetActiveTab("carrito")}>Carrito</button>
           {isAdminLogged && (
             <>

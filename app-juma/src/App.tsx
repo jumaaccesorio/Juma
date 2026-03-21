@@ -1138,8 +1138,10 @@ function App() {
         adminError={adminError}
         cartItemsCount={cartItemsCount}
         cartTotal={cartTotal}
+        categories={categories}
         currentClient={currentClient}
         onSetActiveTab={setActiveTab}
+        onSelectCatalogCategory={navigateToCategoryInCatalog}
         onAdminFormChange={setAdminForm}
         onLoginAdmin={loginAdmin}
         onLogoutAdmin={logoutAdmin}

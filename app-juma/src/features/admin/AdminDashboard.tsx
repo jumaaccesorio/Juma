@@ -19,8 +19,31 @@ export default function AdminDashboard({ orders, clients, lowStockProducts, onSe
     );
     const pendingOrders = orders.filter((order) => order.status === "PENDIENTE").length;
     const stockAlerts = lowStockProducts.length;
-    const growth = "12.5%";
-    return { totalSales, pendingOrders, stockAlerts, growth };
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const previousMonthDate = new Date(currentYear, currentMonth - 1, 1);
+    const previousYear = previousMonthDate.getFullYear();
+    const previousMonth = previousMonthDate.getMonth();
+
+    const currentMonthSales = completedOrders
+      .filter((order) => {
+        const date = new Date(order.date);
+        return !Number.isNaN(date.getTime()) && date.getFullYear() === currentYear && date.getMonth() === currentMonth;
+      })
+      .reduce((acc, order) => acc + order.items.reduce((sum, item) => sum + item.quantity * item.unitSalePrice, 0), 0);
+
+    const previousMonthSales = completedOrders
+      .filter((order) => {
+        const date = new Date(order.date);
+        return !Number.isNaN(date.getTime()) && date.getFullYear() === previousYear && date.getMonth() === previousMonth;
+      })
+      .reduce((acc, order) => acc + order.items.reduce((sum, item) => sum + item.quantity * item.unitSalePrice, 0), 0);
+
+    const growthValue = previousMonthSales > 0 ? ((currentMonthSales - previousMonthSales) / previousMonthSales) * 100 : 0;
+    const growthLabel = `${growthValue >= 0 ? "+" : ""}${growthValue.toFixed(1)}%`;
+
+    return { totalSales, pendingOrders, stockAlerts, growthLabel, currentMonthSales, previousMonthSales };
   }, [orders, lowStockProducts]);
 
   const recentOrders = useMemo(() => orders.slice(0, 5), [orders]);
@@ -62,9 +85,9 @@ export default function AdminDashboard({ orders, clients, lowStockProducts, onSe
         <div className="bg-background p-8">
           <p className="text-[10px] font-bold tracking-widest uppercase text-muted mb-3">Total Ventas</p>
           <p className="font-headline text-3xl text-primary">${stats.totalSales.toLocaleString("es-AR")}</p>
-          <div className="mt-4 flex items-center gap-1 text-xs text-green-600 font-bold">
+          <div className={`mt-4 flex items-center gap-1 text-xs font-bold ${stats.growthLabel.startsWith("-") ? "text-warning" : "text-green-600"}`}>
             <span className="material-symbols-outlined text-sm">trending_up</span>
-            <span>+8.2% vs mes anterior</span>
+            <span>{stats.growthLabel} vs mes anterior</span>
           </div>
         </div>
         <div className="bg-background p-8">
@@ -85,10 +108,14 @@ export default function AdminDashboard({ orders, clients, lowStockProducts, onSe
         </div>
         <div className="bg-background p-8">
           <p className="text-[10px] font-bold tracking-widest uppercase text-muted mb-3">Crecimiento Mensual</p>
-          <p className="font-headline text-3xl text-ink">{stats.growth}</p>
+          <p className="font-headline text-3xl text-ink">{stats.growthLabel}</p>
           <div className="mt-4 flex items-center gap-1 text-xs text-tertiary font-bold">
             <span className="material-symbols-outlined text-sm">insights</span>
-            <span>Objetivo: 15%</span>
+            <span>
+              {stats.previousMonthSales > 0
+                ? `Mes actual $${stats.currentMonthSales.toLocaleString("es-AR")}`
+                : "Sin base previa para comparar"}
+            </span>
           </div>
         </div>
       </section>
