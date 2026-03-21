@@ -36,16 +36,16 @@ export default function AdminDashboard({ orders, clients, lowStockProducts, onSe
   const getOrderTotal = (order: Order) => order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0);
 
   return (
-    <div className="pt-24 px-10 pb-16 space-y-12">
-      <section className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-line pb-8">
+    <div className="space-y-8 px-4 pb-10 pt-20 sm:px-6 lg:px-10 lg:pb-16 lg:pt-24">
+      <section className="flex flex-col gap-6 border-b border-line pb-8 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="font-headline text-4xl text-ink">Bienvenido de nuevo, Admin</h2>
+          <h2 className="font-headline text-3xl text-ink sm:text-4xl">Bienvenido de nuevo, Admin</h2>
           <p className="font-body text-muted mt-2">Aqui tienes un resumen de tu atelier hoy.</p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <button
             onClick={() => onSetActiveTab("venta_rapida")}
-            className="px-6 py-2.5 bg-background border border-line text-ink font-bold text-xs tracking-widest uppercase hover:bg-secondary transition-colors shadow-sm"
+            className="bg-background px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-ink shadow-sm transition-colors hover:bg-secondary border border-line"
           >
             Venta Rapida
           </button>
@@ -93,9 +93,9 @@ export default function AdminDashboard({ orders, clients, lowStockProducts, onSe
         </div>
       </section>
 
-      <div className="grid grid-cols-12 gap-8">
+      <div className="grid grid-cols-12 gap-6 lg:gap-8">
         <div className="col-span-12 lg:col-span-8 bg-secondary/45 p-8 rounded-xl border border-line shadow-sm relative overflow-hidden">
-          <div className="flex justify-between items-center mb-10">
+          <div className="mb-8 flex flex-col gap-3 sm:mb-10 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="font-headline text-xl text-ink">Rendimiento de Ventas</h3>
               <p className="text-xs text-muted font-body">Ultimos 7 dias de actividad</p>
@@ -167,7 +167,7 @@ export default function AdminDashboard({ orders, clients, lowStockProducts, onSe
       </div>
 
       <section className="space-y-6">
-        <div className="flex items-baseline justify-between border-b border-line pb-4">
+        <div className="flex flex-col gap-3 border-b border-line pb-4 sm:flex-row sm:items-baseline sm:justify-between">
           <h3 className="font-headline text-2xl text-ink">Pedidos Recientes</h3>
           <button onClick={() => onSetActiveTab("pedidos")} className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">
             Ver todos los pedidos

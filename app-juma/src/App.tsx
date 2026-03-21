@@ -158,6 +158,7 @@ function App() {
   const [error, setError] = useState("");
   const [adminError, setAdminError] = useState("");
   const [isAdminLogged, setIsAdminLogged] = useState(false);
+  const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState(false);
   const [adminForm, setAdminForm] = useState({ user: "", password: "" });
   const [currentClient, setCurrentClient] = useState<Client | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -866,6 +867,7 @@ function App() {
 
   const logoutAdmin = () => {
     setIsAdminLogged(false);
+    setIsAdminSidebarOpen(false);
     setActiveTab("catalogo");
   };
 
@@ -902,13 +904,22 @@ function App() {
   if (isAdminTab) {
     return (
       <div className="flex min-h-screen bg-background font-body text-ink">
-        <AdminSidebar activeTab={activeTab} onSetActiveTab={setActiveTab} />
-        <main className="flex-1 ml-64 min-h-screen flex flex-col">
-          <AdminTopNav onPreview={() => setActiveTab("catalogo")} onLogout={logoutAdmin} />
+        <AdminSidebar
+          activeTab={activeTab}
+          onSetActiveTab={setActiveTab}
+          isOpen={isAdminSidebarOpen}
+          onClose={() => setIsAdminSidebarOpen(false)}
+        />
+        <main className="flex-1 min-h-screen flex flex-col md:ml-64">
+          <AdminTopNav
+            onOpenMenu={() => setIsAdminSidebarOpen(true)}
+            onPreview={() => setActiveTab("catalogo")}
+            onLogout={logoutAdmin}
+          />
           
           <div className="flex-1">
             {error ? (
-              <div className="pt-20 px-10">
+              <div className="px-4 pt-20 sm:px-6 lg:px-10">
                 <div className="bg-red-50 text-red-500 p-4 rounded-xl text-center text-sm font-bold tracking-widest uppercase flex items-center justify-center gap-2 border border-red-100">
                   <span className="material-symbols-outlined text-lg">error</span>
                   {error}
@@ -927,7 +938,7 @@ function App() {
             )}
 
             {activeTab === "catalogo" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
                 <CatalogPanel
                   products={catalogProducts}
                   onAddToCart={addToCart}
@@ -943,7 +954,7 @@ function App() {
             )}
 
             {activeTab === "venta_rapida" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
                 <QuickSalePanel
                   products={products}
                   categories={categories}
@@ -955,7 +966,7 @@ function App() {
             )}
 
             {activeTab === "inicio_admin" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
                 <AdminHomePanel
                   heroBanner={heroBanner}
                   featuredPanels={featuredPanels}
@@ -975,7 +986,7 @@ function App() {
             )}
 
             {activeTab === "categorias" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
                 <CategoriesPanel
                   categories={categories}
                   onAddCategory={addCategory}
@@ -985,7 +996,7 @@ function App() {
             )}
 
             {activeTab === "productos" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
                 <ProductsPanel
                   products={products}
                   categories={categories}
@@ -1003,7 +1014,7 @@ function App() {
             )}
 
             {activeTab === "clientes" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
                 <ClientsPanel
                   clientForm={clientForm}
                   clientStats={clientStats}
@@ -1021,7 +1032,7 @@ function App() {
             )}
 
             {activeTab === "inventario" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
                 <InventoryPanel
                   products={products}
                   categories={categories}
@@ -1033,7 +1044,7 @@ function App() {
             )}
 
             {activeTab === "pedidos" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
                 <OrdersPanel
                   clients={clients}
                   products={products}
@@ -1054,7 +1065,7 @@ function App() {
             )}
 
             {activeTab === "finanzas" && (
-              <div className="pt-20 px-10 pb-10">
+              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
                 <FinancePanel finance={finance} />
               </div>
             )}

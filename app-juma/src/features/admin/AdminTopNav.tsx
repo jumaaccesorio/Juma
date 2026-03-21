@@ -1,13 +1,21 @@
 export type AdminTopNavProps = {
+  onOpenMenu: () => void;
   onPreview: () => void;
   onLogout: () => void;
 };
 
-export default function AdminTopNav({ onPreview, onLogout }: AdminTopNavProps) {
+export default function AdminTopNav({ onOpenMenu, onPreview, onLogout }: AdminTopNavProps) {
   return (
-    <header className="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-background/90 backdrop-blur-md flex justify-between items-center px-8 z-40 border-b border-line">
-      <div className="flex items-center gap-4 flex-1">
-        <div className="relative w-full max-w-md group">
+    <header className="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-line bg-background/90 px-4 backdrop-blur-md md:left-64 md:px-8">
+      <div className="flex flex-1 items-center gap-3 md:gap-4">
+        <button
+          type="button"
+          onClick={onOpenMenu}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-ink md:hidden"
+        >
+          <span className="material-symbols-outlined">menu</span>
+        </button>
+        <div className="relative hidden w-full max-w-md group sm:block">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm">search</span>
           <input
             className="w-full bg-background border border-line focus:ring-1 focus:ring-primary/30 focus:border-primary/20 py-2 pl-10 text-sm font-body tracking-tight placeholder:text-muted rounded"
@@ -16,13 +24,13 @@ export default function AdminTopNav({ onPreview, onLogout }: AdminTopNavProps) {
           />
         </div>
       </div>
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-2 sm:gap-3 md:gap-6">
         <button
-          className="inline-flex items-center gap-2 rounded-lg border border-line bg-quaternary px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white"
+          className="inline-flex items-center gap-2 rounded-lg border border-line bg-quaternary px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white md:px-4"
           onClick={onPreview}
         >
           <span className="material-symbols-outlined text-[18px]">preview</span>
-          <span className="font-body tracking-tight">Preview</span>
+          <span className="hidden font-body tracking-tight sm:inline">Preview</span>
         </button>
         <button className="relative text-ink/70 hover:text-primary transition-opacity">
           <span className="material-symbols-outlined" data-icon="notifications">notifications</span>
@@ -30,7 +38,7 @@ export default function AdminTopNav({ onPreview, onLogout }: AdminTopNavProps) {
         </button>
         <button className="flex items-center gap-2 text-ink/70 hover:text-primary transition-opacity" onClick={onLogout}>
           <span className="material-symbols-outlined" data-icon="account_circle">account_circle</span>
-          <span className="font-body text-sm tracking-tight font-medium">Cerrar Sesion</span>
+          <span className="hidden font-body text-sm font-medium tracking-tight lg:inline">Cerrar Sesion</span>
         </button>
       </div>
     </header>
