@@ -55,7 +55,7 @@ type FinancePanelProps = {
 
 function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelProps) {
   const [selectedMonthKey, setSelectedMonthKey] = useState(finance.selectedMonthKey);
-  const [viewMode, setViewMode] = useState<"resumen" | "historial">("resumen");
+  const [viewMode, setViewMode] = useState<"mensual" | "semanal" | "historial">("mensual");
   const [expenseForm, setExpenseForm] = useState({
     description: "",
     detail: "",
@@ -74,6 +74,18 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
     () => finance.dailyHistory.filter((item) => item.date.startsWith(selectedMonthKey)),
     [finance.dailyHistory, selectedMonthKey],
   );
+
+  const weeklyBreakdown = useMemo(() => {
+    const recentDays = visibleFinance?.dailyBreakdown.slice(-7) ?? [];
+    const chartMax = recentDays.reduce((max, day) => Math.max(max, day.income, day.expense), 0);
+    return {
+      days: recentDays,
+      chartMax,
+      incomeTotal: recentDays.reduce((total, day) => total + day.income, 0),
+      expenseTotal: recentDays.reduce((total, day) => total + day.expense, 0),
+      salesTotal: recentDays.reduce((total, day) => total + day.salesCount, 0),
+    };
+  }, [visibleFinance]);
 
   const handleSubmitExpense = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -124,15 +136,24 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
           </div>
           <div className="w-full">
             <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Modo de vista</label>
-            <div className="grid grid-cols-2 gap-2 rounded-xl bg-white p-1 shadow-sm dark:bg-slate-900">
+            <div className="grid grid-cols-3 gap-2 rounded-xl bg-white p-1 shadow-sm dark:bg-slate-900">
               <button
                 type="button"
-                onClick={() => setViewMode("resumen")}
+                onClick={() => setViewMode("mensual")}
                 className={`rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-widest transition-colors ${
-                  viewMode === "resumen" ? "bg-primary text-white" : "text-slate-500"
+                  viewMode === "mensual" ? "bg-primary text-white" : "text-slate-500"
                 }`}
               >
                 Mensual
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("semanal")}
+                className={`rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-widest transition-colors ${
+                  viewMode === "semanal" ? "bg-primary text-white" : "text-slate-500"
+                }`}
+              >
+                Semanal
               </button>
               <button
                 type="button"
@@ -192,7 +213,7 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
           <div className="mb-5 flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">Agregar egreso</h3>
-              <p className="mt-1 text-sm text-slate-500">Registrá gastos manuales con detalle para el historial.</p>
+              <p className="mt-1 text-sm text-slate-500">Registra gastos manuales con detalle para el historial.</p>
             </div>
             <span className="rounded-full bg-red-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-red-600">
               ${visibleFinance.manualExpenseMonth.toLocaleString("es-AR")} manual
@@ -201,7 +222,7 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
-              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Descripción</label>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Descripcion</label>
               <input
                 value={expenseForm.description}
                 onChange={(event) => setExpenseForm((prev) => ({ ...prev, description: event.target.value }))}
@@ -210,7 +231,7 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
               />
             </div>
             <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Categoría</label>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Categoria</label>
               <input
                 value={expenseForm.category}
                 onChange={(event) => setExpenseForm((prev) => ({ ...prev, category: event.target.value }))}
@@ -269,18 +290,18 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
                 <span className="text-base font-bold text-slate-900">${visibleFinance.averageTicket.toLocaleString("es-AR")}</span>
               </div>
               <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
-                <span className="text-sm text-slate-500">Mejor día</span>
+                <span className="text-sm text-slate-500">Mejor dia</span>
                 <span className="text-base font-bold text-slate-900">{visibleFinance.bestDayLabel}</span>
               </div>
               <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
-                <span className="text-sm text-slate-500">Ingreso mejor día</span>
+                <span className="text-sm text-slate-500">Ingreso mejor dia</span>
                 <span className="text-base font-bold text-slate-900">${visibleFinance.bestDayIncome.toLocaleString("es-AR")}</span>
               </div>
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="rounded-xl border border-neutral-soft bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <p className="text-sm font-medium text-slate-500">Inversión vigente</p>
+              <p className="text-sm font-medium text-slate-500">Inversion vigente</p>
               <p className="mt-4 text-3xl font-black text-slate-900 dark:text-white">${finance.totalInvestment.toLocaleString("es-AR")}</p>
             </div>
             <div className="rounded-xl border border-neutral-soft bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -291,12 +312,12 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
         </div>
       </div>
 
-      {viewMode === "resumen" ? (
-        <div className="rounded-xl border border-neutral-soft bg-white p-4 shadow-sm md:p-8 dark:border-slate-800 dark:bg-slate-900">
+      {viewMode === "mensual" ? (
+        <div className="rounded-xl border border-neutral-soft bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:p-8">
           <div className="mb-8 flex flex-col gap-4 border-b border-neutral-soft pb-4 dark:border-slate-800 md:flex-row md:items-end md:justify-between">
             <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Gráfico mensual</h3>
-              <p className="mt-1 text-sm text-slate-500">Ingreso y egreso por día dentro del mes seleccionado.</p>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Grafico mensual</h3>
+              <p className="mt-1 text-sm text-slate-500">Ingreso y egreso por dia dentro del mes seleccionado.</p>
             </div>
             <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-widest">
               <span className="rounded-full bg-green-50 px-3 py-1 text-green-600">Ingresos</span>
@@ -350,8 +371,63 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
             </div>
           </div>
         </div>
+      ) : viewMode === "semanal" ? (
+        <div className="rounded-xl border border-neutral-soft bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:p-6">
+          <div className="mb-5 flex flex-col gap-3 border-b border-neutral-soft pb-4 dark:border-slate-800 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Grafico semanal</h3>
+              <p className="mt-1 text-sm text-slate-500">Resumen de los ultimos 7 dias del mes filtrado.</p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-widest">
+              <span className="rounded-full bg-green-50 px-3 py-1 text-green-600">
+                ${weeklyBreakdown.incomeTotal.toLocaleString("es-AR")} ingresos
+              </span>
+              <span className="rounded-full bg-red-50 px-3 py-1 text-red-600">
+                ${weeklyBreakdown.expenseTotal.toLocaleString("es-AR")} egresos
+              </span>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-500">
+                {weeklyBreakdown.salesTotal} ventas
+              </span>
+            </div>
+          </div>
+
+          {weeklyBreakdown.days.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+              No hay suficientes movimientos para armar la vista semanal.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-7">
+              {weeklyBreakdown.days.map((row) => {
+                const incomeHeight = weeklyBreakdown.chartMax > 0 ? Math.max(12, (row.income / weeklyBreakdown.chartMax) * 100) : 12;
+                const expenseHeight = weeklyBreakdown.chartMax > 0 ? Math.max(12, (row.expense / weeklyBreakdown.chartMax) * 100) : 12;
+                return (
+                  <div key={`weekly-${row.day}`} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-widest text-slate-400">{row.label}</span>
+                      <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-500">{row.salesCount} vtas</span>
+                    </div>
+                    <div className="flex h-28 items-end gap-2">
+                      <div className="flex flex-1 flex-col items-center justify-end gap-2">
+                        <div className="w-full rounded-t-md bg-green-400/85" style={{ height: `${incomeHeight}%` }} />
+                        <span className="text-[10px] font-bold text-green-700">Ing.</span>
+                      </div>
+                      <div className="flex flex-1 flex-col items-center justify-end gap-2">
+                        <div className="w-full rounded-t-md bg-red-300" style={{ height: `${expenseHeight}%` }} />
+                        <span className="text-[10px] font-bold text-red-700">Egr.</span>
+                      </div>
+                    </div>
+                    <div className="mt-3 space-y-1 text-xs text-slate-500">
+                      <p>Ingresos: ${row.income.toLocaleString("es-AR")}</p>
+                      <p>Egresos: ${row.expense.toLocaleString("es-AR")}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       ) : (
-        <div className="rounded-xl border border-neutral-soft bg-white p-4 shadow-sm md:p-6 dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-xl border border-neutral-soft bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:p-6">
           <div className="mb-5 flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">Historial diario</h3>
