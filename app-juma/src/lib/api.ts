@@ -69,6 +69,17 @@ export const api = {
     return mapCategory(query.data);
   },
 
+  async updateCategory(id: number, name: string): Promise<Category> {
+    const query = await supabase
+      .from("categories")
+      .update({ name })
+      .eq("id", id)
+      .select("*")
+      .single();
+    if (query.error) throw query.error;
+    return mapCategory(query.data);
+  },
+
   async deleteCategory(id: number): Promise<void> {
     const query = await supabase.from("categories").delete().eq("id", id);
     if (query.error) throw query.error;

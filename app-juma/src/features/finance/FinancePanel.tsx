@@ -48,7 +48,7 @@ function FinancePanel({ finance }: FinancePanelProps) {
   );
 
   return (
-    <div className="flex-1 min-h-screen space-y-20 bg-secondary p-6 dark:bg-carbon md:p-10">
+    <div className="flex-1 min-h-screen space-y-8 bg-secondary p-4 dark:bg-carbon md:p-8">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <h2 className="font-serif text-3xl font-bold text-slate-900 dark:text-white">Admin Finanzas</h2>
@@ -70,7 +70,7 @@ function FinancePanel({ finance }: FinancePanelProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="flex items-center gap-4 rounded-xl border border-neutral-soft bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="rounded-lg bg-green-50 p-3 text-green-600 dark:bg-green-900/20">
             <span className="material-symbols-outlined text-3xl">payments</span>
@@ -109,7 +109,7 @@ function FinancePanel({ finance }: FinancePanelProps) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-neutral-soft bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="rounded-xl border border-neutral-soft bg-white p-5 shadow-sm md:p-8 dark:border-slate-800 dark:bg-slate-900">
         <div className="mb-8 flex flex-col gap-4 border-b border-neutral-soft pb-4 dark:border-slate-800 md:flex-row md:items-end md:justify-between">
           <div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">Grafico mensual</h3>
@@ -123,7 +123,7 @@ function FinancePanel({ finance }: FinancePanelProps) {
         </div>
 
         <div className="w-full overflow-x-auto pb-4">
-          <div className="flex min-w-[960px] items-end gap-3">
+          <div className="flex min-w-[720px] items-end gap-3 md:min-w-[960px]">
             {visibleFinance.dailyBreakdown.map((row) => {
               const incomeHeight = visibleFinance.chartMax > 0 ? Math.max(4, (row.income / visibleFinance.chartMax) * 100) : 4;
               const expenseHeight = visibleFinance.chartMax > 0 ? Math.max(4, (row.expense / visibleFinance.chartMax) * 100) : 4;

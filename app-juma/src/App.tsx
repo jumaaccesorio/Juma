@@ -152,7 +152,7 @@ function App() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
-  const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<string | null>(null);
+  const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<number | null>(null);
   const [featuredPanels, setFeaturedPanels] = useState<FeaturedPanel[]>(DEFAULT_FEATURED_PANELS);
   const [heroBanner, setHeroBanner] = useState<HeroBanner>(DEFAULT_HERO_BANNER);
   const [error, setError] = useState("");
@@ -315,9 +315,22 @@ function App() {
     }
   };
 
-  const navigateToCategoryInCatalog = (categoryName: string) => {
-    setCatalogCategoryFilter(categoryName);
+  const navigateToCategoryInCatalog = (categoryId: number | null) => {
+    setCatalogCategoryFilter(categoryId);
     setActiveTab("catalogo");
+  };
+
+  const updateCategory = async (id: number, name: string) => {
+    try {
+      setError("");
+      const updatedCategory = await api.updateCategory(id, name);
+      setCategories((prev) => prev.map((category) => (category.id === id ? updatedCategory : category)).sort((a, b) => a.name.localeCompare(b.name)));
+      setProducts((prev) => prev.map((product) => (product.categoryId === id ? { ...product, categoryName: updatedCategory.name } : product)));
+      setFeaturedPanels((prev) => prev.map((panel) => (panel.categoryId === id ? { ...panel, title: updatedCategory.name } : panel)));
+    } catch (err) {
+      console.error(err);
+      setError(`No se pudo actualizar la categoria en Supabase. ${getErrorMessage(err, "Verifica permisos y politicas RLS.")}`);
+    }
   };
 
   const saveUser = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -941,6 +954,7 @@ function App() {
               <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
                 <CatalogPanel
                   products={catalogProducts}
+                  categories={categories}
                   onAddToCart={addToCart}
                   featuredPanels={featuredPanels}
                   heroBanner={heroBanner}
@@ -989,7 +1003,9 @@ function App() {
               <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
                 <CategoriesPanel
                   categories={categories}
+                  products={products}
                   onAddCategory={addCategory}
+                  onUpdateCategory={updateCategory}
                   onDeleteCategory={deleteCategory}
                 />
               </div>
@@ -1126,6 +1142,7 @@ function App() {
       {activeTab === "catalogo" ? (
         <CatalogPanel
           products={catalogProducts}
+          categories={categories}
           onAddToCart={addToCart}
           featuredPanels={featuredPanels}
           heroBanner={heroBanner}

@@ -68,7 +68,7 @@ function OrdersPanel({
   );
 
   return (
-    <div className="flex-1 p-6 md:p-10 space-y-20 bg-secondary dark:bg-carbon min-h-screen">
+    <div className="flex-1 min-h-screen space-y-8 bg-secondary p-4 md:p-8 dark:bg-carbon">
       {/* Header Actions */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -86,7 +86,7 @@ function OrdersPanel({
       </div>
 
       {/* Summary KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-neutral-soft dark:border-slate-800 flex items-center gap-4 shadow-sm">
           <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
             <span className="material-symbols-outlined text-3xl">shopping_bag</span>
@@ -118,7 +118,7 @@ function OrdersPanel({
 
       {/* New Order Form */}
       {showForm && (
-        <form className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-neutral-soft dark:border-slate-800 shadow-sm animate-fade-in" onSubmit={(e) => { onAddOrder(e); setShowForm(false); }}>
+        <form className="animate-fade-in rounded-xl border border-neutral-soft bg-white p-5 shadow-sm md:p-8 dark:border-slate-800 dark:bg-slate-900" onSubmit={(e) => { onAddOrder(e); setShowForm(false); }}>
           <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 border-b border-neutral-soft dark:border-slate-800 pb-4">Crear Nuevo Pedido</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -145,7 +145,7 @@ function OrdersPanel({
           </div>
 
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <label className="text-sm font-bold text-slate-700">Agregar Productos</label>
               <div className="relative w-full sm:w-64">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>

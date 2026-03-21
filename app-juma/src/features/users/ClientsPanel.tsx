@@ -32,7 +32,7 @@ function ClientsPanel({
   onCancelEdit 
 }: ClientsPanelProps) {
   return (
-    <div className="flex-1 p-6 md:p-10 space-y-20 bg-secondary dark:bg-carbon min-h-screen">
+    <div className="flex-1 min-h-screen space-y-8 bg-secondary p-4 md:p-8 dark:bg-carbon">
       {/* Header Actions */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -55,8 +55,8 @@ function ClientsPanel({
       </div>
 
       {/* Add Client Form */}
-      <form className={`p-8 rounded-xl border shadow-sm transition-all ${editingClientId ? 'bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/30' : 'bg-white dark:bg-slate-900 border-neutral-soft dark:border-slate-800'}`} onSubmit={onAddClient}>
-        <div className="flex items-center justify-between mb-6 border-b border-neutral-soft dark:border-slate-800 pb-4">
+      <form className={`rounded-xl border p-5 shadow-sm transition-all md:p-8 ${editingClientId ? 'bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/30' : 'bg-white dark:bg-slate-900 border-neutral-soft dark:border-slate-800'}`} onSubmit={onAddClient}>
+        <div className="mb-6 flex flex-col gap-3 border-b border-neutral-soft pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">
             {editingClientId ? 'Editar Usuario' : 'Registrar Nuevo Usuario'}
           </h3>
@@ -98,7 +98,47 @@ function ClientsPanel({
           <h3 className="font-bold text-lg text-slate-900 dark:text-white">Directorio</h3>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="space-y-3 p-4 lg:hidden">
+          {clientStats.map((row) => (
+            <div key={`mobile-${row.client.id}`} className="rounded-xl border border-line bg-background p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold uppercase text-primary">
+                    {row.client.name.substring(0, 2)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">{row.client.name}</p>
+                    <p className="text-xs text-slate-500">{row.orders.length} pedidos</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => onEditClick(row.client)} className="rounded-lg bg-tertiary/18 p-2 text-[#4f6780]">
+                    <span className="material-symbols-outlined text-lg">edit</span>
+                  </button>
+                  <button onClick={() => onDeleteClick(row.client.id)} className="rounded-lg bg-warning/18 p-2 text-[#9a6d48]">
+                    <span className="material-symbols-outlined text-lg">delete</span>
+                  </button>
+                </div>
+              </div>
+              <div className="mt-4 space-y-2 text-sm text-slate-600">
+                {row.client.phone ? <p>{row.client.phone}</p> : null}
+                {row.client.email ? <p className="break-all">{row.client.email}</p> : null}
+                {!row.client.phone && !row.client.email ? <p className="italic text-slate-400">Sin datos</p> : null}
+                <div className="flex items-center justify-between pt-2 text-xs">
+                  <span className="text-slate-500">Ultima compra</span>
+                  <span className="font-medium text-slate-700">{row.lastOrderDate === "-" ? "-" : new Date(row.lastOrderDate).toLocaleDateString("es-AR", { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500">Total comprado</span>
+                  <span className="font-bold text-primary">${row.totalSpent.toLocaleString("es-AR")}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+          {clientStats.length === 0 ? <div className="p-6 text-center text-sm text-slate-500">No se encontraron clientes registrados.</div> : null}
+        </div>
+
+        <div className="hidden overflow-x-auto lg:block">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50">

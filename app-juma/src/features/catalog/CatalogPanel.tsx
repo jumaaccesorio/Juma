@@ -1,21 +1,23 @@
-import { useEffect, useState } from "react";
-import type { FeaturedPanel, HeroBanner, Product } from "../../types";
+import { useEffect, useMemo, useState } from "react";
+import type { Category, FeaturedPanel, HeroBanner, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
 
 type CatalogPanelProps = {
   products: Product[];
+  categories: Category[];
   onAddToCart: (productId: number) => void;
   featuredPanels: FeaturedPanel[];
   heroBanner: HeroBanner;
   favoriteProductIds: Set<number>;
   onToggleFavorite: (productId: number) => void;
-  initialCategory: string | null;
-  onCategoryChange: (cat: string | null) => void;
-  onPanelCategoryClick: (categoryName: string) => void;
+  initialCategory: number | null;
+  onCategoryChange: (cat: number | null) => void;
+  onPanelCategoryClick: (categoryId: number | null) => void;
 };
 
 function CatalogPanel({
   products,
+  categories,
   onAddToCart,
   featuredPanels,
   heroBanner,
@@ -25,21 +27,36 @@ function CatalogPanel({
   onCategoryChange,
   onPanelCategoryClick,
 }: CatalogPanelProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory);
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(initialCategory);
 
   useEffect(() => {
     setSelectedCategory(initialCategory);
   }, [initialCategory]);
 
-  const handleCategoryChange = (category: string | null) => {
+  const handleCategoryChange = (category: number | null) => {
     setSelectedCategory(category);
     onCategoryChange(category);
   };
 
   const heroTitleLines = heroBanner.title.split("\n");
-  const filteredProducts = selectedCategory
-    ? products.filter((product) => product.categoryName?.toLowerCase() === selectedCategory.toLowerCase())
-    : products;
+  const selectedCategoryName = selectedCategory ? categories.find((category) => category.id === selectedCategory)?.name ?? null : null;
+  const filteredProducts = useMemo(() => {
+    if (!selectedCategory) return products;
+
+    const includedCategoryIds = new Set<number>();
+    const queue = [selectedCategory];
+
+    while (queue.length > 0) {
+      const currentCategoryId = queue.shift();
+      if (!currentCategoryId || includedCategoryIds.has(currentCategoryId)) continue;
+      includedCategoryIds.add(currentCategoryId);
+      categories
+        .filter((category) => category.parentId === currentCategoryId)
+        .forEach((category) => queue.push(category.id));
+    }
+
+    return products.filter((product) => product.categoryId != null && includedCategoryIds.has(product.categoryId));
+  }, [categories, products, selectedCategory]);
 
   return (
     <div className="flex flex-col">
@@ -84,7 +101,7 @@ function CatalogPanel({
               <div className="absolute inset-0 p-6 flex flex-col justify-end">
                 <h3 className="font-headline text-white text-xl font-medium tracking-tight">{panel.title}</h3>
                 <button
-                  onClick={() => onPanelCategoryClick(panel.title)}
+                  onClick={() => onPanelCategoryClick(panel.categoryId ?? null)}
                   className="text-white/80 text-xs font-medium uppercase tracking-[0.18em] mt-2 flex items-center gap-2 group-hover:text-white"
                 >
                   {panel.cta} <span className="material-symbols-outlined text-sm">trending_flat</span>
@@ -100,7 +117,7 @@ function CatalogPanel({
           <div className="flex flex-col">
             <span className="text-primary font-bold tracking-[0.3em] uppercase text-xs mb-2">Catalogo Online</span>
             <h2 className="font-headline text-carbon text-3xl font-light">
-              {selectedCategory ? `Categoria: ${selectedCategory}` : "Novedades"}
+              {selectedCategoryName ? `Categoria: ${selectedCategoryName}` : "Novedades"}
             </h2>
           </div>
           <button
