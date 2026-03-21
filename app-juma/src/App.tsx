@@ -548,29 +548,108 @@ function App() {
   const completedOrders = useMemo(() => orders.filter((order) => order.status === "REALIZADO"), [orders]);
 
   const finance = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    const investedThisMonth = products
-      .filter((product) => {
-        const created = new Date(product.createdAt);
-        return created.getMonth() === currentMonth && created.getFullYear() === currentYear;
-      })
-      .reduce((acc, product) => acc + product.purchasePrice * product.initialStock, 0);
     const totalInvestment = products.reduce((acc, product) => acc + product.purchasePrice * product.stock, 0);
     const totalAccessoriesPrice = products.reduce((acc, product) => acc + product.salePrice * product.stock, 0);
-    const lastDay = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const dailySales = Array.from({ length: lastDay }, (_, i) => ({ day: i + 1, total: 0 }));
+
+    const monthKeySet = new Set<string>();
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    monthKeySet.add(currentMonthKey);
+
     for (const order of completedOrders) {
       const date = new Date(order.date);
-      if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
-        const day = date.getDate();
-        const orderTotal = order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0);
-        dailySales[day - 1].total += orderTotal;
-      }
+      if (Number.isNaN(date.getTime())) continue;
+      monthKeySet.add(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
     }
-    const maxSale = Math.max(...dailySales.map((row) => row.total), 1);
-    return { investedThisMonth, totalInvestment, totalAccessoriesPrice, dailySales, maxSale };
+
+    for (const product of products) {
+      const date = new Date(product.createdAt);
+      if (Number.isNaN(date.getTime())) continue;
+      monthKeySet.add(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
+    }
+
+    const months = Array.from(monthKeySet)
+      .sort((a, b) => (a < b ? 1 : -1))
+      .map((key) => {
+        const [year, month] = key.split("-").map(Number);
+        const date = new Date(year, month - 1, 1);
+        return {
+          key,
+          label: date.toLocaleDateString("es-AR", { month: "long", year: "numeric" }),
+        };
+      });
+
+    const monthlySummaries = months.map((month) => {
+      const [year, monthIndexValue] = month.key.split("-").map(Number);
+      const monthIndex = monthIndexValue - 1;
+      const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+      const dailyBreakdown = Array.from({ length: lastDay }, (_, index) => ({
+        day: index + 1,
+        label: `${index + 1}/${monthIndexValue}`,
+        income: 0,
+        expense: 0,
+        salesCount: 0,
+      }));
+
+      const ordersInMonth = completedOrders.filter((order) => {
+        const date = new Date(order.date);
+        return !Number.isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === monthIndex;
+      });
+
+      let incomeMonth = 0;
+      let salesCountMonth = 0;
+
+      for (const order of ordersInMonth) {
+        const date = new Date(order.date);
+        const dayIndex = date.getDate() - 1;
+        const orderIncome = order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0);
+        const orderExpense = order.items.reduce((acc, item) => acc + item.quantity * item.unitPurchasePrice, 0);
+        incomeMonth += orderIncome;
+        salesCountMonth += 1;
+        if (dailyBreakdown[dayIndex]) {
+          dailyBreakdown[dayIndex].income += orderIncome;
+          dailyBreakdown[dayIndex].expense += orderExpense;
+          dailyBreakdown[dayIndex].salesCount += 1;
+        }
+      }
+
+      const expenseMonth = products
+        .filter((product) => {
+          const created = new Date(product.createdAt);
+          return !Number.isNaN(created.getTime()) && created.getFullYear() === year && created.getMonth() === monthIndex;
+        })
+        .reduce((acc, product) => acc + product.purchasePrice * product.initialStock, 0);
+
+      const balanceMonth = incomeMonth - expenseMonth;
+      const averageTicket = salesCountMonth > 0 ? incomeMonth / salesCountMonth : 0;
+      const bestDay = dailyBreakdown.reduce(
+        (best, day) => (day.income > best.income ? day : best),
+        dailyBreakdown[0] ?? { day: 1, label: "1", income: 0, expense: 0, salesCount: 0 },
+      );
+      const chartMax = Math.max(1, ...dailyBreakdown.flatMap((day) => [day.income, day.expense]));
+
+      return {
+        key: month.key,
+        label: month.label,
+        incomeMonth,
+        expenseMonth,
+        salesCountMonth,
+        balanceMonth,
+        averageTicket,
+        bestDayLabel: bestDay.label,
+        bestDayIncome: bestDay.income,
+        dailyBreakdown,
+        chartMax,
+      };
+    });
+
+    return {
+      months,
+      selectedMonthKey: months[0]?.key ?? currentMonthKey,
+      monthlySummaries,
+      totalInvestment,
+      totalAccessoriesPrice,
+    };
   }, [products, completedOrders]);
 
   const orderTotal = (order: Order) => order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0);
