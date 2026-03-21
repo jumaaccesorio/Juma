@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type FinanceMonthOption = {
   key: string;
@@ -75,6 +75,12 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
     () => finance.dailyHistory.filter((item) => item.date.startsWith(selectedMonthKey)),
     [finance.dailyHistory, selectedMonthKey],
   );
+
+  useEffect(() => {
+    if (!finance.months.some((month) => month.key === selectedMonthKey)) {
+      setSelectedMonthKey(finance.selectedMonthKey);
+    }
+  }, [finance.months, finance.selectedMonthKey, selectedMonthKey]);
 
   const weeklyBreakdown = useMemo(() => {
     const recentDays = visibleFinance?.dailyBreakdown.slice(-7) ?? [];

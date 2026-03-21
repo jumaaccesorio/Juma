@@ -24,6 +24,7 @@ type OrdersPanelProps = {
   onRemoveOrderItemRow: (index: number) => void;
   onUpdateOrderItemRow: (index: number, key: keyof NewOrderItem, value: string) => void;
   onMarkOrderAsRealized: (orderId: number) => void;
+  onDeleteOrder: (orderId: number) => void;
   getClientName: (clientId: number) => string;
   getOrderTotal: (order: Order) => number;
 };
@@ -42,6 +43,7 @@ function OrdersPanel({
   onRemoveOrderItemRow,
   onUpdateOrderItemRow,
   onMarkOrderAsRealized,
+  onDeleteOrder,
   getClientName,
   getOrderTotal,
 }: OrdersPanelProps) {
@@ -594,22 +596,30 @@ function OrdersPanel({
                     Requiere reposicion
                   </div>
                 ) : null}
-                <div className="mt-4">
+                <div className="mt-4 flex gap-2">
                   {order.status === "PENDIENTE" ? (
                     <button 
                       type="button" 
                       onClick={() => onMarkOrderAsRealized(order.id)}
-                      className="inline-flex w-full items-center justify-center gap-1 rounded-lg bg-primary/10 px-3 py-2 text-xs font-bold text-primary"
+                      className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-primary/10 px-3 py-2 text-xs font-bold text-primary"
                     >
                       <span className="material-symbols-outlined text-[16px]">check_circle</span>
                       Marcar envio
                     </button>
                   ) : (
-                    <span className="inline-flex w-full items-center justify-center gap-1 rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-400">
+                    <span className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-400">
                       <span className="material-symbols-outlined text-[16px]">done_all</span>
                       Completado
                     </span>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => onDeleteOrder(order.id)}
+                    className="inline-flex items-center justify-center rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-600"
+                    title="Eliminar pedido"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                  </button>
                 </div>
               </div>
             );
@@ -686,6 +696,14 @@ function OrdersPanel({
                         Completado
                       </span>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => onDeleteOrder(order.id)}
+                      className="ml-2 inline-flex items-center justify-center rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100"
+                      title="Eliminar pedido"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                    </button>
                   </td>
                       </>
                     );

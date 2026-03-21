@@ -515,6 +515,11 @@ function App() {
     }));
   };
 
+  const refreshOrders = async () => {
+    const refreshedOrders = await api.getOrders();
+    setOrders(refreshedOrders);
+  };
+
   const addOrder = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
@@ -540,16 +545,17 @@ function App() {
         status: orderForm.status,
         items
       });
-      
+      setOrders((prev) => [newOrder, ...prev]);
+
       if (orderForm.status === "REALIZADO") {
+        await refreshOrders();
         for (const item of items) {
-            const prod = productMap.get(item.productId);
-            if(prod) await api.updateStock(prod.id, Math.max(0, prod.stock - item.quantity));
+          const prod = productMap.get(item.productId);
+          if (prod) await api.updateStock(prod.id, Math.max(0, prod.stock - item.quantity));
         }
         deductStock(items);
       }
-      
-      setOrders((prev) => [newOrder, ...prev]);
+
       setOrderForm({ clientId: "", date: new Date().toISOString().slice(0, 10), status: "PENDIENTE", items: [] });
     } catch (err) {
       console.error(err);
@@ -568,15 +574,48 @@ function App() {
     
     try {
       await api.updateOrderStatus(orderId, "REALIZADO");
+      setOrders((prev) => prev.map((row) => (row.id === orderId ? { ...row, status: "REALIZADO" } : row)));
+      await refreshOrders();
       for (const item of order.items) {
-          const prod = productMap.get(item.productId);
-          if(prod) await api.updateStock(prod.id, Math.max(0, prod.stock - item.quantity));
+        const prod = productMap.get(item.productId);
+        if (prod) await api.updateStock(prod.id, Math.max(0, prod.stock - item.quantity));
       }
       deductStock(order.items);
-      setOrders((prev) => prev.map((row) => (row.id === orderId ? { ...row, status: "REALIZADO" } : row)));
     } catch (err) {
       console.error(err);
       setError("Error al actualizar pedido en base de datos.");
+    }
+  };
+
+  const deleteOrder = async (orderId: number) => {
+    const order = orders.find((row) => row.id === orderId);
+    if (!order) return;
+    const confirmDelete = window.confirm(`¿Eliminar el pedido #${String(order.id).padStart(5, "0")}?`);
+    if (!confirmDelete) return;
+
+    try {
+      setError("");
+      await api.deleteOrder(orderId);
+
+      if (order.status === "REALIZADO") {
+        for (const item of order.items) {
+          const product = productMap.get(item.productId);
+          if (!product) continue;
+          const restoredStock = product.stock + item.quantity;
+          await api.updateStock(product.id, restoredStock);
+        }
+        setProducts((prev) =>
+          prev.map((product) => {
+            const row = order.items.find((item) => item.productId === product.id);
+            return row ? { ...product, stock: product.stock + row.quantity } : product;
+          }),
+        );
+      }
+
+      setOrders((prev) => prev.filter((row) => row.id !== orderId));
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo eliminar el pedido.");
     }
   };
 
@@ -772,7 +811,7 @@ function App() {
       type: "INGRESO" as const,
       description: `Pedido #${String(order.id).padStart(5, "0")}`,
       detail: order.clientId ? clientMap.get(order.clientId)?.name ?? "Cliente" : order.guestName || "Invitado",
-      category: "Pedido",
+      category: "Pedido realizado",
       amount: order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0),
     })), ...financeExpenses.map((expense) => ({
       id: `expense-${expense.id}`,
@@ -1253,6 +1292,7 @@ function App() {
                   onRemoveOrderItemRow={removeOrderItemRow}
                   onUpdateOrderItemRow={updateOrderItemRow}
                   onMarkOrderAsRealized={markOrderAsRealized}
+                  onDeleteOrder={deleteOrder}
                   getClientName={(clientId) => clientMap.get(clientId)?.name ?? "-"}
                   getOrderTotal={orderTotal}
                 />

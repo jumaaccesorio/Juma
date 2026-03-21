@@ -275,6 +275,11 @@ export const api = {
     if (query.error) throw query.error;
   },
 
+  async deleteOrder(id: number): Promise<void> {
+    const query = await supabase.from("orders").delete().eq("id", id);
+    if (query.error) throw query.error;
+  },
+
   async getFavorites(clientId: number): Promise<Favorite[]> {
     const query = await supabase.from("favorites").select("*").eq("client_id", clientId);
     if (query.error) throw query.error;
