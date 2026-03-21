@@ -24,6 +24,7 @@ import ClientProfilePanel from "./features/users/ClientProfilePanel";
 import CustomerAuthModal from "./features/users/CustomerAuthModal";
 import type { CartItem, Client, Favorite, FeaturedPanel, HeroBanner, NewOrderItem, Order, OrderItem, Product, Tab, Category } from "./types";
 import { api } from "./lib/api";
+import { getProductDisplayName } from "./lib/productLabel";
 
 const CLIENT_SESSION_KEY = "juma_client";
 
@@ -442,7 +443,7 @@ function App() {
     
     try {
       const newProduct = await api.addProduct({
-        name: productForm.name.trim(),
+        name: productForm.name.trim() || productForm.subName.trim(),
         subName: productForm.subName.trim(),
         categoryId: Number(productForm.categoryId) || undefined,
         isFeatured: productForm.isFeatured,
@@ -597,6 +598,28 @@ function App() {
       await api.updateProduct(productId, { enabled: !product.enabled });
       setProducts((prev) => prev.map((product) => (product.id === productId ? { ...product, enabled: !product.enabled } : product)));
     } catch (err) { console.error(err); }
+  };
+
+  const saveProductEdits = async (productId: number, updates: Partial<Product>) => {
+    const normalizedName = typeof updates.name === "string" ? updates.name.trim() : undefined;
+    const normalizedSubName = typeof updates.subName === "string" ? updates.subName.trim() : undefined;
+    const payload: Partial<Product> = {
+      ...updates,
+      name: normalizedName !== undefined ? (normalizedName || normalizedSubName || "") : updates.name,
+      subName: normalizedSubName ?? updates.subName,
+    };
+
+    await api.updateProduct(productId, payload);
+    setProducts((prev) =>
+      prev.map((product) => {
+        if (product.id !== productId) return product;
+        const next = { ...product, ...payload };
+        return {
+          ...next,
+          name: getProductDisplayName(next),
+        };
+      }),
+    );
   };
 
   const clientStats = useMemo(() => clients.map((client) => {
@@ -886,7 +909,7 @@ function App() {
       }
 
       const newProduct = await api.addProduct({
-        name: row.name,
+        name: row.name || row.subName,
         subName: row.subName,
         categoryId: category.id,
         purchasePrice: row.purchasePrice,
@@ -1010,6 +1033,7 @@ function App() {
                   productForm={productForm}
                   productImageData={productImageData}
                   onImportProducts={importProducts}
+                  onSaveProductEdits={saveProductEdits}
                   onProductFormChange={setProductForm}
                   onProductImageChange={updateProductImage}
                   onAddProduct={addProduct}
