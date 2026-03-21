@@ -75,6 +75,13 @@ type ImportedProductRow = {
   categoryName: string;
 };
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error && typeof error === "object" && "message" in error && typeof (error as { message?: unknown }).message === "string") {
+    return (error as { message: string }).message;
+  }
+  return fallback;
+}
+
 function splitCsvLine(line: string, delimiter: string) {
   const values: string[] = [];
   let current = "";
@@ -271,16 +278,24 @@ function App() {
 
   const addCategory = async (name: string, parentId?: number | null) => {
     try {
+      setError("");
       const cat = await api.addCategory(name, parentId);
       setCategories(prev => [...prev, cat].sort((a, b) => a.name.localeCompare(b.name)));
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+      setError(`No se pudo guardar la categoria en Supabase. ${getErrorMessage(err, "Revisa que hayas ejecutado schema_complete.sql y las politicas RLS.")}`);
+    }
   };
 
   const deleteCategory = async (id: number) => {
     try {
+      setError("");
       await api.deleteCategory(id);
       setCategories(prev => prev.filter(c => c.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+      setError(`No se pudo eliminar la categoria en Supabase. ${getErrorMessage(err, "Verifica permisos y politicas RLS.")}`);
+    }
   };
 
   const toggleFavorite = async (productId: number) => {

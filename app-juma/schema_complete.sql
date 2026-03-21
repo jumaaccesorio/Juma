@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS clients (
 CREATE TABLE IF NOT EXISTS products (
   id             SERIAL PRIMARY KEY,
   name           TEXT NOT NULL,
+  sub_name       TEXT NOT NULL DEFAULT '',
   category_id    INT REFERENCES categories(id) ON DELETE SET NULL,
   is_featured    BOOLEAN NOT NULL DEFAULT FALSE,
   purchase_price NUMERIC(12, 2) NOT NULL DEFAULT 0,
