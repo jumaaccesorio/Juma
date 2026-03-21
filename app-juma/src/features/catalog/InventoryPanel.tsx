@@ -30,6 +30,11 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
     });
   }, [products, query, categoryFilter]);
 
+  const rootCategories = useMemo(
+    () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
+    [categories],
+  );
+
   const startEdit = (product: Product) => {
     setEditingProductId(product.id);
     setEditName(product.name);
@@ -49,6 +54,102 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
 
   return (
     <div className="min-h-screen flex-1 space-y-8 bg-secondary p-4 text-ink md:space-y-12 md:p-10">
+      <div className="space-y-6 md:hidden">
+        <div className="mb-8">
+          <h2 className="font-headline text-4xl text-primary leading-tight">Curated Inventory</h2>
+          <p className="mt-1 text-sm tracking-wide text-secondary">Refining the digital atelier&apos;s stock.</p>
+        </div>
+
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
+            <span className="material-symbols-outlined text-lg text-outline">search</span>
+          </div>
+          <input
+            className="w-full rounded-none border-none bg-surface-container-lowest py-4 pl-12 pr-4 text-sm outline outline-1 outline-outline-variant/15 transition-all focus:outline-primary"
+            placeholder="Search archive..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            type="text"
+          />
+        </div>
+
+        <div className="flex gap-4 overflow-x-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <button
+            type="button"
+            onClick={() => setCategoryFilter("")}
+            className={`whitespace-nowrap rounded-full px-6 py-2 text-xs font-medium ${!categoryFilter ? "bg-primary text-on-primary" : "bg-surface-container-low text-secondary hover:bg-secondary-container"}`}
+          >
+            All
+          </button>
+          {rootCategories.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              onClick={() => setCategoryFilter(String(category.id))}
+              className={`whitespace-nowrap rounded-full px-6 py-2 text-xs font-medium transition-colors ${
+                categoryFilter === String(category.id)
+                  ? "bg-primary text-on-primary"
+                  : "bg-surface-container-low text-secondary hover:bg-secondary-container"
+              }`}
+            >
+              {category.name}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-5">
+          {filteredProducts.map((product) => (
+            <div key={`atelier-mobile-${product.id}`} className="flex items-center gap-4 bg-surface-container-lowest p-5 shadow-[0_12px_40px_rgba(45,45,45,0.04)]">
+              <div className="h-24 w-24 shrink-0 overflow-hidden bg-surface-container-low">
+                {product.image ? (
+                  <img src={product.image} alt={getProductDisplayName(product)} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-slate-300">
+                    <span className="material-symbols-outlined">image</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex h-24 flex-grow flex-col justify-between">
+                <div>
+                  <h3 className="font-headline text-lg italic text-on-surface">{getProductDisplayName(product)}</h3>
+                  <p className="mt-0.5 text-[10px] uppercase tracking-widest text-secondary">{product.categoryName || "Sin categoria"}</p>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onUpdateStock(product.id, Math.max(0, product.stock - 1))}
+                      className="flex h-8 w-8 items-center justify-center border border-outline-variant/30 text-primary transition-all active:scale-95 hover:bg-secondary-container"
+                    >
+                      <span className="material-symbols-outlined text-sm">remove</span>
+                    </button>
+                    <span className="w-6 text-center font-headline text-lg italic">{String(product.stock).padStart(2, "0")}</span>
+                    <button
+                      type="button"
+                      onClick={() => onUpdateStock(product.id, product.stock + 1)}
+                      className="flex h-8 w-8 items-center justify-center border border-outline-variant/30 text-primary transition-all active:scale-95 hover:bg-secondary-container"
+                    >
+                      <span className="material-symbols-outlined text-sm">add</span>
+                    </button>
+                  </div>
+                  <span className={`rounded-full px-3 py-1 text-[10px] font-bold ${
+                    product.stock <= 2 ? "bg-error-container/20 text-error" : "bg-tertiary-container/20 text-on-tertiary-container"
+                  }`}>
+                    {product.stock <= 2 ? "LOW STOCK" : "IN STOCK"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+          {filteredProducts.length === 0 ? (
+            <div className="bg-surface-container-lowest p-8 text-center text-sm text-secondary shadow-[0_12px_40px_rgba(45,45,45,0.04)]">
+              No hay productos en el inventario.
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="hidden md:block space-y-8">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 className="font-serif text-3xl font-bold text-ink">Control de Inventario</h2>
@@ -293,6 +394,7 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
             </tbody>
           </table>
         </div>
+      </div>
       </div>
     </div>
   );

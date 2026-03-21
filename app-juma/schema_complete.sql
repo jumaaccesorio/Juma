@@ -1,11 +1,11 @@
 -- ============================================================
 -- JUMA ACCESSORY - ESQUEMA COMPLETO DE BASE DE DATOS
--- Versión: 2.0 (Marzo 2025)
--- Ejecutar en: Supabase SQL Editor (una sola vez, en orden)
+-- Version: 2.0
+-- Ejecutar en Supabase SQL Editor
 -- ============================================================
 
 -- ============================================================
--- 1. CATEGORÍAS
+-- 1. CATEGORIAS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS categories (
   id         SERIAL PRIMARY KEY,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS categories (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS clients (
   id         SERIAL PRIMARY KEY,
-  auth_id    UUID UNIQUE,          -- Referencia al usuario de Supabase Auth
+  auth_id    UUID UNIQUE,
   name       TEXT NOT NULL,
   email      TEXT NOT NULL UNIQUE,
   phone      TEXT NOT NULL DEFAULT '',
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS favorites (
 );
 
 -- ============================================================
--- 8. BANNER PRINCIPAL (una sola fila, id = 1)
+-- 8. BANNER PRINCIPAL
 -- ============================================================
 CREATE TABLE IF NOT EXISTS hero_banner (
   id       INT PRIMARY KEY DEFAULT 1,
@@ -107,7 +107,6 @@ CREATE TABLE IF NOT EXISTS hero_banner (
   image    TEXT NOT NULL DEFAULT ''
 );
 
--- Inserta la fila por defecto si no existe
 INSERT INTO hero_banner (id, tag, title, subtitle, image)
 VALUES (
   1,
@@ -119,10 +118,10 @@ VALUES (
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
--- 9. CARTELES DESTACADOS (featured panels)
+-- 9. CARTELES DESTACADOS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS featured_panels (
-  id          TEXT PRIMARY KEY,     -- Ej: 'blanco', 'dorado', etc.
+  id          TEXT PRIMARY KEY,
   title       TEXT NOT NULL DEFAULT '',
   cta         TEXT NOT NULL DEFAULT 'Mira mas',
   image       TEXT NOT NULL DEFAULT '',
@@ -131,7 +130,6 @@ CREATE TABLE IF NOT EXISTS featured_panels (
   category_id INT REFERENCES categories(id) ON DELETE SET NULL
 );
 
--- Paneles por defecto
 INSERT INTO featured_panels (id, title, cta, image, class_name) VALUES
   ('blanco',     'Acero Quirurgico Blanco', 'Mira mas', 'https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=1400&q=80', 'card-left'),
   ('dorado',     'Acero Dorado',            'Mira mas', 'https://images.unsplash.com/photo-1535632787350-4e68ef0ac584?auto=format&fit=crop&w=1200&q=80', 'card-top'),
@@ -141,47 +139,51 @@ ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
 -- 10. ROW LEVEL SECURITY (RLS)
--- Política abierta para simplificar el acceso desde el frontend.
 -- ============================================================
-
--- Habilitar RLS en cada tabla
-ALTER TABLE categories      ENABLE ROW LEVEL SECURITY;
-ALTER TABLE clients         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE products        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE orders          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE order_items     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categories       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clients          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_items      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_expenses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE favorites       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE hero_banner     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE featured_panels ENABLE ROW LEVEL SECURITY;
+ALTER TABLE favorites        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE hero_banner      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE featured_panels  ENABLE ROW LEVEL SECURITY;
 
--- Política: acceso total a cualquier rol (anon + authenticated)
--- categories
+DROP POLICY IF EXISTS "open_categories" ON categories;
 CREATE POLICY "open_categories" ON categories FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
--- clients
+
+DROP POLICY IF EXISTS "open_clients" ON clients;
 CREATE POLICY "open_clients" ON clients FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
--- products
+
+DROP POLICY IF EXISTS "open_products" ON products;
 CREATE POLICY "open_products" ON products FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
--- orders
+
+DROP POLICY IF EXISTS "open_orders" ON orders;
 CREATE POLICY "open_orders" ON orders FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
--- order_items
+
+DROP POLICY IF EXISTS "open_order_items" ON order_items;
 CREATE POLICY "open_order_items" ON order_items FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
--- finance_expenses
+
+DROP POLICY IF EXISTS "open_finance_expenses" ON finance_expenses;
 CREATE POLICY "open_finance_expenses" ON finance_expenses FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
--- favorites
+
+DROP POLICY IF EXISTS "open_favorites" ON favorites;
 CREATE POLICY "open_favorites" ON favorites FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
--- hero_banner
+
+DROP POLICY IF EXISTS "open_hero_banner" ON hero_banner;
 CREATE POLICY "open_hero_banner" ON hero_banner FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
--- featured_panels
+
+DROP POLICY IF EXISTS "open_featured_panels" ON featured_panels;
 CREATE POLICY "open_featured_panels" ON featured_panels FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 -- ============================================================
--- 11. PERMISOS DE SCHEMA
+-- 11. PERMISOS
 -- ============================================================
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL TABLES    IN SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
 
 -- ============================================================
--- FIN DEL SCRIPT
+-- FIN
 -- ============================================================

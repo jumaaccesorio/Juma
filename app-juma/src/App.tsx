@@ -1066,7 +1066,7 @@ function App() {
             onLogout={logoutAdmin}
           />
           
-          <div className="flex-1 overflow-x-hidden">
+          <div className="flex-1 overflow-x-hidden pb-28 md:pb-0">
             {error ? (
               <div className="px-4 pt-20 sm:px-6 lg:px-10">
                 <div className="bg-red-50 text-red-500 p-4 rounded-xl text-center text-sm font-bold tracking-widest uppercase flex items-center justify-center gap-2 border border-red-100">
@@ -1231,6 +1231,45 @@ function App() {
               </div>
             )}
           </div>
+
+          <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around bg-background px-2 pb-6 pt-2 shadow-[0_-4px_20px_rgba(45,45,45,0.04)] md:hidden">
+            {[
+              { id: "dashboard", label: "Dashboard", icon: "dashboard" },
+              { id: "venta_rapida", label: "Sales", icon: "payments" },
+              { id: "inventario", label: "Inventory", icon: "inventory_2" },
+              { id: "pedidos", label: "Orders", icon: "shopping_bag" },
+            ].map((item) => {
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveTab(item.id as Tab)}
+                  className={`flex flex-col items-center justify-center px-3 py-1 transition-opacity ${
+                    isActive
+                      ? "scale-90 rounded-xl bg-secondary text-primary"
+                      : "text-secondary hover:text-primary"
+                  }`}
+                >
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+                  >
+                    {item.icon}
+                  </span>
+                  <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.1em]">{item.label}</span>
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => setIsAdminSidebarOpen(true)}
+              className="flex flex-col items-center justify-center px-3 py-1 text-secondary transition-opacity hover:text-primary"
+            >
+              <span className="material-symbols-outlined">more_horiz</span>
+              <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.1em]">More</span>
+            </button>
+          </nav>
         </main>
       </div>
     );
