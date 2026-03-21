@@ -9,6 +9,7 @@ type StoreHeaderProps = {
   cartItemsCount: number;
   cartTotal: number;
   categories: Category[];
+  selectedCatalogCategoryId: number | null;
   currentClient: Client | null;
   onSetActiveTab: (tab: Tab) => void;
   onSelectCatalogCategory: (categoryId: number | null) => void;
@@ -26,6 +27,7 @@ export default function StoreHeader({
   cartItemsCount,
   cartTotal,
   categories,
+  selectedCatalogCategoryId,
   currentClient,
   onSetActiveTab,
   onSelectCatalogCategory,
@@ -41,6 +43,8 @@ export default function StoreHeader({
     () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
     [categories],
   );
+  const isHomeActive = activeTab === "catalogo" && selectedCatalogCategoryId == null && !showCatalogMenu;
+  const isCatalogActive = showCatalogMenu || selectedCatalogCategoryId != null;
 
   useEffect(() => {
     if (isAdminLogged) {
@@ -138,10 +142,18 @@ export default function StoreHeader({
 
         {/* Navigation Tabs */}
         <nav className="w-full overflow-x-auto flex items-center gap-6 py-2 pb-0 mt-2 text-sm uppercase tracking-widest font-bold text-slate-400 whitespace-nowrap scrollbar-hide">
-          <button className={`hover:text-primary transition-colors pb-2 border-b-2 ${activeTab === "catalogo" ? "text-primary border-primary" : "border-transparent"}`} onClick={() => onSetActiveTab("catalogo")}>Inicio</button>
+          <button
+            className={`hover:text-primary transition-colors pb-2 border-b-2 ${isHomeActive ? "text-primary border-primary" : "border-transparent"}`}
+            onClick={() => {
+              onSelectCatalogCategory(null);
+              onSetActiveTab("catalogo");
+            }}
+          >
+            Inicio
+          </button>
           <div className="relative">
             <button
-              className={`flex items-center gap-1 pb-2 border-b-2 transition-colors ${activeTab === "catalogo" ? "text-primary border-primary" : "border-transparent hover:text-primary"}`}
+              className={`flex items-center gap-1 pb-2 border-b-2 transition-colors ${isCatalogActive ? "text-primary border-primary" : "border-transparent hover:text-primary"}`}
               onClick={() => setShowCatalogMenu((prev) => !prev)}
             >
               Catalogo
@@ -157,6 +169,7 @@ export default function StoreHeader({
                       type="button"
                       onClick={() => {
                         onSelectCatalogCategory(category.id);
+                        onSetActiveTab("catalogo");
                         setShowCatalogMenu(false);
                       }}
                       className="block w-full px-6 py-3 text-left text-[15px] font-medium normal-case tracking-normal text-ink transition-colors hover:bg-secondary/55 hover:text-primary"

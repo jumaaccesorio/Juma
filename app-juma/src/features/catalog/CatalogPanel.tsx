@@ -28,6 +28,10 @@ function CatalogPanel({
   onPanelCategoryClick,
 }: CatalogPanelProps) {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(initialCategory);
+  const rootCategories = useMemo(
+    () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
+    [categories],
+  );
 
   useEffect(() => {
     setSelectedCategory(initialCategory);
@@ -126,6 +130,29 @@ function CatalogPanel({
           >
             Ver todo el catalogo <span className="material-symbols-outlined text-sm">{selectedCategory ? "close" : "open_in_new"}</span>
           </button>
+        </div>
+        <div className="mb-10 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => handleCategoryChange(null)}
+            className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
+              selectedCategory == null ? "border-primary bg-primary text-white" : "border-primary/20 bg-white text-primary hover:border-primary"
+            }`}
+          >
+            Todas
+          </button>
+          {rootCategories.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              onClick={() => handleCategoryChange(category.id)}
+              className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
+                selectedCategory === category.id ? "border-primary bg-primary text-white" : "border-primary/20 bg-white text-primary hover:border-primary"
+              }`}
+            >
+              {category.name}
+            </button>
+          ))}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {filteredProducts.length === 0 ? (

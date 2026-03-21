@@ -166,7 +166,15 @@ function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<"login" | "checkout">("login");
   const [lastOrderConfirmation, setLastOrderConfirmation] = useState<{ orderId: number; customerName?: string } | null>(null);
-  const [cartSuccessMessage, setCartSuccessMessage] = useState("");
+  const [cartSuccessToast, setCartSuccessToast] = useState<{
+    productId: number;
+    name: string;
+    image: string;
+    price: number;
+    quantity: number;
+    cartItemsCount: number;
+    cartTotal: number;
+  } | null>(null);
 
   const [clientForm, setClientForm] = useState({ name: "", phone: "", email: "" });
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
@@ -214,10 +222,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!cartSuccessMessage) return;
-    const timeoutId = window.setTimeout(() => setCartSuccessMessage(""), 2600);
+    if (!cartSuccessToast) return;
+    const timeoutId = window.setTimeout(() => setCartSuccessToast(null), 3200);
     return () => window.clearTimeout(timeoutId);
-  }, [cartSuccessMessage]);
+  }, [cartSuccessToast]);
 
   // Restore session from localStorage
   useEffect(() => {
@@ -705,14 +713,36 @@ function App() {
     setCartItems((prev) => {
       const existing = prev.find((item) => item.productId === productId);
       if (!existing) {
-        setCartSuccessMessage(`${getProductDisplayName(product)} agregado al carrito.`);
+        setCartSuccessToast({
+          productId: product.id,
+          name: getProductDisplayName(product),
+          image: product.image,
+          price: product.salePrice,
+          quantity: 1,
+          cartItemsCount: prev.reduce((acc, item) => acc + item.quantity, 0) + 1,
+          cartTotal: prev.reduce((acc, item) => {
+            const currentProduct = productMap.get(item.productId);
+            return acc + (currentProduct ? currentProduct.salePrice * item.quantity : 0);
+          }, 0) + product.salePrice,
+        });
         return [...prev, { productId, quantity: 1 }];
       }
       if (existing.quantity >= product.stock) {
         setError("No puedes agregar mas unidades que el stock disponible.");
         return prev;
       }
-      setCartSuccessMessage(`${getProductDisplayName(product)} agregado al carrito.`);
+      setCartSuccessToast({
+        productId: product.id,
+        name: getProductDisplayName(product),
+        image: product.image,
+        price: product.salePrice,
+        quantity: existing.quantity + 1,
+        cartItemsCount: prev.reduce((acc, item) => acc + item.quantity, 0) + 1,
+        cartTotal: prev.reduce((acc, item) => {
+          const currentProduct = productMap.get(item.productId);
+          return acc + (currentProduct ? currentProduct.salePrice * item.quantity : 0);
+        }, 0) + product.salePrice,
+      });
       return prev.map((item) => (item.productId === productId ? { ...item, quantity: item.quantity + 1 } : item));
     });
   };
@@ -1139,6 +1169,7 @@ function App() {
         cartItemsCount={cartItemsCount}
         cartTotal={cartTotal}
         categories={categories}
+        selectedCatalogCategoryId={catalogCategoryFilter}
         currentClient={currentClient}
         onSetActiveTab={setActiveTab}
         onSelectCatalogCategory={navigateToCategoryInCatalog}
@@ -1148,14 +1179,54 @@ function App() {
         onLoginClientClick={() => { setAuthModalMode("login"); setShowAuthModal(true); }}
       />
 
-      {cartSuccessMessage ? (
-        <div className="pointer-events-none fixed right-4 top-24 z-[120] max-w-sm rounded-xl border border-success/40 bg-white px-4 py-3 shadow-xl shadow-black/10">
-          <div className="flex items-start gap-3">
-            <span className="material-symbols-outlined text-success">check_circle</span>
+      {cartSuccessToast ? (
+        <div className="fixed right-4 top-24 z-[120] w-[min(92vw,420px)] overflow-hidden rounded-sm border border-line bg-white shadow-2xl shadow-black/15">
+          <div className="flex items-start justify-between border-b border-line px-5 py-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-success">Carrito actualizado</p>
-              <p className="mt-1 text-sm text-ink">{cartSuccessMessage}</p>
+              <p className="text-xl font-bold text-[#6f7f80]">¡Agregado al carrito!</p>
             </div>
+            <button
+              type="button"
+              onClick={() => setCartSuccessToast(null)}
+              className="rounded-full p-1 text-muted transition-colors hover:bg-secondary hover:text-ink"
+            >
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
+          </div>
+          <div className="flex gap-4 px-5 py-4">
+            <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden bg-secondary">
+              {cartSuccessToast.image ? (
+                <img src={cartSuccessToast.image} alt={cartSuccessToast.name} className="h-full w-full object-cover" />
+              ) : (
+                <span className="material-symbols-outlined text-4xl text-muted">image</span>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xl leading-6 text-[#6f7f80]">{cartSuccessToast.name}</p>
+              <p className="mt-2 text-[1.1rem] text-[#6f7f80]">
+                {cartSuccessToast.quantity} x ${cartSuccessToast.price.toLocaleString("es-AR")}
+              </p>
+              <div className="mt-6 flex items-center justify-between border-t border-line pt-4">
+                <div>
+                  <p className="text-[1rem] font-bold text-[#6f7f80]">
+                    Total ({cartSuccessToast.cartItemsCount} producto{cartSuccessToast.cartItemsCount === 1 ? "" : "s"}):
+                  </p>
+                </div>
+                <p className="text-[2rem] font-black text-[#6f7f80]">${cartSuccessToast.cartTotal.toLocaleString("es-AR")}</p>
+              </div>
+            </div>
+          </div>
+          <div className="px-5 pb-5">
+            <button
+              type="button"
+              onClick={() => {
+                setCartSuccessToast(null);
+                setActiveTab("carrito");
+              }}
+              className="w-full border-b-2 border-primary/35 pb-3 text-center text-sm font-bold uppercase tracking-[0.22em] text-muted transition-colors hover:text-primary"
+            >
+              Ver carrito
+            </button>
           </div>
         </div>
       ) : null}
