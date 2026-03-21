@@ -54,7 +54,7 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
           </button>
         </div>
 
-        <nav className="flex-1 space-y-2 overflow-y-auto pb-4">
+        <nav className="flex-1 space-y-2 overflow-y-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {menuItems.map((item) => (
             <button
               key={item.id}
