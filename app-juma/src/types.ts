@@ -62,6 +62,7 @@ export type Order = {
 
 export type FinanceExpense = {
   id: number;
+  type: "INGRESO" | "EGRESO";
   description: string;
   detail: string;
   category: string;

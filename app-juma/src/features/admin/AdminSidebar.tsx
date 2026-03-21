@@ -39,9 +39,9 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
               <span className="font-body text-sm font-semibold text-primary">J</span>
             </div>
             <div>
-              <h1 className="font-headline text-2xl italic tracking-tight text-primary md:text-2xl md:not-italic">Golden Admin</h1>
+              <h1 className="font-headline text-2xl italic tracking-tight text-primary md:text-2xl md:not-italic">Juma Accessory</h1>
               <p className="mt-1 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-secondary md:text-muted">
-                Boutique Atelier
+                Panel de Control
               </p>
             </div>
           </div>
@@ -84,13 +84,6 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
         </nav>
 
         <div className="mt-auto border-t border-outline-variant/10 pt-6 md:border-line md:pt-4">
-          <button
-            type="button"
-            className="group flex w-full items-center gap-4 rounded px-3 py-3 text-left text-error transition-all hover:bg-error/5 md:px-4"
-          >
-            <span className="material-symbols-outlined transition-transform group-hover:rotate-12">logout</span>
-            <span className="font-body text-xs font-medium uppercase tracking-[0.14em]">Cerrar Sesion</span>
-          </button>
           <div className="mt-4 flex items-center gap-3 rounded border border-outline-variant/10 bg-surface-container-lowest px-4 py-4 shadow-[0_12px_40px_rgba(45,45,45,0.04)] md:border-line md:bg-background md:shadow-subtle">
             <div className="flex size-10 items-center justify-center rounded-full bg-primary font-bold text-white">J</div>
             <div>

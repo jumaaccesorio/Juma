@@ -169,6 +169,11 @@ export const api = {
     if (query.error) throw query.error;
   },
 
+  async deleteProduct(id: number): Promise<void> {
+    const query = await supabase.from("products").delete().eq("id", id);
+    if (query.error) throw query.error;
+  },
+
   async getOrders(): Promise<Order[]> {
     const ordersQuery = await supabase.from("orders").select("*").order("date", { ascending: false });
     if (ordersQuery.error) throw ordersQuery.error;
@@ -197,6 +202,7 @@ export const api = {
   },
 
   async addFinanceExpense(expense: {
+    type: "INGRESO" | "EGRESO";
     description: string;
     detail: string;
     category: string;
@@ -206,6 +212,7 @@ export const api = {
     const query = await supabase
       .from("finance_expenses")
       .insert({
+        type: expense.type,
         description: expense.description,
         detail: expense.detail,
         category: expense.category,
@@ -436,6 +443,7 @@ function mapFavorite(row: any): Favorite {
 function mapFinanceExpense(row: any): FinanceExpense {
   return {
     id: row.id,
+    type: row.type === "INGRESO" ? "INGRESO" : "EGRESO",
     description: row.description ?? "",
     detail: row.detail ?? "",
     category: row.category ?? "General",

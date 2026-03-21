@@ -49,7 +49,7 @@ type FinanceView = {
 
 type FinancePanelProps = {
   finance: FinanceView;
-  onAddExpense: (expense: { description: string; detail: string; category: string; amount: number; date: string }) => Promise<void>;
+  onAddExpense: (expense: { type: "INGRESO" | "EGRESO"; description: string; detail: string; category: string; amount: number; date: string }) => Promise<void>;
   onDeleteExpense: (expenseId: number) => Promise<void>;
 };
 
@@ -57,6 +57,7 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
   const [selectedMonthKey, setSelectedMonthKey] = useState(finance.selectedMonthKey);
   const [viewMode, setViewMode] = useState<"mensual" | "semanal" | "historial">("mensual");
   const [expenseForm, setExpenseForm] = useState({
+    type: "EGRESO" as "INGRESO" | "EGRESO",
     description: "",
     detail: "",
     category: "General",
@@ -95,6 +96,7 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
     setIsSavingExpense(true);
     try {
       await onAddExpense({
+        type: expenseForm.type,
         description: expenseForm.description.trim(),
         detail: expenseForm.detail.trim(),
         category: expenseForm.category.trim() || "General",
@@ -212,8 +214,8 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
         <form onSubmit={handleSubmitExpense} className="rounded-xl border border-neutral-soft bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:p-6">
           <div className="mb-5 flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Agregar egreso</h3>
-              <p className="mt-1 text-sm text-slate-500">Registra gastos manuales con detalle para el historial.</p>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Agregar movimiento manual</h3>
+              <p className="mt-1 text-sm text-slate-500">Registra ingresos o egresos manuales con detalle para el historial.</p>
             </div>
             <span className="rounded-full bg-red-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-red-600">
               ${visibleFinance.manualExpenseMonth.toLocaleString("es-AR")} manual
@@ -221,6 +223,17 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Tipo</label>
+              <select
+                value={expenseForm.type}
+                onChange={(event) => setExpenseForm((prev) => ({ ...prev, type: event.target.value as "INGRESO" | "EGRESO" }))}
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="EGRESO">Egreso</option>
+                <option value="INGRESO">Ingreso</option>
+              </select>
+            </div>
             <div className="md:col-span-2">
               <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Descripcion</label>
               <input
@@ -275,7 +288,7 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
                 disabled={isSavingExpense}
                 className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-bold uppercase tracking-widest text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isSavingExpense ? "Guardando..." : "Guardar egreso"}
+                {isSavingExpense ? "Guardando..." : `Guardar ${expenseForm.type === "INGRESO" ? "ingreso" : "egreso"}`}
               </button>
             </div>
           </div>
@@ -445,7 +458,7 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
               </div>
             ) : (
               historyItems.map((item) => {
-                const expenseId = item.type === "EGRESO" ? Number(item.id.replace("expense-", "")) : null;
+                const expenseId = item.id.startsWith("expense-") ? Number(item.id.replace("expense-", "")) : null;
                 return (
                   <div key={item.id} className="flex flex-col gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-4 md:flex-row md:items-center md:justify-between">
                     <div className="min-w-0 flex-1">

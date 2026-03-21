@@ -34,6 +34,7 @@ type ProductsPanelProps = {
   onToggleProductEnabled: (productId: number) => void;
   onUpdateExistingProductImage: (productId: number, file: File | null) => void;
   onSaveProductEdits: (productId: number, updates: Partial<Product>) => void;
+  onDeleteProduct: (productId: number) => void;
   onImportProducts: (file: File | null) => void;
 };
 
@@ -59,10 +60,12 @@ function ProductsPanel({
   onToggleProductEnabled,
   onUpdateExistingProductImage,
   onSaveProductEdits,
+  onDeleteProduct,
   onImportProducts,
 }: ProductsPanelProps) {
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [visibilityFilter, setVisibilityFilter] = useState<"ALL" | "VISIBLE" | "HIDDEN">("ALL");
   const [showForm, setShowForm] = useState(false);
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [drafts, setDrafts] = useState<Record<number, ProductDraft>>({});
@@ -86,9 +89,13 @@ function ProductsPanel({
           (value || "").toLowerCase().includes(normalized),
         );
       const matchesCategory = !categoryFilter || String(product.categoryId ?? "") === categoryFilter;
-      return matchesQuery && matchesCategory;
+      const matchesVisibility =
+        visibilityFilter === "ALL" ||
+        (visibilityFilter === "VISIBLE" && product.enabled) ||
+        (visibilityFilter === "HIDDEN" && !product.enabled);
+      return matchesQuery && matchesCategory && matchesVisibility;
     });
-  }, [products, query, categoryFilter]);
+  }, [products, query, categoryFilter, visibilityFilter]);
 
   const stats = useMemo(() => {
     const totalProducts = products.length;
@@ -364,9 +371,39 @@ function ProductsPanel({
       <div className="bg-background rounded-xl border border-line overflow-hidden shadow-sm">
         <div className="p-4 border-b border-line flex flex-col lg:flex-row items-center justify-between gap-4">
           <div className="flex gap-4 overflow-x-auto w-full sm:w-auto">
-            <button className="px-4 py-2 text-sm font-bold border-b-2 border-primary text-primary whitespace-nowrap">Todos</button>
-            <button className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors whitespace-nowrap">Visibles ({stats.enabledCount})</button>
-            <button className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors whitespace-nowrap">Ocultos ({stats.disabledCount})</button>
+            <button
+              type="button"
+              onClick={() => setVisibilityFilter("ALL")}
+              className={`px-4 py-2 text-sm whitespace-nowrap transition-colors border-b-2 ${
+                visibilityFilter === "ALL"
+                  ? "font-bold border-primary text-primary"
+                  : "font-medium border-transparent text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              Todos
+            </button>
+            <button
+              type="button"
+              onClick={() => setVisibilityFilter("VISIBLE")}
+              className={`px-4 py-2 text-sm whitespace-nowrap transition-colors border-b-2 ${
+                visibilityFilter === "VISIBLE"
+                  ? "font-bold border-primary text-primary"
+                  : "font-medium border-transparent text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              Visibles ({stats.enabledCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setVisibilityFilter("HIDDEN")}
+              className={`px-4 py-2 text-sm whitespace-nowrap transition-colors border-b-2 ${
+                visibilityFilter === "HIDDEN"
+                  ? "font-bold border-primary text-primary"
+                  : "font-medium border-transparent text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              Ocultos ({stats.disabledCount})
+            </button>
           </div>
           <div className="flex w-full lg:w-auto gap-3">
             <div className="relative w-full sm:w-64">
@@ -689,24 +726,38 @@ function ProductsPanel({
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 border-t border-line px-6 py-5">
-              <button
-                type="button"
-                onClick={() => setEditingProductId(null)}
-                className="rounded-lg border border-line bg-white px-5 py-3 text-sm font-bold text-muted transition-colors hover:bg-secondary hover:text-ink"
-              >
-                Cancelar
-              </button>
+            <div className="flex flex-col gap-3 border-t border-line px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
               <button
                 type="button"
                 onClick={() => {
-                  handleSaveDraft(editingProduct);
+                  const confirmDelete = window.confirm(`¿Eliminar "${getProductDisplayName(editingProduct)}"? Esta accion no se puede deshacer.`);
+                  if (!confirmDelete) return;
+                  onDeleteProduct(editingProduct.id);
                   setEditingProductId(null);
                 }}
-                className="rounded-lg bg-primary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90"
+                className="rounded-lg border border-red-200 bg-red-50 px-5 py-3 text-sm font-bold text-red-600 transition-colors hover:bg-red-100"
               >
-                Guardar cambios
+                Eliminar producto
               </button>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingProductId(null)}
+                  className="rounded-lg border border-line bg-white px-5 py-3 text-sm font-bold text-muted transition-colors hover:bg-secondary hover:text-ink"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleSaveDraft(editingProduct);
+                    setEditingProductId(null);
+                  }}
+                  className="rounded-lg bg-primary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90"
+                >
+                  Guardar cambios
+                </button>
+              </div>
             </div>
           </div>
         </div>

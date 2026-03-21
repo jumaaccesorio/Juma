@@ -177,7 +177,6 @@ export default function StoreHeader({
                         onSelectCatalogCategory(category.id);
                         onSetActiveTab("catalogo");
                         setShowCatalogMenu(false);
-                        scrollToPageTop();
                       }}
                       className="block w-full px-6 py-3 text-left text-[15px] font-medium normal-case tracking-normal text-ink transition-colors hover:bg-secondary/40 hover:text-primary"
                     >

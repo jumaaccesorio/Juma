@@ -82,6 +82,16 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
+function parseAppDate(value?: string | null) {
+  if (!value) return new Date(NaN);
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+  return new Date(value);
+}
+
 function splitCsvLine(line: string, delimiter: string) {
   const values: string[] = [];
   let current = "";
@@ -348,6 +358,12 @@ function App() {
   const navigateToCategoryInCatalog = (categoryId: number | null) => {
     setCatalogCategoryFilter(categoryId);
     setActiveTab("catalogo");
+    window.setTimeout(() => {
+      const catalogSection = document.getElementById("catalog-products-section");
+      if (catalogSection) {
+        catalogSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 120);
   };
 
   const updateCategory = async (id: number, name: string) => {
@@ -603,6 +619,18 @@ function App() {
     }
   };
 
+  const deleteProduct = async (productId: number) => {
+    try {
+      await api.deleteProduct(productId);
+      setProducts((prev) => prev.filter((product) => product.id !== productId));
+      setCartItems((prev) => prev.filter((item) => item.productId !== productId));
+      setFavorites((prev) => prev.filter((favorite) => favorite.productId !== productId));
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo eliminar el producto.");
+    }
+  };
+
   const clientStats = useMemo(() => clients.map((client) => {
     const clientOrders = orders.filter((order) => order.clientId === client.id);
     const totalSpent = clientOrders.filter((order) => order.status === "REALIZADO").reduce((acc, order) => acc + order.items.reduce((sum, item) => sum + item.quantity * item.unitSalePrice, 0), 0);
@@ -623,19 +651,19 @@ function App() {
     monthKeySet.add(currentMonthKey);
 
     for (const order of completedOrders) {
-      const date = new Date(order.date);
+      const date = parseAppDate(order.date);
       if (Number.isNaN(date.getTime())) continue;
       monthKeySet.add(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
     }
 
     for (const expense of financeExpenses) {
-      const date = new Date(expense.date);
+      const date = parseAppDate(expense.date);
       if (Number.isNaN(date.getTime())) continue;
       monthKeySet.add(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
     }
 
     for (const product of products) {
-      const date = new Date(product.createdAt);
+      const date = parseAppDate(product.createdAt);
       if (Number.isNaN(date.getTime())) continue;
       monthKeySet.add(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
     }
@@ -664,20 +692,21 @@ function App() {
       }));
 
       const ordersInMonth = completedOrders.filter((order) => {
-        const date = new Date(order.date);
+        const date = parseAppDate(order.date);
         return !Number.isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === monthIndex;
       });
       const expensesInMonth = financeExpenses.filter((expense) => {
-        const date = new Date(expense.date);
+        const date = parseAppDate(expense.date);
         return !Number.isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === monthIndex;
       });
 
       let incomeMonth = 0;
       let salesCountMonth = 0;
       let manualExpenseMonth = 0;
+      let manualIncomeMonth = 0;
 
       for (const order of ordersInMonth) {
-        const date = new Date(order.date);
+        const date = parseAppDate(order.date);
         const dayIndex = date.getDate() - 1;
         const orderIncome = order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0);
         const orderExpense = order.items.reduce((acc, item) => acc + item.quantity * item.unitPurchasePrice, 0);
@@ -695,14 +724,22 @@ function App() {
         0,
       );
       for (const expense of expensesInMonth) {
-        const date = new Date(expense.date);
+        const date = parseAppDate(expense.date);
         const dayIndex = date.getDate() - 1;
-        manualExpenseMonth += expense.amount;
-        if (dailyBreakdown[dayIndex]) {
-          dailyBreakdown[dayIndex].expense += expense.amount;
+        if (expense.type === "INGRESO") {
+          manualIncomeMonth += expense.amount;
+          if (dailyBreakdown[dayIndex]) {
+            dailyBreakdown[dayIndex].income += expense.amount;
+          }
+        } else {
+          manualExpenseMonth += expense.amount;
+          if (dailyBreakdown[dayIndex]) {
+            dailyBreakdown[dayIndex].expense += expense.amount;
+          }
         }
       }
 
+      incomeMonth += manualIncomeMonth;
       const expenseMonth = salesExpenseMonth + manualExpenseMonth;
 
       const balanceMonth = incomeMonth - expenseMonth;
@@ -740,7 +777,7 @@ function App() {
     })), ...financeExpenses.map((expense) => ({
       id: `expense-${expense.id}`,
       date: expense.date,
-      type: "EGRESO" as const,
+      type: expense.type,
       description: expense.description,
       detail: expense.detail,
       category: expense.category,
@@ -758,14 +795,14 @@ function App() {
     };
   }, [products, completedOrders, financeExpenses, clientMap]);
 
-  const addFinanceExpense = async (payload: { description: string; detail: string; category: string; amount: number; date: string }) => {
+  const addFinanceExpense = async (payload: { type: "INGRESO" | "EGRESO"; description: string; detail: string; category: string; amount: number; date: string }) => {
     try {
       setError("");
       const createdExpense = await api.addFinanceExpense(payload);
       setFinanceExpenses((prev) => [createdExpense, ...prev]);
     } catch (err) {
       console.error(err);
-      setError("No se pudo guardar el egreso.");
+      setError("No se pudo guardar el movimiento manual.");
     }
   };
 
@@ -776,7 +813,7 @@ function App() {
       setFinanceExpenses((prev) => prev.filter((expense) => expense.id !== expenseId));
     } catch (err) {
       console.error(err);
-      setError("No se pudo eliminar el egreso.");
+      setError("No se pudo eliminar el movimiento manual.");
     }
   };
 
@@ -1164,6 +1201,7 @@ function App() {
                   onToggleProductEnabled={toggleProductEnabled}
                   onUpdateExistingProductImage={updateExistingProductImage}
                   onSaveProductEdits={saveProductEdits}
+                  onDeleteProduct={deleteProduct}
                   onImportProducts={importProducts}
                 />
               </div>

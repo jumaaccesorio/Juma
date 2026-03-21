@@ -77,6 +77,8 @@ CREATE TABLE IF NOT EXISTS order_items (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS finance_expenses (
   id          SERIAL PRIMARY KEY,
+  type        TEXT NOT NULL DEFAULT 'EGRESO'
+                CHECK (type IN ('INGRESO', 'EGRESO')),
   description TEXT NOT NULL,
   detail      TEXT NOT NULL DEFAULT '',
   category    TEXT NOT NULL DEFAULT 'General',
@@ -84,6 +86,15 @@ CREATE TABLE IF NOT EXISTS finance_expenses (
   date        DATE NOT NULL DEFAULT CURRENT_DATE,
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE finance_expenses
+  ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'EGRESO';
+
+ALTER TABLE finance_expenses
+  DROP CONSTRAINT IF EXISTS finance_expenses_type_check;
+
+ALTER TABLE finance_expenses
+  ADD CONSTRAINT finance_expenses_type_check CHECK (type IN ('INGRESO', 'EGRESO'));
 
 -- ============================================================
 -- 7. FAVORITOS

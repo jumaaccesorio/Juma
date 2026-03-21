@@ -116,7 +116,7 @@ function CatalogPanel({
         </div>
       </section>
 
-      <section className="bg-primary/[0.03] px-6 md:px-40 py-20">
+      <section id="catalog-products-section" className="bg-primary/[0.03] px-6 md:px-40 py-20">
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
           <div className="flex flex-col">
             <span className="text-primary font-bold tracking-[0.3em] uppercase text-xs mb-2">Catalogo Online</span>
