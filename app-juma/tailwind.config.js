@@ -11,6 +11,8 @@ module.exports = {
             "primary": "#C5A37F",
             "background": "#FCFAFA",
             "secondary": "#F3EDE2",
+            "tertiary": "#97ABC1",
+            "quaternary": "#E8DED2",
             "carbon": "#2D2D2D",
             "ink": "#2D2D2D",
             "muted": "#757575",

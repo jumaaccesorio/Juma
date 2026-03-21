@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import type { Category, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
@@ -64,8 +64,8 @@ function ProductsPanel({
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [drafts, setDrafts] = useState<Record<number, ProductDraft>>({});
-  const quickEditRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setDrafts((prev) => {
@@ -146,13 +146,16 @@ function ProductsPanel({
     });
   };
 
-  const openQuickEdit = (product: Product) => {
+  const openEditor = (product: Product) => {
     setDrafts((prev) => ({
       ...prev,
       [product.id]: prev[product.id] ?? buildDraft(product),
     }));
-    quickEditRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setEditingProductId(product.id);
   };
+
+  const editingProduct = editingProductId ? products.find((product) => product.id === editingProductId) ?? null : null;
+  const editingDraft = editingProduct ? drafts[editingProduct.id] ?? buildDraft(editingProduct) : null;
 
   return (
     <div className="flex-1 p-6 md:p-10 space-y-12 bg-secondary min-h-screen text-ink">
@@ -172,7 +175,7 @@ function ProductsPanel({
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-background p-6 rounded-xl border border-line flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
+          <div className="p-3 bg-tertiary/18 text-[#4f6780] rounded-lg">
             <span className="material-symbols-outlined text-3xl">inventory</span>
           </div>
           <div>
@@ -181,7 +184,7 @@ function ProductsPanel({
           </div>
         </div>
         <div className="bg-background p-6 rounded-xl border border-line flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-lg">
+          <div className="p-3 bg-warning/22 text-[#9a6d48] rounded-lg">
             <span className="material-symbols-outlined text-3xl">warning</span>
           </div>
           <div>
@@ -190,7 +193,7 @@ function ProductsPanel({
           </div>
         </div>
         <div className="bg-background p-6 rounded-xl border border-line flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-primary/10 text-primary rounded-lg">
+          <div className="p-3 bg-primary/12 text-primary rounded-lg">
             <span className="material-symbols-outlined text-3xl">payments</span>
           </div>
           <div>
@@ -199,7 +202,7 @@ function ProductsPanel({
           </div>
         </div>
         <div className="bg-background p-6 rounded-xl border border-line flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-green-50 text-green-600 rounded-lg">
+          <div className="p-3 bg-success/25 text-[#647554] rounded-lg">
             <span className="material-symbols-outlined text-3xl">trending_up</span>
           </div>
           <div>
@@ -428,50 +431,48 @@ function ProductsPanel({
                     <td className="p-4 text-sm text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap">
                       {product.categoryName || <span className="text-slate-400 italic">Sin Categoria</span>}
                       {product.isFeatured && (
-                        <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-[10px] font-bold uppercase rounded" title="Destacado en Inicio">
-                          *
+                        <span className="ml-2 inline-flex items-center rounded-full bg-quaternary px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary" title="Destacado en Inicio">
+                          Featured
                         </span>
                       )}
                     </td>
                     <td className="p-4 text-sm font-medium text-slate-500">${product.purchasePrice.toLocaleString("es-AR")}</td>
                     <td className="p-4 text-sm font-bold text-primary">${product.salePrice.toLocaleString("es-AR")}</td>
                     <td className="p-4">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-sm font-bold ${product.stock <= 2 ? "text-red-600" : "text-slate-700"}`}>{product.stock}</span>
-                          {product.stock <= 2 && <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-black uppercase rounded">Low</span>}
-                        </div>
-                        <div className="w-24 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
-                          <div
-                            className={`h-full ${product.stock > 5 ? "bg-green-500" : product.stock > 0 ? "bg-yellow-500" : "bg-red-500"}`}
-                            style={{ width: `${Math.min(100, Math.max(5, (product.stock / 20) * 100))}%` }}
-                          ></div>
-                        </div>
-                      </div>
+                      <span
+                        className={`inline-flex min-w-[72px] items-center justify-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] ${
+                          product.stock <= 2
+                            ? "bg-warning/30 text-[#9a6d48]"
+                            : product.stock <= 10
+                              ? "bg-quaternary text-primary"
+                              : "bg-tertiary/20 text-[#4f6780]"
+                        }`}
+                      >
+                        {product.stock} units
+                      </span>
                     </td>
                     <td className="p-4">
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          className="sr-only peer"
-                          checked={product.enabled}
-                          onChange={() => onToggleProductEnabled(product.id)}
-                        />
-                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                        <span className="ms-3 text-xs font-semibold uppercase tracking-wider text-slate-500 w-12 text-center">{product.enabled ? "Visible" : "Oculto"}</span>
-                      </label>
+                      <button
+                        type="button"
+                        onClick={() => onToggleProductEnabled(product.id)}
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] transition-colors ${
+                          product.enabled ? "bg-success/25 text-[#647554]" : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {product.enabled ? "Visible" : "Oculto"}
+                      </button>
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => openQuickEdit(product)}
-                          className="inline-flex items-center gap-1 bg-tertiary/20 text-[#36506b] hover:bg-tertiary hover:text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors"
+                          onClick={() => openEditor(product)}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-tertiary/14 text-[#4f6780] transition-colors hover:bg-tertiary hover:text-white"
+                          title="Editar producto"
                         >
                           <span className="material-symbols-outlined text-sm">edit</span>
-                          Editar
                         </button>
-                        <label className="text-slate-400 hover:text-primary transition-colors cursor-pointer p-2 inline-flex items-center justify-center rounded-lg hover:bg-primary/10">
+                        <label className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-line bg-quaternary text-primary transition-colors hover:bg-primary hover:text-white">
                           <span className="material-symbols-outlined">add_a_photo</span>
                           <input
                             type="file"
@@ -497,103 +498,144 @@ function ProductsPanel({
         </div>
       </div>
 
-      <div ref={quickEditRef} className="bg-background rounded-xl border border-line overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-line">
-          <h3 className="font-bold text-lg text-ink">Edicion rapida de productos</h3>
-          <p className="text-sm text-slate-500 mt-1">Edita nombre, subnombre, categoria, precios y stock sin salir del panel.</p>
+      {editingProduct && editingDraft && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2D2D2D]/35 p-4 backdrop-blur-[2px]">
+          <div className="w-full max-w-3xl rounded-xl border border-line bg-background shadow-[0_24px_80px_rgba(45,45,45,0.16)]">
+            <div className="flex items-start justify-between border-b border-line px-6 py-5">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-muted">Editor de producto</p>
+                <h3 className="mt-2 font-serif text-3xl text-ink">{getProductDisplayName(editingProduct)}</h3>
+                <p className="mt-1 text-sm text-muted">Modifica el producto seleccionado sin salir del listado.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingProductId(null)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-muted transition-colors hover:bg-secondary hover:text-ink"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="grid gap-6 px-6 py-6 md:grid-cols-[220px_minmax(0,1fr)]">
+              <div className="space-y-4">
+                <div className="overflow-hidden rounded-xl border border-line bg-secondary">
+                  <div className="flex aspect-square items-center justify-center">
+                    {editingProduct.image ? (
+                      <img className="h-full w-full object-cover" src={editingProduct.image} alt={getProductDisplayName(editingProduct)} />
+                    ) : (
+                      <span className="material-symbols-outlined text-5xl text-muted">image</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center rounded-full bg-tertiary/18 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#4f6780]">
+                    Stock {editingProduct.stock}
+                  </span>
+                  <span className="inline-flex items-center rounded-full bg-quaternary px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+                    Venta ${editingProduct.salePrice.toLocaleString("es-AR")}
+                  </span>
+                </div>
+                <label className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 py-3 text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-white">
+                  <span className="material-symbols-outlined text-base">add_a_photo</span>
+                  Cambiar imagen
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => onUpdateExistingProductImage(editingProduct.id, e.target.files?.[0] ?? null)}
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Nombre visible</label>
+                  <input
+                    className="w-full rounded-lg border border-line bg-white px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-primary/20"
+                    value={editingDraft.name}
+                    onChange={(e) => updateDraft(editingProduct.id, "name", e.target.value)}
+                    placeholder="Nombre visible"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Subnombre</label>
+                  <input
+                    className="w-full rounded-lg border border-line bg-white px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-primary/20"
+                    value={editingDraft.subName}
+                    onChange={(e) => updateDraft(editingProduct.id, "subName", e.target.value)}
+                    placeholder="Nombre de busqueda"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Categoria</label>
+                  <select
+                    className="w-full rounded-lg border border-line bg-white px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-primary/20"
+                    value={editingDraft.categoryId}
+                    onChange={(e) => updateDraft(editingProduct.id, "categoryId", e.target.value)}
+                  >
+                    <option value="">Sin categoria</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Stock</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="w-full rounded-lg border border-line bg-white px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-primary/20"
+                    value={editingDraft.stock}
+                    onChange={(e) => updateDraft(editingProduct.id, "stock", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Precio compra</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="w-full rounded-lg border border-line bg-white px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-primary/20"
+                    value={editingDraft.purchasePrice}
+                    onChange={(e) => updateDraft(editingProduct.id, "purchasePrice", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Precio venta</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="w-full rounded-lg border border-line bg-white px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-primary/20"
+                    value={editingDraft.salePrice}
+                    onChange={(e) => updateDraft(editingProduct.id, "salePrice", e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 border-t border-line px-6 py-5">
+              <button
+                type="button"
+                onClick={() => setEditingProductId(null)}
+                className="rounded-lg border border-line bg-white px-5 py-3 text-sm font-bold text-muted transition-colors hover:bg-secondary hover:text-ink"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleSaveDraft(editingProduct);
+                  setEditingProductId(null);
+                }}
+                className="rounded-lg bg-primary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90"
+              >
+                Guardar cambios
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[980px]">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/50">
-                <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Producto</th>
-                <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Subnombre</th>
-                <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Categoria</th>
-                <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Compra</th>
-                <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Venta</th>
-                <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Stock</th>
-                <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Guardar</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-soft dark:divide-slate-800">
-              {filteredProducts.map((product) => {
-                const draft = drafts[product.id] ?? buildDraft(product);
-                return (
-                  <tr key={`edit-${product.id}`} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors">
-                    <td className="p-4">
-                      <input
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                        value={draft.name}
-                        onChange={(e) => updateDraft(product.id, "name", e.target.value)}
-                        placeholder="Nombre visible"
-                      />
-                    </td>
-                    <td className="p-4">
-                      <input
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                        value={draft.subName}
-                        onChange={(e) => updateDraft(product.id, "subName", e.target.value)}
-                        placeholder="Nombre de busqueda"
-                      />
-                    </td>
-                    <td className="p-4">
-                      <select
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                        value={draft.categoryId}
-                        onChange={(e) => updateDraft(product.id, "categoryId", e.target.value)}
-                      >
-                        <option value="">Sin categoria</option>
-                        {categories.map((category) => (
-                          <option key={category.id} value={category.id}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="p-4">
-                      <input
-                        type="number"
-                        min="0"
-                        className="w-28 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                        value={draft.purchasePrice}
-                        onChange={(e) => updateDraft(product.id, "purchasePrice", e.target.value)}
-                      />
-                    </td>
-                    <td className="p-4">
-                      <input
-                        type="number"
-                        min="0"
-                        className="w-28 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                        value={draft.salePrice}
-                        onChange={(e) => updateDraft(product.id, "salePrice", e.target.value)}
-                      />
-                    </td>
-                    <td className="p-4">
-                      <input
-                        type="number"
-                        min="0"
-                        className="w-24 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                        value={draft.stock}
-                        onChange={(e) => updateDraft(product.id, "stock", e.target.value)}
-                      />
-                    </td>
-                    <td className="p-4 text-right">
-                      <button
-                        type="button"
-                        onClick={() => handleSaveDraft(product)}
-                        className="inline-flex items-center gap-2 bg-primary/10 text-primary hover:bg-primary hover:text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-base">save</span>
-                        Guardar
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -57,20 +57,20 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
       </div>
 
       {lowStockProducts.length > 0 ? (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg flex gap-3 shadow-sm items-start">
-          <span className="material-symbols-outlined text-red-500 mt-0.5">warning</span>
+        <div className="flex items-start gap-3 rounded-r-lg border-l-4 border-warning bg-warning/18 p-4 shadow-sm">
+          <span className="material-symbols-outlined mt-0.5 text-[#9a6d48]">warning</span>
           <div>
-            <h4 className="font-bold text-red-800 text-sm">Atencion: Productos con bajo stock</h4>
-            <p className="text-sm text-red-700 mt-1">
+            <h4 className="text-sm font-bold text-[#8a6140]">Atencion: Productos con bajo stock</h4>
+            <p className="mt-1 text-sm text-[#8a6140]">
               Los siguientes productos requieren reposicion inminente:{" "}
               <strong className="font-bold">{lowStockProducts.map((product) => getProductDisplayName(product)).join(", ")}</strong>.
             </p>
           </div>
         </div>
       ) : (
-        <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg flex gap-3 shadow-sm items-center">
-          <span className="material-symbols-outlined text-green-500">check_circle</span>
-          <p className="text-sm font-bold text-green-800">El inventario se encuentra en niveles optimos. No hay productos en falta critica.</p>
+        <div className="flex items-center gap-3 rounded-r-lg border-l-4 border-success bg-success/20 p-4 shadow-sm">
+          <span className="material-symbols-outlined text-[#647554]">check_circle</span>
+          <p className="text-sm font-bold text-[#647554]">El inventario se encuentra en niveles optimos. No hay productos en falta critica.</p>
         </div>
       )}
 
@@ -148,8 +148,8 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
                   </td>
                   <td className="p-4 text-sm text-slate-600 dark:text-slate-400 font-medium">{product.categoryName || "Sin categoria"}</td>
                   <td className="p-4 text-center">
-                    <span className={`inline-flex items-center justify-center font-bold px-3 py-1 rounded-full text-xs ${product.stock <= 2 ? "bg-red-100 text-red-700" : product.stock <= 10 ? "bg-yellow-100 text-yellow-700" : "bg-slate-100 text-slate-700"}`}>
-                      {product.stock}
+                    <span className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] ${product.stock <= 2 ? "bg-warning/30 text-[#9a6d48]" : product.stock <= 10 ? "bg-quaternary text-primary" : "bg-tertiary/20 text-[#4f6780]"}`}>
+                      {product.stock} units
                     </span>
                   </td>
                   <td className="p-4">
@@ -185,7 +185,7 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
                         <button
                           type="button"
                           onClick={() => saveEdit(product)}
-                          className="inline-flex items-center gap-1 bg-primary/10 text-primary hover:bg-primary hover:text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors"
+                          className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-primary/90"
                         >
                           <span className="material-symbols-outlined text-sm">save</span>
                           Guardar
@@ -202,7 +202,7 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
                       <button
                         type="button"
                         onClick={() => startEdit(product)}
-                        className="inline-flex items-center gap-1 bg-tertiary/20 text-[#36506b] hover:bg-tertiary hover:text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors"
+                        className="inline-flex items-center gap-1 rounded-lg bg-tertiary/18 px-3 py-2 text-xs font-bold text-[#4f6780] transition-colors hover:bg-tertiary hover:text-white"
                       >
                         <span className="material-symbols-outlined text-sm">edit</span>
                         Editar
