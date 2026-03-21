@@ -59,7 +59,88 @@ export default function AdminDashboard({ orders, clients, lowStockProducts, onSe
   const getOrderTotal = (order: Order) => order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0);
 
   return (
-    <div className="space-y-8 px-4 pb-10 pt-20 sm:px-6 lg:px-10 lg:pb-16 lg:pt-24">
+    <div className="space-y-8 overflow-x-hidden px-4 pb-10 pt-20 sm:px-6 lg:px-10 lg:pb-16 lg:pt-24">
+      <div className="space-y-6 md:hidden">
+        <section>
+          <span className="mb-2 block text-xs uppercase tracking-[0.2em] text-secondary">Atelier Overview</span>
+          <h2 className="font-headline text-4xl italic text-primary leading-tight">Bienvenido de nuevo, Admin</h2>
+          <p className="mt-2 text-sm text-muted">Aqui tienes un resumen de tu atelier hoy.</p>
+        </section>
+
+        <section className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => onSetActiveTab("venta_rapida")}
+            className="flex aspect-square flex-col items-start justify-between rounded-xl bg-background p-5 text-left shadow-[0_12px_40px_rgba(45,45,45,0.06)]"
+          >
+            <span className="material-symbols-outlined text-primary">payments</span>
+            <div>
+              <span className="mb-1 block text-[10px] uppercase tracking-[0.14em] text-muted">Transaction</span>
+              <span className="font-body font-semibold text-primary">Venta Rapida</span>
+            </div>
+          </button>
+          <button
+            onClick={() => onSetActiveTab("productos")}
+            className="flex aspect-square flex-col items-start justify-between rounded-xl bg-primary p-5 text-left shadow-[0_12px_40px_rgba(45,45,45,0.06)]"
+          >
+            <span className="material-symbols-outlined text-white">add_circle</span>
+            <div>
+              <span className="mb-1 block text-[10px] uppercase tracking-[0.14em] text-white/70">Catalog</span>
+              <span className="font-body font-semibold text-white">Nuevo Producto</span>
+            </div>
+          </button>
+        </section>
+
+        <section className="rounded-xl bg-surface-container-low p-6">
+          <div className="mb-6 flex items-end justify-between gap-4">
+            <div>
+              <h3 className="font-headline text-2xl italic text-primary">Rendimiento</h3>
+              <p className="text-xs text-secondary">{stats.growthLabel} vs mes anterior</p>
+            </div>
+            <span className="font-headline text-3xl text-primary">${stats.currentMonthSales.toLocaleString("es-AR")}</span>
+          </div>
+          <div className="flex h-32 items-end justify-between gap-2">
+            {[0.32, 0.45, 0.4, 0.68, 0.58, 0.86, 0.64].map((value, index) => (
+              <div key={index} className="w-full rounded-t-sm bg-primary/70" style={{ height: `${value * 100}%` }} />
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-xl bg-background p-5 shadow-[0_12px_40px_rgba(45,45,45,0.04)]">
+          <div className="mb-5 flex items-center justify-between">
+            <h3 className="font-headline text-2xl italic text-primary">Pedidos recientes</h3>
+            <button onClick={() => onSetActiveTab("pedidos")} className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
+              Ver todo
+            </button>
+          </div>
+          <div className="space-y-3">
+            {recentOrders.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted">No hay pedidos recientes.</p>
+            ) : (
+              recentOrders.slice(0, 3).map((order) => (
+                <div key={`dash-mobile-${order.id}`} className="flex items-center gap-3 rounded-xl bg-surface-container-lowest p-4">
+                  <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-surface-container-low">
+                    <span className="font-body text-xs font-bold uppercase text-primary">
+                      {getClientName(order).slice(0, 2)}
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-on-surface">{getClientName(order)}</p>
+                    <p className="text-[10px] text-secondary">#{order.id.toString().padStart(5, "0")}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-headline text-lg text-primary">${getOrderTotal(order).toLocaleString("es-AR")}</p>
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-[8px] font-bold uppercase ${order.status === "REALIZADO" ? "bg-primary-container/20 text-on-primary-container" : "bg-tertiary-container/20 text-on-tertiary-container"}`}>
+                      {order.status === "REALIZADO" ? "Enviado" : "Pendiente"}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+      </div>
+
+      <div className="hidden space-y-8 md:block">
       <section className="flex flex-col gap-6 border-b border-line pb-8 md:flex-row md:items-end md:justify-between">
         <div>
           <h2 className="font-headline text-3xl text-ink sm:text-4xl">Bienvenido de nuevo, Admin</h2>
@@ -285,6 +366,7 @@ export default function AdminDashboard({ orders, clients, lowStockProducts, onSe
           </table>
         </div>
       </section>
+      </div>
     </div>
   );
 }

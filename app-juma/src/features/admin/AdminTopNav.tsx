@@ -15,6 +15,10 @@ export default function AdminTopNav({ onOpenMenu, onPreview, onLogout }: AdminTo
         >
           <span className="material-symbols-outlined">menu</span>
         </button>
+        <div className="min-w-0 md:hidden">
+          <p className="truncate font-headline text-2xl italic text-primary">Golden Admin</p>
+          <p className="truncate text-[9px] font-semibold uppercase tracking-[0.18em] text-secondary">Boutique Atelier</p>
+        </div>
         <div className="relative hidden w-full max-w-md min-w-0 group sm:block">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm">search</span>
           <input
@@ -36,7 +40,7 @@ export default function AdminTopNav({ onOpenMenu, onPreview, onLogout }: AdminTo
           <span className="material-symbols-outlined" data-icon="notifications">notifications</span>
           <span className="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full"></span>
         </button>
-        <button className="flex items-center gap-2 text-ink/70 hover:text-primary transition-opacity" onClick={onLogout}>
+        <button className="hidden items-center gap-2 text-ink/70 transition-opacity hover:text-primary md:flex" onClick={onLogout}>
           <span className="material-symbols-outlined" data-icon="account_circle">account_circle</span>
           <span className="hidden font-body text-sm font-medium tracking-tight lg:inline">Cerrar Sesion</span>
         </button>

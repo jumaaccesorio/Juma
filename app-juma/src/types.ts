@@ -60,6 +60,16 @@ export type Order = {
   items: OrderItem[];
 };
 
+export type FinanceExpense = {
+  id: number;
+  description: string;
+  detail: string;
+  category: string;
+  amount: number;
+  date: string;
+  createdAt: string;
+};
+
 export type NewOrderItem = {
   productId: string;
   quantity: string;

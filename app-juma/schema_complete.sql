@@ -73,7 +73,20 @@ CREATE TABLE IF NOT EXISTS order_items (
 );
 
 -- ============================================================
--- 6. FAVORITOS
+-- 6. EGRESOS MANUALES
+-- ============================================================
+CREATE TABLE IF NOT EXISTS finance_expenses (
+  id          SERIAL PRIMARY KEY,
+  description TEXT NOT NULL,
+  detail      TEXT NOT NULL DEFAULT '',
+  category    TEXT NOT NULL DEFAULT 'General',
+  amount      NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  date        DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- 7. FAVORITOS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS favorites (
   id         SERIAL PRIMARY KEY,
@@ -84,7 +97,7 @@ CREATE TABLE IF NOT EXISTS favorites (
 );
 
 -- ============================================================
--- 7. BANNER PRINCIPAL (una sola fila, id = 1)
+-- 8. BANNER PRINCIPAL (una sola fila, id = 1)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS hero_banner (
   id       INT PRIMARY KEY DEFAULT 1,
@@ -106,7 +119,7 @@ VALUES (
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
--- 8. CARTELES DESTACADOS (featured panels)
+-- 9. CARTELES DESTACADOS (featured panels)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS featured_panels (
   id          TEXT PRIMARY KEY,     -- Ej: 'blanco', 'dorado', etc.
@@ -127,7 +140,7 @@ INSERT INTO featured_panels (id, title, cta, image, class_name) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
--- 9. ROW LEVEL SECURITY (RLS)
+-- 10. ROW LEVEL SECURITY (RLS)
 -- Política abierta para simplificar el acceso desde el frontend.
 -- ============================================================
 
@@ -137,6 +150,7 @@ ALTER TABLE clients         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE finance_expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE favorites       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE hero_banner     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE featured_panels ENABLE ROW LEVEL SECURITY;
@@ -152,6 +166,8 @@ CREATE POLICY "open_products" ON products FOR ALL TO anon, authenticated USING (
 CREATE POLICY "open_orders" ON orders FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 -- order_items
 CREATE POLICY "open_order_items" ON order_items FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+-- finance_expenses
+CREATE POLICY "open_finance_expenses" ON finance_expenses FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 -- favorites
 CREATE POLICY "open_favorites" ON favorites FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 -- hero_banner
@@ -160,7 +176,7 @@ CREATE POLICY "open_hero_banner" ON hero_banner FOR ALL TO anon, authenticated U
 CREATE POLICY "open_featured_panels" ON featured_panels FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 -- ============================================================
--- 10. PERMISOS DE SCHEMA
+-- 11. PERMISOS DE SCHEMA
 -- ============================================================
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT ALL ON ALL TABLES    IN SCHEMA public TO anon, authenticated;

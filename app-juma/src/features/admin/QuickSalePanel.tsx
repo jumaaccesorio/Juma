@@ -116,7 +116,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
 
   return (
     <>
-      <div className="mx-auto flex max-w-md flex-1 flex-col bg-surface px-6 py-4 pb-32 md:hidden">
+      <div className="mx-auto flex w-full max-w-md min-w-0 flex-1 flex-col overflow-x-hidden bg-surface px-4 py-4 pb-32 md:hidden">
         {successMsg && (
           <div className="mb-6 rounded-2xl border border-[#C5A37F]/25 bg-[#C5A37F]/10 px-4 py-3 text-sm font-medium text-primary shadow-[0_12px_30px_rgba(117,89,58,0.08)]">
             {successMsg}
@@ -124,9 +124,9 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         )}
 
         <section className="mb-8">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 min-w-0">
             <h2 className="font-headline text-xl italic text-primary">Venta Rápida</h2>
-            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-secondary">Boutique Admin</span>
+            <span className="mt-1 block text-[10px] font-medium uppercase tracking-[0.2em] text-secondary">Boutique Admin</span>
           </div>
 
           <div className="rounded-xl bg-white p-4 shadow-[0_12px_40px_rgba(45,45,45,0.06)]">
@@ -168,9 +168,9 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         </section>
 
         <section className="mb-8">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex items-center justify-between gap-3">
             <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">Catálogo Curado</h3>
-            <span className="material-symbols-outlined text-secondary">filter_list</span>
+            <span className="material-symbols-outlined shrink-0 text-secondary">filter_list</span>
           </div>
 
           <div className="relative mb-4">
@@ -185,7 +185,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
             />
           </div>
 
-          <div className="mb-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+          <div className="mb-4 flex gap-2 overflow-x-auto pb-1 pr-2 [scrollbar-width:none]">
             <button
               type="button"
               onClick={() => setSelectedCategoryId(null)}
@@ -219,7 +219,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
               <p className="mt-3 text-sm text-secondary">No encontramos productos para ese filtro.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               {filteredProducts.map((product) => {
                 const inCart = cart.find((item) => item.product.id === product.id)?.quantity ?? 0;
                 return (
@@ -227,7 +227,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                     key={product.id}
                     type="button"
                     onClick={() => addToCart(product)}
-                    className={`group overflow-hidden rounded-xl text-left transition ${
+                    className={`group min-w-0 overflow-hidden rounded-xl text-left transition ${
                       inCart > 0 ? "border border-primary/20 bg-primary/5" : "bg-surface-container-low"
                     }`}
                   >
@@ -259,8 +259,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                         </div>
                       )}
                     </div>
-                    <div className="p-3">
-                      <h4 className="font-headline text-sm italic text-on-surface">{getProductDisplayName(product)}</h4>
+                    <div className="min-w-0 p-3">
+                      <h4 className="truncate font-headline text-sm italic text-on-surface">{getProductDisplayName(product)}</h4>
                       <p className="mt-0.5 text-[11px] font-medium tracking-tight text-secondary">
                         ${product.salePrice.toLocaleString("es-AR")}
                       </p>
@@ -288,10 +288,10 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                 cart.map((item) => (
                   <div
                     key={item.product.id}
-                    className="flex items-center justify-between border-b border-outline-variant/10 pb-2 text-sm"
+                    className="flex items-start justify-between gap-3 border-b border-outline-variant/10 pb-2 text-sm"
                   >
-                    <div>
-                      <span className="font-headline italic text-on-surface-variant">
+                    <div className="min-w-0 flex-1">
+                      <span className="block truncate font-headline italic text-on-surface-variant">
                         {item.quantity}x {getProductDisplayName(item.product)}
                       </span>
                       <div className="mt-1 flex items-center gap-2">
@@ -318,7 +318,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                         </button>
                       </div>
                     </div>
-                    <span className="font-medium">${(item.product.salePrice * item.quantity).toLocaleString("es-AR")}</span>
+                    <span className="shrink-0 font-medium">${(item.product.salePrice * item.quantity).toLocaleString("es-AR")}</span>
                   </div>
                 ))
               )}

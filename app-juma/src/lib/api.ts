@@ -1,4 +1,4 @@
-import type { Category, Client, Favorite, FeaturedPanel, HeroBanner, Order, OrderItem, Product } from "../types";
+import type { Category, Client, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, Order, OrderItem, Product } from "../types";
 import { supabase } from "./supabase";
 
 function toErrorMessage(error: unknown, fallback = "Ocurrio un error inesperado.") {
@@ -188,6 +188,39 @@ export const api = {
     }
 
     return orders.map((order) => mapOrder({ ...order, items: itemsByOrderId.get(order.id) ?? [] }));
+  },
+
+  async getFinanceExpenses(): Promise<FinanceExpense[]> {
+    const query = await supabase.from("finance_expenses").select("*").order("date", { ascending: false }).order("id", { ascending: false });
+    if (query.error) throw query.error;
+    return (query.data ?? []).map(mapFinanceExpense);
+  },
+
+  async addFinanceExpense(expense: {
+    description: string;
+    detail: string;
+    category: string;
+    amount: number;
+    date: string;
+  }): Promise<FinanceExpense> {
+    const query = await supabase
+      .from("finance_expenses")
+      .insert({
+        description: expense.description,
+        detail: expense.detail,
+        category: expense.category,
+        amount: expense.amount,
+        date: expense.date,
+      })
+      .select("*")
+      .single();
+    if (query.error) throw query.error;
+    return mapFinanceExpense(query.data);
+  },
+
+  async deleteFinanceExpense(id: number): Promise<void> {
+    const query = await supabase.from("finance_expenses").delete().eq("id", id);
+    if (query.error) throw query.error;
   },
 
   async addOrder(order: {
@@ -397,5 +430,17 @@ function mapFavorite(row: any): Favorite {
     clientId: row.client_id,
     productId: row.product_id,
     createdAt: row.created_at,
+  };
+}
+
+function mapFinanceExpense(row: any): FinanceExpense {
+  return {
+    id: row.id,
+    description: row.description ?? "",
+    detail: row.detail ?? "",
+    category: row.category ?? "General",
+    amount: Number(row.amount ?? 0),
+    date: row.date,
+    createdAt: row.created_at ?? "",
   };
 }

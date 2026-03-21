@@ -22,7 +22,7 @@ import ClientsPanel from "./features/users/ClientsPanel";
 import StoreHeader from "./features/users/StoreHeader";
 import ClientProfilePanel from "./features/users/ClientProfilePanel";
 import CustomerAuthModal from "./features/users/CustomerAuthModal";
-import type { CartItem, Client, Favorite, FeaturedPanel, HeroBanner, NewOrderItem, Order, OrderItem, Product, Tab, Category } from "./types";
+import type { CartItem, Client, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, Product, Tab, Category } from "./types";
 import { api } from "./lib/api";
 import { getProductDisplayName } from "./lib/productLabel";
 
@@ -150,6 +150,7 @@ function App() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [financeExpenses, setFinanceExpenses] = useState<FinanceExpense[]>([]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<number | null>(null);
@@ -199,11 +200,12 @@ function App() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [c, cats, p, o, fp, hb] = await Promise.all([
+        const [c, cats, p, o, expenses, fp, hb] = await Promise.all([
           api.getClients(),
           api.getCategories(),
           api.getProducts(),
           api.getOrders(),
+          api.getFinanceExpenses(),
           api.getFeaturedPanels(),
           api.getHeroBanner()
         ]);
@@ -211,6 +213,7 @@ function App() {
         setCategories(cats);
         setProducts(p.map((x) => ({ ...x, enabled: x.enabled ?? true, image: x.image ?? "" })));
         setOrders(o);
+        setFinanceExpenses(expenses);
         if (fp.length > 0) setFeaturedPanels(fp);
         if (hb) setHeroBanner(hb);
         setHomeConfigDirty(false);
@@ -625,6 +628,12 @@ function App() {
       monthKeySet.add(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
     }
 
+    for (const expense of financeExpenses) {
+      const date = new Date(expense.date);
+      if (Number.isNaN(date.getTime())) continue;
+      monthKeySet.add(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
+    }
+
     for (const product of products) {
       const date = new Date(product.createdAt);
       if (Number.isNaN(date.getTime())) continue;
@@ -658,9 +667,14 @@ function App() {
         const date = new Date(order.date);
         return !Number.isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === monthIndex;
       });
+      const expensesInMonth = financeExpenses.filter((expense) => {
+        const date = new Date(expense.date);
+        return !Number.isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === monthIndex;
+      });
 
       let incomeMonth = 0;
       let salesCountMonth = 0;
+      let manualExpenseMonth = 0;
 
       for (const order of ordersInMonth) {
         const date = new Date(order.date);
@@ -676,12 +690,20 @@ function App() {
         }
       }
 
-      const expenseMonth = products
-        .filter((product) => {
-          const created = new Date(product.createdAt);
-          return !Number.isNaN(created.getTime()) && created.getFullYear() === year && created.getMonth() === monthIndex;
-        })
-        .reduce((acc, product) => acc + product.purchasePrice * product.initialStock, 0);
+      const salesExpenseMonth = ordersInMonth.reduce(
+        (acc, order) => acc + order.items.reduce((sum, item) => sum + item.quantity * item.unitPurchasePrice, 0),
+        0,
+      );
+      for (const expense of expensesInMonth) {
+        const date = new Date(expense.date);
+        const dayIndex = date.getDate() - 1;
+        manualExpenseMonth += expense.amount;
+        if (dailyBreakdown[dayIndex]) {
+          dailyBreakdown[dayIndex].expense += expense.amount;
+        }
+      }
+
+      const expenseMonth = salesExpenseMonth + manualExpenseMonth;
 
       const balanceMonth = incomeMonth - expenseMonth;
       const averageTicket = salesCountMonth > 0 ? incomeMonth / salesCountMonth : 0;
@@ -703,8 +725,28 @@ function App() {
         bestDayIncome: bestDay.income,
         dailyBreakdown,
         chartMax,
+        manualExpenseMonth,
       };
     });
+
+    const dailyHistory = [...completedOrders.map((order) => ({
+      id: `income-${order.id}`,
+      date: order.date,
+      type: "INGRESO" as const,
+      description: `Pedido #${String(order.id).padStart(5, "0")}`,
+      detail: order.clientId ? clientMap.get(order.clientId)?.name ?? "Cliente" : order.guestName || "Invitado",
+      category: "Pedido",
+      amount: order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0),
+    })), ...financeExpenses.map((expense) => ({
+      id: `expense-${expense.id}`,
+      date: expense.date,
+      type: "EGRESO" as const,
+      description: expense.description,
+      detail: expense.detail,
+      category: expense.category,
+      amount: expense.amount,
+    }))]
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.id < b.id ? 1 : -1));
 
     return {
       months,
@@ -712,8 +754,31 @@ function App() {
       monthlySummaries,
       totalInvestment,
       totalAccessoriesPrice,
+      dailyHistory,
     };
-  }, [products, completedOrders]);
+  }, [products, completedOrders, financeExpenses, clientMap]);
+
+  const addFinanceExpense = async (payload: { description: string; detail: string; category: string; amount: number; date: string }) => {
+    try {
+      setError("");
+      const createdExpense = await api.addFinanceExpense(payload);
+      setFinanceExpenses((prev) => [createdExpense, ...prev]);
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo guardar el egreso.");
+    }
+  };
+
+  const deleteFinanceExpense = async (expenseId: number) => {
+    try {
+      setError("");
+      await api.deleteFinanceExpense(expenseId);
+      setFinanceExpenses((prev) => prev.filter((expense) => expense.id !== expenseId));
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo eliminar el egreso.");
+    }
+  };
 
   const orderTotal = (order: Order) => order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0);
 
@@ -994,14 +1059,14 @@ function App() {
           isOpen={isAdminSidebarOpen}
           onClose={() => setIsAdminSidebarOpen(false)}
         />
-        <main className="flex-1 min-h-screen flex flex-col md:ml-64">
+        <main className="flex min-h-screen flex-1 flex-col overflow-x-hidden md:ml-64">
           <AdminTopNav
             onOpenMenu={() => setIsAdminSidebarOpen(true)}
             onPreview={() => setActiveTab("catalogo")}
             onLogout={logoutAdmin}
           />
           
-          <div className="flex-1">
+          <div className="flex-1 overflow-x-hidden">
             {error ? (
               <div className="px-4 pt-20 sm:px-6 lg:px-10">
                 <div className="bg-red-50 text-red-500 p-4 rounded-xl text-center text-sm font-bold tracking-widest uppercase flex items-center justify-center gap-2 border border-red-100">
@@ -1158,7 +1223,11 @@ function App() {
 
             {activeTab === "finanzas" && (
               <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
-                <FinancePanel finance={finance} />
+                <FinancePanel
+                  finance={finance}
+                  onAddExpense={addFinanceExpense}
+                  onDeleteExpense={deleteFinanceExpense}
+                />
               </div>
             )}
           </div>
