@@ -54,7 +54,10 @@ export const api = {
   },
 
   async getCategories(): Promise<Category[]> {
-    const query = await supabase.from("categories").select("*").order("name", { ascending: true });
+    const query = await supabase
+      .from("categories")
+      .select("id, name, parent_id, created_at")
+      .order("name", { ascending: true });
     if (query.error) throw query.error;
     return (query.data ?? []).map(mapCategory);
   },
@@ -86,7 +89,10 @@ export const api = {
   },
 
   async getClients(): Promise<Client[]> {
-    const query = await supabase.from("clients").select("*").order("created_at", { ascending: false });
+    const query = await supabase
+      .from("clients")
+      .select("id, auth_id, name, email, phone, created_at")
+      .order("created_at", { ascending: false });
     if (query.error) throw query.error;
     return (query.data ?? []).map(mapClient);
   },
@@ -117,7 +123,7 @@ export const api = {
   async getProducts(): Promise<Product[]> {
     const query = await supabase
       .from("products")
-      .select("*, categories(name)")
+      .select("id, name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, source_url, created_at, categories(name)")
       .order("created_at", { ascending: false });
     if (query.error) throw query.error;
     return (query.data ?? []).map((row: any) => mapProduct({ ...row, category_name: row.categories?.name ?? null }));
@@ -175,14 +181,20 @@ export const api = {
   },
 
   async getOrders(): Promise<Order[]> {
-    const ordersQuery = await supabase.from("orders").select("*").order("date", { ascending: false });
+    const ordersQuery = await supabase
+      .from("orders")
+      .select("id, client_id, guest_name, guest_email, guest_phone, date, status")
+      .order("date", { ascending: false });
     if (ordersQuery.error) throw ordersQuery.error;
 
     const orders = ordersQuery.data ?? [];
     if (orders.length === 0) return [];
 
     const orderIds = orders.map((order) => order.id);
-    const itemsQuery = await supabase.from("order_items").select("*").in("order_id", orderIds);
+    const itemsQuery = await supabase
+      .from("order_items")
+      .select("order_id, product_id, quantity, unit_sale_price, unit_purchase_price")
+      .in("order_id", orderIds);
     if (itemsQuery.error) throw itemsQuery.error;
 
     const itemsByOrderId = new Map<number, any[]>();
@@ -196,7 +208,11 @@ export const api = {
   },
 
   async getFinanceExpenses(): Promise<FinanceExpense[]> {
-    const query = await supabase.from("finance_expenses").select("*").order("date", { ascending: false }).order("id", { ascending: false });
+    const query = await supabase
+      .from("finance_expenses")
+      .select("id, type, description, detail, category, amount, date, created_at")
+      .order("date", { ascending: false })
+      .order("id", { ascending: false });
     if (query.error) throw query.error;
     return (query.data ?? []).map(mapFinanceExpense);
   },
@@ -281,7 +297,10 @@ export const api = {
   },
 
   async getFavorites(clientId: number): Promise<Favorite[]> {
-    const query = await supabase.from("favorites").select("*").eq("client_id", clientId);
+    const query = await supabase
+      .from("favorites")
+      .select("id, client_id, product_id, created_at")
+      .eq("client_id", clientId);
     if (query.error) throw query.error;
     return (query.data ?? []).map(mapFavorite);
   },
@@ -298,7 +317,11 @@ export const api = {
   },
 
   async getHeroBanner(): Promise<HeroBanner | null> {
-    const query = await supabase.from("hero_banner").select("*").eq("id", 1).maybeSingle();
+    const query = await supabase
+      .from("hero_banner")
+      .select("id, tag, title, subtitle, image")
+      .eq("id", 1)
+      .maybeSingle();
     if (query.error) throw query.error;
     if (!query.data) return null;
     return {
@@ -310,7 +333,9 @@ export const api = {
   },
 
   async getFeaturedPanels(): Promise<FeaturedPanel[]> {
-    const query = await supabase.from("featured_panels").select("*");
+    const query = await supabase
+      .from("featured_panels")
+      .select("id, title, cta, image, class_name, category_id");
     if (query.error) throw query.error;
     return (query.data ?? []).map((panel: any) => ({
       id: String(panel.id),

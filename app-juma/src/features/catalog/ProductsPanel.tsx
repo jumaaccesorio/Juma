@@ -169,7 +169,7 @@ function ProductsPanel({
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 className="font-serif text-3xl font-bold text-slate-900 dark:text-white">Admin Productos</h2>
-          <p className="text-slate-500 mt-1">Gestiona tu catalogo de joyeria e inventario.</p>
+          <p className="mt-1 text-slate-600">Gestiona tu catálogo de joyería e inventario.</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}

@@ -5,19 +5,20 @@ type AdminSidebarProps = {
   onSetActiveTab: (tab: Tab) => void;
   isOpen: boolean;
   onClose: () => void;
+  onLogout: () => void;
 };
 
-export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClose }: AdminSidebarProps) {
+export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClose, onLogout }: AdminSidebarProps) {
   const menuItems = [
-    { id: "dashboard", label: "Dashboard", icon: "dashboard" },
-    { id: "venta_rapida", label: "Venta Rapida", icon: "bolt" },
-    { id: "categorias", label: "Categorias", icon: "category" },
+    { id: "dashboard", label: "Inicio", icon: "dashboard" },
+    { id: "venta_rapida", label: "Venta rápida", icon: "bolt" },
+    { id: "categorias", label: "Categorías", icon: "category" },
     { id: "inventario", label: "Inventario", icon: "inventory_2" },
     { id: "productos", label: "Productos", icon: "layers" },
     { id: "clientes", label: "Usuarios", icon: "group" },
     { id: "pedidos", label: "Pedidos", icon: "shopping_bag" },
     { id: "finanzas", label: "Finanzas", icon: "payments" },
-    { id: "inicio_admin", label: "Configuracion", icon: "settings" },
+    { id: "inicio_admin", label: "Configuración", icon: "settings" },
   ];
 
   return (
@@ -29,13 +30,13 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
         className={`fixed inset-0 z-40 bg-ink/35 transition-opacity md:hidden ${isOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
       />
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen w-[20rem] flex-col border-r border-outline-variant/10 bg-surface px-6 py-6 transition-transform duration-300 md:w-64 md:translate-x-0 md:border-line md:bg-secondary md:px-4 ${
+        className={`fixed left-0 top-0 z-50 flex h-screen w-[20rem] flex-col border-r border-line bg-secondary px-6 py-6 shadow-[18px_0_40px_rgba(45,45,45,0.16)] transition-transform duration-300 md:w-64 md:translate-x-0 md:px-4 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="mb-8 flex items-start justify-between md:mb-10 md:px-2">
           <div className="flex items-center gap-4 md:block">
-            <div className="flex size-12 items-center justify-center overflow-hidden rounded-full bg-surface-container-high md:hidden">
+            <div className="flex size-12 items-center justify-center overflow-hidden rounded-full bg-background shadow-sm md:hidden">
               <span className="font-body text-sm font-semibold text-primary">J</span>
             </div>
             <div>
@@ -45,10 +46,10 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-outline-variant/20 bg-surface-container-low text-secondary md:hidden"
+            <button
+              type="button"
+              onClick={onClose}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-background text-secondary shadow-sm md:hidden"
           >
             <span className="material-symbols-outlined text-lg">close</span>
           </button>
@@ -64,8 +65,8 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
               }}
               className={`group flex w-full items-center gap-4 rounded px-3 py-3 text-left transition-all duration-150 md:rounded-none md:border-r-2 md:px-4 ${
                 activeTab === item.id
-                  ? "bg-secondary-container text-primary md:border-r-primary md:bg-background md:font-semibold"
-                  : "text-secondary hover:bg-surface-container-low md:border-r-transparent md:text-muted md:hover:bg-background/70"
+                  ? "bg-background text-primary shadow-sm md:border-r-primary md:font-semibold"
+                  : "text-secondary hover:bg-background/80 md:border-r-transparent md:text-muted md:hover:bg-background/70"
               }`}
             >
               <span
@@ -83,8 +84,19 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
           ))}
         </nav>
 
-        <div className="mt-auto border-t border-outline-variant/10 pt-6 md:border-line md:pt-4">
-          <div className="mt-4 flex items-center gap-3 rounded border border-outline-variant/10 bg-surface-container-lowest px-4 py-4 shadow-[0_12px_40px_rgba(45,45,45,0.04)] md:border-line md:bg-background md:shadow-subtle">
+        <div className="mt-auto border-t border-line pt-6 md:pt-4">
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onLogout();
+            }}
+            className="mb-4 flex w-full items-center gap-3 rounded border border-red-200 bg-red-50 px-4 py-3 text-left text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 md:hidden"
+          >
+            <span className="material-symbols-outlined text-lg">logout</span>
+            Cerrar sesión
+          </button>
+          <div className="mt-4 flex items-center gap-3 rounded border border-line bg-background px-4 py-4 shadow-[0_12px_40px_rgba(45,45,45,0.08)] md:shadow-subtle">
             <div className="flex size-10 items-center justify-center rounded-full bg-primary font-bold text-white">J</div>
             <div>
               <p className="text-xs font-bold text-primary">Juma Accessory</p>

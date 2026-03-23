@@ -56,8 +56,8 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
     <div className="min-h-screen flex-1 space-y-8 bg-secondary p-4 text-ink md:space-y-12 md:p-10">
       <div className="space-y-6 md:hidden">
         <div className="mb-8">
-          <h2 className="font-headline text-4xl text-primary leading-tight">Curated Inventory</h2>
-          <p className="mt-1 text-sm tracking-wide text-secondary">Refining the digital atelier&apos;s stock.</p>
+          <h2 className="font-headline text-4xl text-primary leading-tight">Inventario</h2>
+          <p className="mt-1 text-sm tracking-wide text-secondary">Gestiona el stock del atelier digital.</p>
         </div>
 
         <div className="relative">
@@ -66,7 +66,7 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
           </div>
           <input
             className="w-full rounded-none border-none bg-surface-container-lowest py-4 pl-12 pr-4 text-sm outline outline-1 outline-outline-variant/15 transition-all focus:outline-primary"
-            placeholder="Search archive..."
+            placeholder="Buscar en inventario..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             type="text"
@@ -79,7 +79,7 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
             onClick={() => setCategoryFilter("")}
             className={`whitespace-nowrap rounded-full px-6 py-2 text-xs font-medium ${!categoryFilter ? "bg-primary text-on-primary" : "bg-surface-container-low text-secondary hover:bg-secondary-container"}`}
           >
-            All
+            Todas
           </button>
           {rootCategories.map((category) => (
             <button

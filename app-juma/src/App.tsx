@@ -206,33 +206,104 @@ function App() {
     status: "PENDIENTE" as "PENDIENTE" | "REALIZADO",
     items: [] as NewOrderItem[],
   });
+  const [hasLoadedAdminData, setHasLoadedAdminData] = useState(false);
+
+  const normalizeProducts = (rows: Product[]) =>
+    rows.map((row) => ({ ...row, enabled: row.enabled ?? true, image: row.image ?? "" }));
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const [c, cats, p, o, expenses, fp, hb] = await Promise.all([
-          api.getClients(),
-          api.getCategories(),
-          api.getProducts(),
-          api.getOrders(),
-          api.getFinanceExpenses(),
-          api.getFeaturedPanels(),
-          api.getHeroBanner()
-        ]);
-        setClients(c);
-        setCategories(cats);
-        setProducts(p.map((x) => ({ ...x, enabled: x.enabled ?? true, image: x.image ?? "" })));
-        setOrders(o);
-        setFinanceExpenses(expenses);
-        if (fp.length > 0) setFeaturedPanels(fp);
-        if (hb) setHeroBanner(hb);
-        setHomeConfigDirty(false);
-      } catch (err) {
-        console.error("Failed to load initial data from Supabase", err);
+    async function loadPublicData() {
+      setError("");
+
+      const results = await Promise.allSettled([
+        api.getCategories(),
+        api.getProducts(),
+        api.getFeaturedPanels(),
+        api.getHeroBanner(),
+      ]);
+
+      const [categoriesResult, productsResult, panelsResult, heroResult] = results;
+
+      if (categoriesResult.status === "fulfilled") {
+        setCategories(categoriesResult.value);
+      } else {
+        console.warn("No se pudieron cargar las categorias.", categoriesResult.reason);
+      }
+
+      if (productsResult.status === "fulfilled") {
+        setProducts(normalizeProducts(productsResult.value));
+      } else {
+        console.warn("No se pudieron cargar los productos.", productsResult.reason);
+      }
+
+      if (panelsResult.status === "fulfilled") {
+        if (panelsResult.value.length > 0) setFeaturedPanels(panelsResult.value);
+      } else {
+        console.warn("No se pudieron cargar los paneles destacados.", panelsResult.reason);
+      }
+
+      if (heroResult.status === "fulfilled") {
+        if (heroResult.value) setHeroBanner(heroResult.value);
+      } else {
+        console.warn("No se pudo cargar el banner principal.", heroResult.reason);
+      }
+
+      setHomeConfigDirty(false);
+
+      const criticalErrors: string[] = [];
+      if (categoriesResult.status === "rejected") criticalErrors.push("categorías");
+      if (productsResult.status === "rejected") criticalErrors.push("productos");
+
+      if (criticalErrors.length > 0) {
+        setError(`No se pudieron cargar ${criticalErrors.join(" y ")} desde la base de datos. Revisá las políticas de Supabase y la conexión del dispositivo.`);
       }
     }
-    loadData();
+    loadPublicData();
   }, []);
+
+  useEffect(() => {
+    if (!isAdminLogged || hasLoadedAdminData) return;
+
+    let cancelled = false;
+
+    async function loadAdminData() {
+      const results = await Promise.allSettled([
+        api.getClients(),
+        api.getOrders(),
+        api.getFinanceExpenses(),
+      ]);
+
+      if (cancelled) return;
+
+      const [clientsResult, ordersResult, expensesResult] = results;
+
+      if (clientsResult.status === "fulfilled") {
+        setClients(clientsResult.value);
+      } else {
+        console.warn("No se pudieron cargar los clientes.", clientsResult.reason);
+      }
+
+      if (ordersResult.status === "fulfilled") {
+        setOrders(ordersResult.value);
+      } else {
+        console.warn("No se pudieron cargar los pedidos.", ordersResult.reason);
+      }
+
+      if (expensesResult.status === "fulfilled") {
+        setFinanceExpenses(expensesResult.value);
+      } else {
+        console.warn("No se pudieron cargar las finanzas.", expensesResult.reason);
+      }
+
+      setHasLoadedAdminData(true);
+    }
+
+    loadAdminData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdminLogged, hasLoadedAdminData]);
 
   useEffect(() => {
     if (!cartSuccessToast) return;
@@ -1134,6 +1205,7 @@ function App() {
           onSetActiveTab={setActiveTab}
           isOpen={isAdminSidebarOpen}
           onClose={() => setIsAdminSidebarOpen(false)}
+          onLogout={logoutAdmin}
         />
         <main className="flex min-h-screen flex-1 flex-col overflow-x-hidden md:ml-64">
           <AdminTopNav
@@ -1310,12 +1382,12 @@ function App() {
             )}
           </div>
 
-          <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around bg-background px-2 pb-6 pt-2 shadow-[0_-4px_20px_rgba(45,45,45,0.04)] md:hidden">
+          <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-line/80 bg-background/98 px-2 pb-6 pt-2 text-primary shadow-[0_-10px_30px_rgba(45,45,45,0.08)] backdrop-blur-sm md:hidden">
             {[
-              { id: "dashboard", label: "Dashboard", icon: "dashboard" },
-              { id: "venta_rapida", label: "Sales", icon: "payments" },
-              { id: "inventario", label: "Inventory", icon: "inventory_2" },
-              { id: "pedidos", label: "Orders", icon: "shopping_bag" },
+              { id: "dashboard", label: "Inicio", icon: "dashboard" },
+              { id: "venta_rapida", label: "Ventas", icon: "payments" },
+              { id: "inventario", label: "Stock", icon: "inventory_2" },
+              { id: "pedidos", label: "Pedidos", icon: "shopping_bag" },
             ].map((item) => {
               const isActive = activeTab === item.id;
               return (
@@ -1325,8 +1397,8 @@ function App() {
                   onClick={() => setActiveTab(item.id as Tab)}
                   className={`flex flex-col items-center justify-center px-3 py-1 transition-opacity ${
                     isActive
-                      ? "scale-90 rounded-xl bg-secondary text-primary"
-                      : "text-secondary hover:text-primary"
+                      ? "scale-90 rounded-xl bg-primary/14 text-primary"
+                      : "text-muted hover:text-primary"
                   }`}
                 >
                   <span
@@ -1342,10 +1414,10 @@ function App() {
             <button
               type="button"
               onClick={() => setIsAdminSidebarOpen(true)}
-              className="flex flex-col items-center justify-center px-3 py-1 text-secondary transition-opacity hover:text-primary"
+              className="flex flex-col items-center justify-center px-3 py-1 text-muted transition-opacity hover:text-primary"
             >
               <span className="material-symbols-outlined">more_horiz</span>
-              <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.1em]">More</span>
+              <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.1em]">Más</span>
             </button>
           </nav>
         </main>

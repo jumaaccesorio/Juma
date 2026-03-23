@@ -86,9 +86,9 @@ function OrdersPanel({
   }, [orders, statusFilter, query, getClientName]);
 
   const statusTabs: Array<{ label: string; value: "ALL" | OrderStatus }> = [
-    { label: "All", value: "ALL" },
-    { label: "Processing", value: "PENDIENTE" },
-    { label: "Delivered", value: "REALIZADO" },
+    { label: "Todos", value: "ALL" },
+    { label: "Pendientes", value: "PENDIENTE" },
+    { label: "Realizados", value: "REALIZADO" },
   ];
 
   return (
@@ -96,15 +96,15 @@ function OrdersPanel({
       <div className="mx-auto max-w-lg space-y-6 md:hidden">
         <div className="mb-2 flex items-end justify-between">
           <div>
-            <p className="mb-1 text-xs uppercase tracking-widest text-secondary">Archive</p>
-            <h2 className="font-headline text-4xl font-bold text-on-surface">Orders</h2>
+            <p className="mb-1 text-xs uppercase tracking-widest text-secondary">Gestión</p>
+            <h2 className="font-headline text-4xl font-bold text-ink">Pedidos</h2>
           </div>
           <button
             type="button"
             onClick={() => setShowForm(!showForm)}
             className="rounded-sm bg-gradient-to-br from-primary to-primary-container px-4 py-2 text-xs font-bold uppercase tracking-widest text-white shadow-sm transition-opacity hover:opacity-80"
           >
-            {showForm ? "Close" : "New Order"}
+            {showForm ? "Cerrar" : "Nuevo pedido"}
           </button>
         </div>
 
@@ -113,7 +113,7 @@ function OrdersPanel({
             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
             <input
               className="w-full rounded-sm bg-surface-container-lowest py-4 pl-12 pr-4 text-sm shadow-sm transition-all placeholder:text-outline-variant focus:ring-1 focus:ring-primary"
-              placeholder="Search orders..."
+              placeholder="Buscar pedidos..."
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
