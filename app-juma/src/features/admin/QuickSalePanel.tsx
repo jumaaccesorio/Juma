@@ -44,6 +44,19 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
     () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
     [categories],
   );
+  const categoryChips = useMemo(
+    () =>
+      categories
+        .map((category) => {
+          const parent = category.parentId ? categories.find((row) => row.id === category.parentId) ?? null : null;
+          return {
+            id: category.id,
+            label: parent ? `${parent.name} / ${category.name}` : category.name,
+          };
+        })
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [categories],
+  );
 
   const filteredProducts = useMemo(() => {
     let list = enabledProducts;
@@ -265,7 +278,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
             >
               All
             </button>
-            {rootCategories.map((category) => (
+            {categoryChips.map((category) => (
               <button
                 key={category.id}
                 type="button"
@@ -280,7 +293,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                     : "bg-surface-container-low text-secondary hover:bg-secondary-container"
                 }`}
               >
-                {category.name}
+                {category.label}
               </button>
             ))}
           </div>
@@ -485,7 +498,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           >
             Todos
           </button>
-          {rootCategories.map(cat => (
+          {categoryChips.map(cat => (
             <button
               key={cat.id}
               type="button"

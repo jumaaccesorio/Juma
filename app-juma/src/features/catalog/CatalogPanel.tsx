@@ -35,6 +35,20 @@ function CatalogPanel({
     () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
     [categories],
   );
+  const categoryChips = useMemo(
+    () =>
+      categories
+        .map((category) => {
+          const parent = category.parentId ? categories.find((row) => row.id === category.parentId) ?? null : null;
+          return {
+            id: category.id,
+            label: parent ? `${parent.name} / ${category.name}` : category.name,
+            isSubcategory: Boolean(parent),
+          };
+        })
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [categories],
+  );
 
   useEffect(() => {
     setSelectedCategory(initialCategory);
@@ -160,7 +174,7 @@ function CatalogPanel({
           >
             Todas
           </button>
-          {rootCategories.map((category) => (
+          {categoryChips.map((category) => (
             <button
               key={category.id}
               type="button"
@@ -169,7 +183,7 @@ function CatalogPanel({
                 selectedCategory === category.id ? "border-primary bg-primary text-white" : "border-primary/20 bg-white text-primary hover:border-primary"
               }`}
             >
-              {category.name}
+              {category.label}
             </button>
           ))}
         </div>
