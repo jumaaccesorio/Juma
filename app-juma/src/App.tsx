@@ -1088,7 +1088,7 @@ function App() {
 
   const updateHeroText = (field: "tag" | "title" | "subtitle", value: string) => {
     setHomeConfigDirty(true);
-    setHeroBanner((prev) => ({ ...prev, [field]: value }));
+    setHeroBanner((prev) => ({ ...(prev ?? DEFAULT_HERO_BANNER), [field]: value }));
   };
 
   const updateHeroImage = (file: File | null) => {
@@ -1098,7 +1098,7 @@ function App() {
     reader.onload = () => {
       const dataUrl = typeof reader.result === "string" ? reader.result : "";
       if (!dataUrl) return;
-      setHeroBanner((prev) => ({ ...prev, image: dataUrl }));
+      setHeroBanner((prev) => ({ ...(prev ?? DEFAULT_HERO_BANNER), image: dataUrl }));
     };
     reader.readAsDataURL(file);
   };
@@ -1107,7 +1107,7 @@ function App() {
     try {
       setError("");
       setIsSavingHomeConfig(true);
-      await api.saveHomeConfiguration(heroBanner, featuredPanels);
+      await api.saveHomeConfiguration(heroBanner ?? DEFAULT_HERO_BANNER, featuredPanels);
       setHomeConfigDirty(false);
     } catch (err) {
       console.error(err);

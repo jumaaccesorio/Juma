@@ -40,10 +40,6 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   };
 
   const enabledProducts = useMemo(() => products.filter(p => p.enabled && p.stock > 0), [products]);
-  const rootCategories = useMemo(
-    () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
-    [categories],
-  );
   const categoryChips = useMemo(
     () =>
       categories
@@ -509,7 +505,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
               }}
               className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${selectedCategoryId === cat.id ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-[#F3EDE2] text-slate-600 hover:border-primary"}`}
             >
-              {cat.name}
+              {cat.label}
             </button>
           ))}
         </div>

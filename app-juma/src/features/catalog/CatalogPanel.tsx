@@ -33,10 +33,6 @@ function CatalogPanel({
   const [selectedCategory, setSelectedCategory] = useState<number | null>(initialCategory);
   const [page, setPage] = useState(1);
   const productsGridRef = useRef<HTMLElement | null>(null);
-  const rootCategories = useMemo(
-    () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
-    [categories],
-  );
   const categoryChips = useMemo(
     () =>
       categories
