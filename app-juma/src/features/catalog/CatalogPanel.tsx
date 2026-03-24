@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Category, FeaturedPanel, HeroBanner, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
 
@@ -30,6 +30,7 @@ function CatalogPanel({
   const PRODUCTS_PER_PAGE = 16;
   const [selectedCategory, setSelectedCategory] = useState<number | null>(initialCategory);
   const [page, setPage] = useState(1);
+  const productsGridRef = useRef<HTMLElement | null>(null);
   const rootCategories = useMemo(
     () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
     [categories],
@@ -73,6 +74,12 @@ function CatalogPanel({
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
+
+  useEffect(() => {
+    if (!productsGridRef.current) return;
+    const top = productsGridRef.current.getBoundingClientRect().top + window.scrollY - 110;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+  }, [page]);
 
   return (
     <div className="flex flex-col">
@@ -128,7 +135,7 @@ function CatalogPanel({
         </div>
       </section>
 
-      <section id="catalog-products-section" className="bg-primary/[0.03] px-6 md:px-40 py-20">
+      <section ref={productsGridRef} id="catalog-products-section" className="bg-primary/[0.03] px-6 md:px-40 py-20">
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
           <div className="flex flex-col">
             <span className="text-primary font-bold tracking-[0.3em] uppercase text-xs mb-2">Catalogo Online</span>

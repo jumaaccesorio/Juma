@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Category, Client, Order, OrderItem, Product } from "../../types";
 import { api } from "../../lib/api";
 import { getProductDisplayName } from "../../lib/productLabel";
@@ -30,6 +30,14 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   const [successMsg, setSuccessMsg] = useState("");
   const [mobilePage, setMobilePage] = useState(1);
   const [desktopPage, setDesktopPage] = useState(1);
+  const mobileCatalogRef = useRef<HTMLElement | null>(null);
+  const desktopCatalogRef = useRef<HTMLElement | null>(null);
+
+  const scrollToSectionStart = (element: HTMLElement | null) => {
+    if (!element) return;
+    const top = element.getBoundingClientRect().top + window.scrollY - 110;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+  };
 
   const enabledProducts = useMemo(() => products.filter(p => p.enabled && p.stock > 0), [products]);
   const rootCategories = useMemo(
@@ -94,6 +102,14 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
     if (mobilePage > mobileTotalPages) setMobilePage(mobileTotalPages);
     if (desktopPage > desktopTotalPages) setDesktopPage(desktopTotalPages);
   }, [desktopPage, desktopTotalPages, mobilePage, mobileTotalPages]);
+
+  useEffect(() => {
+    scrollToSectionStart(mobileCatalogRef.current);
+  }, [mobilePage]);
+
+  useEffect(() => {
+    scrollToSectionStart(desktopCatalogRef.current);
+  }, [desktopPage]);
 
   useEffect(() => {
     setMobilePage(1);
@@ -175,7 +191,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           </div>
         )}
 
-        <section className="mb-8">
+        <section ref={mobileCatalogRef} className="mb-8">
           <div className="mb-4 min-w-0">
             <h2 className="font-headline text-xl italic text-primary">Venta Rápida</h2>
             <span className="mt-1 block text-[10px] font-medium uppercase tracking-[0.2em] text-secondary">Boutique Admin</span>
@@ -427,7 +443,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
       <div className="hidden h-full flex-1 flex-col overflow-hidden bg-[#f8f6f6] md:flex xl:flex-row">
 
       {/* Left: Product Selector */}
-      <section className="flex flex-1 flex-col space-y-5 overflow-hidden p-4 md:p-6">
+      <section ref={desktopCatalogRef} className="flex flex-1 flex-col space-y-5 overflow-hidden p-4 md:p-6">
         {successMsg && (
           <div className="bg-green-50 border border-green-200 text-green-700 font-bold text-sm px-5 py-3 rounded-xl flex items-center gap-2">
             <span className="material-symbols-outlined">check_circle</span>{successMsg}

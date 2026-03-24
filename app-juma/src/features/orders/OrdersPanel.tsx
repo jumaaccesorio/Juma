@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { Client, NewOrderItem, Order, OrderStatus, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
@@ -54,6 +54,14 @@ function OrdersPanel({
   const [statusFilter, setStatusFilter] = useState<"ALL" | OrderStatus>("ALL");
   const [mobileProductsPage, setMobileProductsPage] = useState(1);
   const [desktopProductsPage, setDesktopProductsPage] = useState(1);
+  const mobileProductsRef = useRef<HTMLDivElement | null>(null);
+  const desktopProductsRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollToSectionStart = (element: HTMLDivElement | null) => {
+    if (!element) return;
+    const top = element.getBoundingClientRect().top + window.scrollY - 110;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+  };
 
   const enabledProducts = useMemo(() => products.filter((product) => product.enabled), [products]);
   const filteredProducts = useMemo(() => {
@@ -78,6 +86,14 @@ function OrdersPanel({
     if (mobileProductsPage > mobileProductsTotalPages) setMobileProductsPage(mobileProductsTotalPages);
     if (desktopProductsPage > desktopProductsTotalPages) setDesktopProductsPage(desktopProductsTotalPages);
   }, [desktopProductsPage, desktopProductsTotalPages, mobileProductsPage, mobileProductsTotalPages]);
+
+  useEffect(() => {
+    scrollToSectionStart(mobileProductsRef.current);
+  }, [mobileProductsPage]);
+
+  useEffect(() => {
+    scrollToSectionStart(desktopProductsRef.current);
+  }, [desktopProductsPage]);
 
   useEffect(() => {
     setMobileProductsPage(1);
@@ -246,7 +262,7 @@ function OrdersPanel({
                   {selectedRows.length}
                 </span>
               </div>
-              <div className="grid max-h-56 grid-cols-2 gap-3 overflow-y-auto rounded-sm bg-surface-container-low p-3">
+              <div ref={mobileProductsRef} className="grid max-h-56 grid-cols-2 gap-3 overflow-y-auto rounded-sm bg-surface-container-low p-3">
                 {mobileVisibleProducts.map((product) => (
                   <button
                     key={product.id}
@@ -512,7 +528,7 @@ function OrdersPanel({
               </div>
             </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 max-h-64 overflow-y-auto p-2 border border-slate-100 rounded-lg bg-slate-50/50">
+            <div ref={desktopProductsRef} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 max-h-64 overflow-y-auto p-2 border border-slate-100 rounded-lg bg-slate-50/50">
               {desktopVisibleProducts.map((product) => (
                 <button
                   key={product.id}
