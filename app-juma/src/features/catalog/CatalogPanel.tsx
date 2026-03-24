@@ -7,7 +7,8 @@ type CatalogPanelProps = {
   categories: Category[];
   onAddToCart: (productId: number) => void;
   featuredPanels: FeaturedPanel[];
-  heroBanner: HeroBanner;
+  heroBanner: HeroBanner | null;
+  isHomeContentLoaded: boolean;
   favoriteProductIds: Set<number>;
   onToggleFavorite: (productId: number) => void;
   initialCategory: number | null;
@@ -21,6 +22,7 @@ function CatalogPanel({
   onAddToCart,
   featuredPanels,
   heroBanner,
+  isHomeContentLoaded,
   favoriteProductIds,
   onToggleFavorite,
   initialCategory,
@@ -60,7 +62,7 @@ function CatalogPanel({
     onCategoryChange(category);
   };
 
-  const heroTitleLines = heroBanner.title.split("\n");
+  const heroTitleLines = heroBanner?.title.split("\n") ?? [];
   const selectedCategoryName = selectedCategory ? categories.find((category) => category.id === selectedCategory)?.name ?? null : null;
   const filteredProducts = useMemo(() => {
     if (!selectedCategory) return products;
@@ -98,56 +100,64 @@ function CatalogPanel({
   return (
     <div className="flex flex-col">
       <section className="relative h-[716px] min-h-[500px] w-full overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
-          style={{ backgroundImage: `linear-gradient(to right, rgba(45, 45, 45, 0.58), transparent), url("${heroBanner.image}")` }}
-        />
-        <div className="relative h-full flex flex-col items-start justify-center px-6 md:px-40 gap-6">
-          <div className="max-w-xl">
-            <h1 className="font-headline text-white text-5xl md:text-7xl font-light leading-tight tracking-tight">
-              {heroTitleLines.length > 1 ? (
-                <>
-                  {heroTitleLines[0]} <br />
-                  <span className="font-semibold italic">{heroTitleLines[1]}</span>
-                </>
-              ) : (
-                <span className="font-semibold italic">{heroBanner.title}</span>
-              )}
-            </h1>
-            <p className="text-white/90 text-lg md:text-xl font-light mt-4 max-w-md">{heroBanner.subtitle}</p>
-          </div>
-          <button className="group flex items-center gap-2 border border-primary text-primary bg-background/85 backdrop-blur px-5 py-2.5 rounded font-bold text-xs uppercase tracking-[0.18em] hover:bg-primary hover:text-white transition-all shadow-subtle">
-            <span>{heroBanner.tag || "Ver Coleccion"}</span>
-            <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
-          </button>
-        </div>
+        {isHomeContentLoaded && heroBanner ? (
+          <>
+            <div
+              className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
+              style={{ backgroundImage: `linear-gradient(to right, rgba(45, 45, 45, 0.58), transparent), url("${heroBanner.image}")` }}
+            />
+            <div className="relative h-full flex flex-col items-start justify-center px-6 md:px-40 gap-6">
+              <div className="max-w-xl">
+                <h1 className="font-headline text-white text-5xl md:text-7xl font-light leading-tight tracking-tight">
+                  {heroTitleLines.length > 1 ? (
+                    <>
+                      {heroTitleLines[0]} <br />
+                      <span className="font-semibold italic">{heroTitleLines[1]}</span>
+                    </>
+                  ) : (
+                    <span className="font-semibold italic">{heroBanner.title}</span>
+                  )}
+                </h1>
+                <p className="mt-4 max-w-md text-lg font-light text-white/90 md:text-xl">{heroBanner.subtitle}</p>
+              </div>
+              <button className="group flex items-center gap-2 rounded border border-primary bg-background/85 px-5 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-primary shadow-subtle backdrop-blur transition-all hover:bg-primary hover:text-white">
+                <span>{heroBanner.tag || "Ver Coleccion"}</span>
+                <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-secondary/55" />
+        )}
       </section>
 
-      <section className="px-6 md:px-40 py-20">
-        <div className="flex flex-col items-center mb-12 text-center">
-          <span className="text-primary font-bold tracking-[0.3em] uppercase text-xs mb-2">Seleccion Exclusiva</span>
-          <h2 className="font-headline text-carbon text-3xl font-light">Nuestras Categorias</h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredPanels.map((panel) => (
-            <div key={panel.id} className="group relative aspect-[4/5] overflow-hidden rounded bg-slate-200 shadow-subtle">
-              <div
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                style={{ backgroundImage: `linear-gradient(0deg, rgba(45, 45, 45, 0.45) 0%, transparent 50%), url("${panel.image}")` }}
-              />
-              <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                <h3 className="font-headline text-white text-xl font-medium tracking-tight">{panel.title}</h3>
-                <button
-                  onClick={() => onPanelCategoryClick(panel.categoryId ?? null)}
-                  className="text-white/80 text-xs font-medium uppercase tracking-[0.18em] mt-2 flex items-center gap-2 group-hover:text-white"
-                >
-                  {panel.cta} <span className="material-symbols-outlined text-sm">trending_flat</span>
-                </button>
+      {isHomeContentLoaded && featuredPanels.length > 0 ? (
+        <section className="px-6 py-20 md:px-40">
+          <div className="mb-12 flex flex-col items-center text-center">
+            <span className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-primary">Seleccion Exclusiva</span>
+            <h2 className="font-headline text-3xl font-light text-carbon">Nuestras Categorias</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {featuredPanels.map((panel) => (
+              <div key={panel.id} className="group relative aspect-[4/5] overflow-hidden rounded bg-slate-200 shadow-subtle">
+                <div
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                  style={{ backgroundImage: `linear-gradient(0deg, rgba(45, 45, 45, 0.45) 0%, transparent 50%), url("${panel.image}")` }}
+                />
+                <div className="absolute inset-0 flex flex-col justify-end p-6">
+                  <h3 className="font-headline text-xl font-medium tracking-tight text-white">{panel.title}</h3>
+                  <button
+                    onClick={() => onPanelCategoryClick(panel.categoryId ?? null)}
+                    className="mt-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-white/80 group-hover:text-white"
+                  >
+                    {panel.cta} <span className="material-symbols-outlined text-sm">trending_flat</span>
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section ref={productsGridRef} id="catalog-products-section" className="bg-primary/[0.03] px-6 md:px-40 py-20">
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">

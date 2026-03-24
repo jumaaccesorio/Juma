@@ -164,8 +164,9 @@ function App() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<number | null>(null);
-  const [featuredPanels, setFeaturedPanels] = useState<FeaturedPanel[]>(DEFAULT_FEATURED_PANELS);
-  const [heroBanner, setHeroBanner] = useState<HeroBanner>(DEFAULT_HERO_BANNER);
+  const [featuredPanels, setFeaturedPanels] = useState<FeaturedPanel[]>([]);
+  const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
+  const [isHomeContentLoaded, setIsHomeContentLoaded] = useState(false);
   const [homeConfigDirty, setHomeConfigDirty] = useState(false);
   const [isSavingHomeConfig, setIsSavingHomeConfig] = useState(false);
   const [error, setError] = useState("");
@@ -251,6 +252,7 @@ function App() {
       }
 
       setHomeConfigDirty(false);
+      setIsHomeContentLoaded(true);
 
       const criticalErrors: string[] = [];
       if (categoriesResult.status === "rejected") criticalErrors.push("categorías");
@@ -1302,6 +1304,7 @@ function App() {
                   onAddToCart={addToCart}
                   featuredPanels={featuredPanels}
                   heroBanner={heroBanner}
+                  isHomeContentLoaded={isHomeContentLoaded}
                   favoriteProductIds={new Set(favorites.map(f => f.productId))}
                   onToggleFavorite={toggleFavorite}
                   initialCategory={catalogCategoryFilter}
@@ -1326,8 +1329,8 @@ function App() {
             {activeTab === "inicio_admin" && (
               <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
                 <AdminHomePanel
-                  heroBanner={heroBanner}
-                  featuredPanels={featuredPanels}
+                  heroBanner={heroBanner ?? DEFAULT_HERO_BANNER}
+                  featuredPanels={featuredPanels.length > 0 ? featuredPanels : DEFAULT_FEATURED_PANELS}
                   categories={categories}
                   canAddMorePanels={featuredPanels.length < PANEL_SLOTS.length}
                   hasUnsavedChanges={homeConfigDirty}
@@ -1601,6 +1604,7 @@ function App() {
           onAddToCart={addToCart}
           featuredPanels={featuredPanels}
           heroBanner={heroBanner}
+          isHomeContentLoaded={isHomeContentLoaded}
           favoriteProductIds={new Set(favorites.map(f => f.productId))}
           onToggleFavorite={toggleFavorite}
           initialCategory={catalogCategoryFilter}
