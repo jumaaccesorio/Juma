@@ -2,6 +2,8 @@ import type { Category, Client, Favorite, FeaturedPanel, FinanceExpense, HeroBan
 import { supabase } from "./supabase";
 
 const PRODUCT_IMAGES_BUCKET = "products";
+const PRODUCT_PUBLIC_PREFIX = `/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/`;
+const PRODUCT_SIGNED_PREFIX = `/storage/v1/object/sign/${PRODUCT_IMAGES_BUCKET}/`;
 
 function toErrorMessage(error: unknown, fallback = "Ocurrio un error inesperado.") {
   if (error && typeof error === "object" && "message" in error && typeof (error as { message?: unknown }).message === "string") {
@@ -135,9 +137,34 @@ export const api = {
     if (productIds.length === 0) return [];
     const query = await supabase.from("products").select("id, image").in("id", productIds);
     if (query.error) throw query.error;
-    return (query.data ?? []).map((row: any) => ({
+
+    const rows = (query.data ?? []).map((row: any) => ({
       id: Number(row.id),
       image: typeof row.image === "string" ? row.image : "",
+    }));
+
+    const signable = rows
+      .map((row) => ({ id: row.id, path: extractProductStoragePath(row.image) }))
+      .filter((row): row is { id: number; path: string } => Boolean(row.path));
+
+    if (signable.length === 0) return rows;
+
+    const signed = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).createSignedUrls(
+      signable.map((row) => row.path),
+      60 * 60 * 24 * 7,
+    );
+
+    if (signed.error) throw signed.error;
+
+    const signedMap = new Map<number, string>();
+    signable.forEach((row, index) => {
+      const signedUrl = signed.data?.[index]?.signedUrl;
+      if (signedUrl) signedMap.set(row.id, signedUrl);
+    });
+
+    return rows.map((row) => ({
+      id: row.id,
+      image: signedMap.get(row.id) ?? row.image,
     }));
   },
 
@@ -457,6 +484,28 @@ function mapProduct(row: any): Product {
     sourceUrl: row.source_url ?? "",
     createdAt: row.created_at ?? "",
   };
+}
+
+function extractProductStoragePath(image: string): string | null {
+  if (!image) return null;
+  if (image.startsWith("data:image/")) return null;
+
+  if (/^https?:\/\//i.test(image)) {
+    try {
+      const url = new URL(image);
+      if (url.pathname.includes(PRODUCT_PUBLIC_PREFIX)) {
+        return decodeURIComponent(url.pathname.split(PRODUCT_PUBLIC_PREFIX)[1] ?? "").trim() || null;
+      }
+      if (url.pathname.includes(PRODUCT_SIGNED_PREFIX)) {
+        return decodeURIComponent(url.pathname.split(PRODUCT_SIGNED_PREFIX)[1] ?? "").trim() || null;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  return image.trim() || null;
 }
 
 function mapOrder(row: any): Order {

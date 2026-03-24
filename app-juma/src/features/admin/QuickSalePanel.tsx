@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Category, Client, Order, OrderItem, Product } from "../../types";
 import { api } from "../../lib/api";
 import { getProductDisplayName } from "../../lib/productLabel";
@@ -19,6 +19,8 @@ type QuickSalePanelProps = {
 };
 
 function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdateStock }: QuickSalePanelProps) {
+  const MOBILE_PRODUCTS_PER_PAGE = 12;
+  const DESKTOP_PRODUCTS_PER_PAGE = 24;
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [selectedClientId, setSelectedClientId] = useState<string>("");
@@ -26,6 +28,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
+  const [mobilePage, setMobilePage] = useState(1);
+  const [desktopPage, setDesktopPage] = useState(1);
 
   const enabledProducts = useMemo(() => products.filter(p => p.enabled && p.stock > 0), [products]);
   const rootCategories = useMemo(
@@ -47,6 +51,54 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
     }
     return list;
   }, [enabledProducts, selectedCategoryId, searchQuery]);
+
+  const mobileTotalPages = Math.max(1, Math.ceil(filteredProducts.length / MOBILE_PRODUCTS_PER_PAGE));
+  const desktopTotalPages = Math.max(1, Math.ceil(filteredProducts.length / DESKTOP_PRODUCTS_PER_PAGE));
+  const mobileProductsPage = useMemo(
+    () => filteredProducts.slice((mobilePage - 1) * MOBILE_PRODUCTS_PER_PAGE, mobilePage * MOBILE_PRODUCTS_PER_PAGE),
+    [filteredProducts, mobilePage],
+  );
+  const desktopProductsPage = useMemo(
+    () => filteredProducts.slice((desktopPage - 1) * DESKTOP_PRODUCTS_PER_PAGE, desktopPage * DESKTOP_PRODUCTS_PER_PAGE),
+    [filteredProducts, desktopPage],
+  );
+
+  const renderPager = (page: number, totalPages: number, onPageChange: (page: number) => void) => {
+    if (totalPages <= 1) return null;
+    return (
+      <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-line/70 bg-white px-4 py-3 shadow-sm">
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.max(1, page - 1))}
+          disabled={page === 1}
+          className="rounded-lg border border-line px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-primary disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Anterior
+        </button>
+        <span className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
+          Pagina {page} de {totalPages}
+        </span>
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+          disabled={page === totalPages}
+          className="rounded-lg border border-line px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-primary disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Siguiente
+        </button>
+      </div>
+    );
+  };
+
+  useEffect(() => {
+    if (mobilePage > mobileTotalPages) setMobilePage(mobileTotalPages);
+    if (desktopPage > desktopTotalPages) setDesktopPage(desktopTotalPages);
+  }, [desktopPage, desktopTotalPages, mobilePage, mobileTotalPages]);
+
+  useEffect(() => {
+    setMobilePage(1);
+    setDesktopPage(1);
+  }, [searchQuery]);
 
   const addToCart = (product: Product) => {
     setCart(prev => {
@@ -201,7 +253,11 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
               <button
                 key={category.id}
                 type="button"
-                onClick={() => setSelectedCategoryId(selectedCategoryId === category.id ? null : category.id)}
+                onClick={() => {
+                  setSelectedCategoryId(selectedCategoryId === category.id ? null : category.id);
+                  setMobilePage(1);
+                  setDesktopPage(1);
+                }}
                 className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-medium transition-colors ${
                   selectedCategoryId === category.id
                     ? "bg-primary text-on-primary"
@@ -220,7 +276,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
-              {filteredProducts.map((product) => {
+              {mobileProductsPage.map((product) => {
                 const inCart = cart.find((item) => item.product.id === product.id)?.quantity ?? 0;
                 return (
                   <button
@@ -270,6 +326,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
               })}
             </div>
           )}
+          {renderPager(mobilePage, mobileTotalPages, setMobilePage)}
         </section>
 
         <section className="mb-12">
@@ -407,6 +464,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
           <button
             onClick={() => setSelectedCategoryId(null)}
+            type="button"
             className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${!selectedCategoryId ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-[#F3EDE2] text-slate-600 hover:border-primary"}`}
           >
             Todos
@@ -414,7 +472,12 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           {rootCategories.map(cat => (
             <button
               key={cat.id}
-              onClick={() => setSelectedCategoryId(selectedCategoryId === cat.id ? null : cat.id)}
+              type="button"
+              onClick={() => {
+                setSelectedCategoryId(selectedCategoryId === cat.id ? null : cat.id);
+                setMobilePage(1);
+                setDesktopPage(1);
+              }}
               className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${selectedCategoryId === cat.id ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-[#F3EDE2] text-slate-600 hover:border-primary"}`}
             >
               {cat.name}
@@ -431,7 +494,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredProducts.map(product => {
+              {desktopProductsPage.map(product => {
                 const inCart = cart.find(i => i.product.id === product.id)?.quantity ?? 0;
                 const lowStock = product.stock <= 3;
                 return (
@@ -473,6 +536,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
               })}
             </div>
           )}
+          {renderPager(desktopPage, desktopTotalPages, setDesktopPage)}
         </div>
       </section>
 

@@ -27,7 +27,9 @@ function CatalogPanel({
   onCategoryChange,
   onPanelCategoryClick,
 }: CatalogPanelProps) {
+  const PRODUCTS_PER_PAGE = 16;
   const [selectedCategory, setSelectedCategory] = useState<number | null>(initialCategory);
+  const [page, setPage] = useState(1);
   const rootCategories = useMemo(
     () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
     [categories],
@@ -39,6 +41,7 @@ function CatalogPanel({
 
   const handleCategoryChange = (category: number | null) => {
     setSelectedCategory(category);
+    setPage(1);
     onCategoryChange(category);
   };
 
@@ -61,6 +64,15 @@ function CatalogPanel({
 
     return products.filter((product) => product.categoryId != null && includedCategoryIds.has(product.categoryId));
   }, [categories, products, selectedCategory]);
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
+  const visibleProducts = useMemo(
+    () => filteredProducts.slice((page - 1) * PRODUCTS_PER_PAGE, page * PRODUCTS_PER_PAGE),
+    [filteredProducts, page],
+  );
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   return (
     <div className="flex flex-col">
@@ -158,7 +170,7 @@ function CatalogPanel({
           {filteredProducts.length === 0 ? (
             <div className="col-span-full text-center py-20 text-muted">No hay productos cargados en el catalogo.</div>
           ) : (
-            filteredProducts.map((product) => (
+            visibleProducts.map((product) => (
               <div key={product.id} className="group bg-white rounded p-4 shadow-subtle transition-shadow hover:shadow-md">
                 <div className="relative aspect-square overflow-hidden rounded mb-4 bg-secondary/60 flex items-center justify-center">
                   {product.image ? (
@@ -196,6 +208,29 @@ function CatalogPanel({
             ))
           )}
         </div>
+        {totalPages > 1 && (
+          <div className="mt-10 flex items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={page === 1}
+              className="rounded border border-primary/20 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-primary disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Anterior
+            </button>
+            <span className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
+              Pagina {page} de {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={page === totalPages}
+              className="rounded border border-primary/20 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-primary disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Siguiente
+            </button>
+          </div>
+        )}
       </section>
 
       <section className="px-6 md:px-40 py-20 bg-background">

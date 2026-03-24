@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import type { Client, NewOrderItem, Order, OrderStatus, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
@@ -47,9 +47,13 @@ function OrdersPanel({
   getClientName,
   getOrderTotal,
 }: OrdersPanelProps) {
+  const MOBILE_PRODUCTS_PER_PAGE = 10;
+  const DESKTOP_PRODUCTS_PER_PAGE = 20;
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"ALL" | OrderStatus>("ALL");
+  const [mobileProductsPage, setMobileProductsPage] = useState(1);
+  const [desktopProductsPage, setDesktopProductsPage] = useState(1);
 
   const enabledProducts = useMemo(() => products.filter((product) => product.enabled), [products]);
   const filteredProducts = useMemo(() => {
@@ -59,6 +63,26 @@ function OrdersPanel({
       [product.name, product.subName, product.categoryName || ""].some((value) => (value || "").toLowerCase().includes(normalized)),
     );
   }, [enabledProducts, query]);
+
+  const mobileProductsTotalPages = Math.max(1, Math.ceil(filteredProducts.length / MOBILE_PRODUCTS_PER_PAGE));
+  const desktopProductsTotalPages = Math.max(1, Math.ceil(filteredProducts.length / DESKTOP_PRODUCTS_PER_PAGE));
+  const mobileVisibleProducts = useMemo(
+    () => filteredProducts.slice((mobileProductsPage - 1) * MOBILE_PRODUCTS_PER_PAGE, mobileProductsPage * MOBILE_PRODUCTS_PER_PAGE),
+    [filteredProducts, mobileProductsPage],
+  );
+  const desktopVisibleProducts = useMemo(
+    () => filteredProducts.slice((desktopProductsPage - 1) * DESKTOP_PRODUCTS_PER_PAGE, desktopProductsPage * DESKTOP_PRODUCTS_PER_PAGE),
+    [filteredProducts, desktopProductsPage],
+  );
+  useEffect(() => {
+    if (mobileProductsPage > mobileProductsTotalPages) setMobileProductsPage(mobileProductsTotalPages);
+    if (desktopProductsPage > desktopProductsTotalPages) setDesktopProductsPage(desktopProductsTotalPages);
+  }, [desktopProductsPage, desktopProductsTotalPages, mobileProductsPage, mobileProductsTotalPages]);
+
+  useEffect(() => {
+    setMobileProductsPage(1);
+    setDesktopProductsPage(1);
+  }, [query, showForm]);
 
   const selectedRows = useMemo(
     () =>
@@ -90,6 +114,33 @@ function OrdersPanel({
     { label: "Pendientes", value: "PENDIENTE" },
     { label: "Realizados", value: "REALIZADO" },
   ];
+
+  const renderPager = (page: number, totalPages: number, onPageChange: (page: number) => void) => {
+    if (totalPages <= 1) return null;
+    return (
+      <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-line/70 bg-white px-3 py-2 shadow-sm">
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.max(1, page - 1))}
+          disabled={page === 1}
+          className="rounded-lg border border-line px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-primary disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Anterior
+        </button>
+        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
+          Pagina {page}/{totalPages}
+        </span>
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+          disabled={page === totalPages}
+          className="rounded-lg border border-line px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-primary disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Siguiente
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="flex-1 min-h-screen space-y-8 bg-secondary p-4 md:p-8 dark:bg-carbon">
@@ -196,7 +247,7 @@ function OrdersPanel({
                 </span>
               </div>
               <div className="grid max-h-56 grid-cols-2 gap-3 overflow-y-auto rounded-sm bg-surface-container-low p-3">
-                {filteredProducts.map((product) => (
+                {mobileVisibleProducts.map((product) => (
                   <button
                     key={product.id}
                     type="button"
@@ -218,6 +269,7 @@ function OrdersPanel({
                   </button>
                 ))}
               </div>
+              {renderPager(mobileProductsPage, mobileProductsTotalPages, setMobileProductsPage)}
             </div>
 
             <div className="space-y-3">
@@ -461,7 +513,7 @@ function OrdersPanel({
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 max-h-64 overflow-y-auto p-2 border border-slate-100 rounded-lg bg-slate-50/50">
-              {filteredProducts.map((product) => (
+              {desktopVisibleProducts.map((product) => (
                 <button
                   key={product.id}
                   type="button"
@@ -485,6 +537,7 @@ function OrdersPanel({
                 </button>
               ))}
             </div>
+            {renderPager(desktopProductsPage, desktopProductsTotalPages, setDesktopProductsPage)}
           </div>
 
           <div className="mb-8">
