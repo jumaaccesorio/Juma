@@ -1088,7 +1088,11 @@ function App() {
 
   const updateHeroText = (field: "tag" | "title" | "subtitle", value: string) => {
     setHomeConfigDirty(true);
-    setHeroBanner((prev) => ({ ...(prev ?? DEFAULT_HERO_BANNER), [field]: value }));
+    setHeroBanner((prev) => {
+      const next: HeroBanner = { ...(prev ?? DEFAULT_HERO_BANNER) };
+      next[field] = value;
+      return next;
+    });
   };
 
   const updateHeroImage = (file: File | null) => {
@@ -1098,7 +1102,10 @@ function App() {
     reader.onload = () => {
       const dataUrl = typeof reader.result === "string" ? reader.result : "";
       if (!dataUrl) return;
-      setHeroBanner((prev) => ({ ...(prev ?? DEFAULT_HERO_BANNER), image: dataUrl }));
+      setHeroBanner((prev) => {
+        const next: HeroBanner = { ...(prev ?? DEFAULT_HERO_BANNER), image: dataUrl };
+        return next;
+      });
     };
     reader.readAsDataURL(file);
   };
