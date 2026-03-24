@@ -1,6 +1,8 @@
 import type { Category, Client, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, Order, OrderItem, Product } from "../types";
 import { supabase } from "./supabase";
 
+const PRODUCT_IMAGES_BUCKET = "products";
+
 function toErrorMessage(error: unknown, fallback = "Ocurrio un error inesperado.") {
   if (error && typeof error === "object" && "message" in error && typeof (error as { message?: unknown }).message === "string") {
     return (error as { message: string }).message;
@@ -123,10 +125,20 @@ export const api = {
   async getProducts(): Promise<Product[]> {
     const query = await supabase
       .from("products")
-      .select("id, name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, source_url, created_at, categories(name)")
+      .select("id, name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, source_url, created_at, categories(name)")
       .order("created_at", { ascending: false });
     if (query.error) throw query.error;
     return (query.data ?? []).map((row: any) => mapProduct({ ...row, category_name: row.categories?.name ?? null }));
+  },
+
+  async getProductImages(productIds: number[]): Promise<Array<{ id: number; image: string }>> {
+    if (productIds.length === 0) return [];
+    const query = await supabase.from("products").select("id, image").in("id", productIds);
+    if (query.error) throw query.error;
+    return (query.data ?? []).map((row: any) => ({
+      id: Number(row.id),
+      image: typeof row.image === "string" ? row.image : "",
+    }));
   },
 
   async addProduct(product: Partial<Product>): Promise<Product> {
@@ -385,20 +397,24 @@ export const api = {
   },
 
   async uploadImage(file: File): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          resolve(reader.result);
-        } else {
-          reject(new Error("No se pudo leer la imagen."));
-        }
-      };
-      reader.onerror = () => reject(new Error("No se pudo leer la imagen."));
-      reader.readAsDataURL(file);
-    }).catch((error) => {
+    try {
+      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const fileName = `${crypto.randomUUID()}.${extension}`;
+      const filePath = fileName;
+
+      const upload = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type || undefined,
+      });
+
+      if (upload.error) throw upload.error;
+
+      const { data } = supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(filePath);
+      return data.publicUrl;
+    } catch (error) {
       throw new Error(toErrorMessage(error, "Error subiendo imagen"));
-    });
+    }
   },
 };
 

@@ -200,6 +200,8 @@ function App() {
     isFeatured: false,
   });
   const [productImageData, setProductImageData] = useState("");
+  const [productImageFile, setProductImageFile] = useState<File | null>(null);
+  const [hydratedProductImageIds, setHydratedProductImageIds] = useState<number[]>([]);
   const [orderForm, setOrderForm] = useState({
     clientId: "",
     date: new Date().toISOString().slice(0, 10),
@@ -260,6 +262,58 @@ function App() {
     }
     loadPublicData();
   }, []);
+
+  useEffect(() => {
+    const knownIds = new Set(products.map((product) => product.id));
+    setHydratedProductImageIds((prev) => prev.filter((id) => knownIds.has(id)));
+  }, [products]);
+
+  useEffect(() => {
+    const hydratedSet = new Set(hydratedProductImageIds);
+    const pendingIds = products.map((product) => product.id).filter((id) => !hydratedSet.has(id));
+    if (pendingIds.length === 0) return;
+
+    let cancelled = false;
+
+    async function hydrateImages() {
+      const chunkSize = 12;
+      for (let index = 0; index < pendingIds.length; index += chunkSize) {
+        if (cancelled) return;
+        const chunk = pendingIds.slice(index, index + chunkSize);
+        try {
+          const imageRows = await api.getProductImages(chunk);
+          if (cancelled) return;
+
+          const imageMap = new Map(
+            imageRows
+              .filter((row) => row.image && !row.image.startsWith("data:image/"))
+              .map((row) => [row.id, row.image]),
+          );
+
+          if (imageMap.size > 0) {
+            setProducts((prev) =>
+              prev.map((product) => {
+                const nextImage = imageMap.get(product.id);
+                return nextImage ? { ...product, image: nextImage } : product;
+              }),
+            );
+          }
+        } catch (error) {
+          console.warn("No se pudieron hidratar imagenes de productos.", error);
+        } finally {
+          if (!cancelled) {
+            setHydratedProductImageIds((prev) => [...new Set([...prev, ...chunk])]);
+          }
+        }
+      }
+    }
+
+    void hydrateImages();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [products, hydratedProductImageIds]);
 
   useEffect(() => {
     if (!isAdminLogged || hasLoadedAdminData) return;
@@ -504,6 +558,7 @@ function App() {
     if (Number.isNaN(stock) || stock < 0) return;
     
     try {
+      const uploadedImageUrl = productImageFile ? await api.uploadImage(productImageFile) : productImageData;
       const newProduct = await api.addProduct({
         name: productForm.name.trim() || productForm.subName.trim(),
         subName: productForm.subName.trim(),
@@ -514,13 +569,15 @@ function App() {
         stock,
         initialStock: stock,
         enabled: true,
-        image: productImageData,
+        image: uploadedImageUrl,
         sourceUrl: productForm.sourceUrl.trim(),
       });
       setProducts((prev) => [newProduct, ...prev]);
+      setHydratedProductImageIds((prev) => [...new Set([...prev, newProduct.id])]);
       
       setProductForm({ name: "", subName: "", categoryId: "", purchasePrice: "", salePrice: "", stock: "", sourceUrl: "", isFeatured: false });
       setProductImageData("");
+      setProductImageFile(null);
       setActiveTab("carrito");
     } catch (err) {
       console.error(err);
@@ -1059,7 +1116,12 @@ function App() {
   };
 
   const updateProductImage = (file: File | null) => {
-    if (!file) return;
+    if (!file) {
+      setProductImageFile(null);
+      setProductImageData("");
+      return;
+    }
+    setProductImageFile(file);
     const reader = new FileReader();
     reader.onload = () => {
       const dataUrl = typeof reader.result === "string" ? reader.result : "";
@@ -1071,18 +1133,16 @@ function App() {
 
   const updateExistingProductImage = (productId: number, file: File | null) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const dataUrl = typeof reader.result === "string" ? reader.result : "";
-      if (!dataUrl) return;
+    void (async () => {
       try {
-        await api.updateProduct(productId, { image: dataUrl });
-        setProducts((prev) => prev.map((product) => (product.id === productId ? { ...product, image: dataUrl } : product)));
+        const imageUrl = await api.uploadImage(file);
+        await api.updateProduct(productId, { image: imageUrl });
+        setProducts((prev) => prev.map((product) => (product.id === productId ? { ...product, image: imageUrl } : product)));
+        setHydratedProductImageIds((prev) => [...new Set([...prev, productId])]);
       } catch (err) {
         console.error("Error updating image", err);
       }
-    };
-    reader.readAsDataURL(file);
+    })();
   };
 
   const importProducts = async (file: File | null) => {

@@ -11,14 +11,14 @@ type AdminSidebarProps = {
 export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClose, onLogout }: AdminSidebarProps) {
   const menuItems = [
     { id: "dashboard", label: "Inicio", icon: "dashboard" },
-    { id: "venta_rapida", label: "Venta rápida", icon: "bolt" },
-    { id: "categorias", label: "Categorías", icon: "category" },
+    { id: "venta_rapida", label: "Venta rapida", icon: "bolt" },
+    { id: "categorias", label: "Categorias", icon: "category" },
     { id: "inventario", label: "Inventario", icon: "inventory_2" },
     { id: "productos", label: "Productos", icon: "layers" },
     { id: "clientes", label: "Usuarios", icon: "group" },
     { id: "pedidos", label: "Pedidos", icon: "shopping_bag" },
     { id: "finanzas", label: "Finanzas", icon: "payments" },
-    { id: "inicio_admin", label: "Configuración", icon: "settings" },
+    { id: "inicio_admin", label: "Configuracion", icon: "settings" },
   ];
 
   return (
@@ -41,15 +41,15 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
             </div>
             <div>
               <h1 className="font-headline text-2xl italic tracking-tight text-primary md:text-2xl md:not-italic">Juma Accessory</h1>
-              <p className="mt-1 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-secondary md:text-muted">
+              <p className="mt-1 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-muted md:text-muted">
                 Panel de Control
               </p>
             </div>
           </div>
-            <button
-              type="button"
-              onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-background text-secondary shadow-sm md:hidden"
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-background text-ink shadow-sm md:hidden"
           >
             <span className="material-symbols-outlined text-lg">close</span>
           </button>
@@ -66,12 +66,12 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
               className={`group flex w-full items-center gap-4 rounded px-3 py-3 text-left transition-all duration-150 md:rounded-none md:border-r-2 md:px-4 ${
                 activeTab === item.id
                   ? "bg-background text-primary shadow-sm md:border-r-primary md:font-semibold"
-                  : "text-secondary hover:bg-background/80 md:border-r-transparent md:text-muted md:hover:bg-background/70"
+                  : "text-ink hover:bg-background/80 hover:text-primary md:border-r-transparent md:text-muted md:hover:bg-background/70"
               }`}
             >
               <span
                 className={`material-symbols-outlined transition-transform group-hover:scale-105 ${
-                  activeTab === item.id ? "text-primary" : "text-secondary md:text-muted"
+                  activeTab === item.id ? "text-primary" : "text-ink group-hover:text-primary md:text-muted"
                 }`}
                 data-icon={item.icon}
               >
@@ -94,13 +94,13 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
             className="mb-4 flex w-full items-center gap-3 rounded border border-red-200 bg-red-50 px-4 py-3 text-left text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 md:hidden"
           >
             <span className="material-symbols-outlined text-lg">logout</span>
-            Cerrar sesión
+            Cerrar sesion
           </button>
           <div className="mt-4 flex items-center gap-3 rounded border border-line bg-background px-4 py-4 shadow-[0_12px_40px_rgba(45,45,45,0.08)] md:shadow-subtle">
             <div className="flex size-10 items-center justify-center rounded-full bg-primary font-bold text-white">J</div>
             <div>
               <p className="text-xs font-bold text-primary">Juma Accessory</p>
-              <p className="text-[10px] uppercase tracking-[0.16em] text-secondary md:tracking-tighter md:text-muted">Plan Premium</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted md:tracking-tighter md:text-muted">Plan Premium</p>
             </div>
           </div>
         </div>
