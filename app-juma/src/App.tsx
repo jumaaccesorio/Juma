@@ -23,6 +23,8 @@ import ClientsPanel from "./features/users/ClientsPanel";
 import StoreHeader from "./features/users/StoreHeader";
 import ClientProfilePanel from "./features/users/ClientProfilePanel";
 import CustomerAuthModal from "./features/users/CustomerAuthModal";
+import AuthConfirmPanel from "./features/users/AuthConfirmPanel";
+import ResetPasswordPanel from "./features/users/ResetPasswordPanel";
 import type { CartItem, Client, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, Product, Tab, Category } from "./types";
 import { api } from "./lib/api";
 import { getProductDisplayName } from "./lib/productLabel";
@@ -92,6 +94,13 @@ function parseAppDate(value?: string | null) {
     return new Date(Number(year), Number(month) - 1, Number(day));
   }
   return new Date(value);
+}
+
+function getAuthRoute(pathname: string): "confirm" | "reset" | null {
+  const normalized = pathname.replace(/\/+$/, "") || "/";
+  if (normalized === "/auth/confirm") return "confirm";
+  if (normalized === "/reset-password") return "reset";
+  return null;
 }
 
 function splitCsvLine(line: string, delimiter: string) {
@@ -200,6 +209,11 @@ function App() {
     quantity: number;
     cartItemsCount: number;
     cartTotal: number;
+  } | null>(null);
+  const [authRoute, setAuthRoute] = useState<"confirm" | "reset" | null>(() => getAuthRoute(window.location.pathname));
+  const [authConfirmState, setAuthConfirmState] = useState<{
+    status: "loading" | "success" | "error";
+    message: string;
   } | null>(null);
 
   const [clientForm, setClientForm] = useState({ name: "", phone: "", email: "", password: "" });
@@ -382,6 +396,57 @@ function App() {
   }, [cartSuccessToast]);
 
   useEffect(() => {
+    const handlePopState = () => {
+      setAuthRoute(getAuthRoute(window.location.pathname));
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useEffect(() => {
+    if (authRoute !== "confirm") {
+      setAuthConfirmState(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function finalizeConfirmation() {
+      try {
+        setAuthConfirmState({
+          status: "loading",
+          message: "Estamos validando tu cuenta y preparando tu acceso.",
+        });
+
+        const client = await api.finalizeCurrentClientFromSession();
+        if (cancelled) return;
+
+        localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(client));
+        setCurrentClient(client);
+        setFavorites(await api.getFavorites(client.id).catch(() => []));
+        setAuthConfirmState({
+          status: "success",
+          message: "Tu cuenta fue activada correctamente. Ya podés ingresar y comprar con normalidad.",
+        });
+      } catch (err) {
+        if (cancelled) return;
+        const message = getErrorMessage(err, "No pudimos validar la cuenta desde el enlace recibido.");
+        setAuthConfirmState({
+          status: "error",
+          message,
+        });
+      }
+    }
+
+    void finalizeConfirmation();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authRoute]);
+
+  useEffect(() => {
     if (isAdminLogged) return;
     if (activeTab !== "catalogo" && activeTab !== "carrito") return;
 
@@ -521,11 +586,24 @@ function App() {
     scrollToCatalogSection();
   };
 
+  const leaveAuthRoute = (nextTab: Tab = "catalogo") => {
+    window.history.replaceState({}, "", "/");
+    setAuthRoute(null);
+    setActiveTab(nextTab);
+    setSelectedCatalogProductId(null);
+    setCatalogViewMode("home");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const submitCatalogSearch = () => {
     setSelectedCatalogProductId(null);
     setCatalogViewMode("search");
     setActiveTab("catalogo");
     scrollToCatalogSection();
+  };
+
+  const handlePasswordResetSubmit = async (password: string) => {
+    await api.updateCurrentUserPassword(password);
   };
 
   const updateCategory = async (id: number, name: string) => {
@@ -1706,6 +1784,23 @@ function App() {
         />
       )}
 
+      {authRoute === "confirm" && authConfirmState ? (
+        <main className="flex grow flex-col">
+          <AuthConfirmPanel
+            status={authConfirmState.status}
+            message={authConfirmState.message}
+            onContinue={() => leaveAuthRoute(currentClient ? "perfil" : "catalogo")}
+          />
+        </main>
+      ) : authRoute === "reset" ? (
+        <main className="flex grow flex-col">
+          <ResetPasswordPanel
+            onSubmit={handlePasswordResetSubmit}
+            onContinue={() => leaveAuthRoute("catalogo")}
+          />
+        </main>
+      ) : (
+
       <main className="flex flex-col grow">
 
       {activeTab === "catalogo" ? (
@@ -1790,6 +1885,7 @@ function App() {
       ) : null}
       
       </main>
+      )}
 
       <footer className="bg-background-dark text-slate-400 px-6 md:px-20 py-16 mt-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-white/10 pb-16">

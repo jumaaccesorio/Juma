@@ -27,7 +27,17 @@ async function getClientByEmailOrAuth(email: string, authId?: string | null) {
 
 export const api = {
   async signUpClient(email: string, password: string, name: string, phone: string): Promise<Client> {
-    const signUp = await supabase.auth.signUp({ email, password });
+    const signUp = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/confirm`,
+        data: {
+          name,
+          phone,
+        },
+      },
+    });
     if (signUp.error) throw signUp.error;
 
     const authId = signUp.data.user?.id ?? null;
@@ -60,9 +70,47 @@ export const api = {
 
   async requestClientPasswordReset(email: string): Promise<void> {
     const reset = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin,
+      redirectTo: `${window.location.origin}/reset-password`,
     });
     if (reset.error) throw reset.error;
+  },
+
+  async finalizeCurrentClientFromSession(): Promise<Client> {
+    const { data: userResult, error } = await supabase.auth.getUser();
+    if (error) throw error;
+
+    const user = userResult.user;
+    if (!user || !user.email) {
+      throw new Error("No encontramos una sesión válida para confirmar la cuenta.");
+    }
+
+    const existing = await getClientByEmailOrAuth(user.email, user.id);
+    if (existing) {
+      if (!existing.authId || existing.authId !== user.id) {
+        await this.updateClient(existing.id, { authId: user.id });
+        return { ...existing, authId: user.id };
+      }
+      return existing;
+    }
+
+    const insert = await supabase
+      .from("clients")
+      .insert({
+        auth_id: user.id,
+        name: typeof user.user_metadata?.name === "string" ? user.user_metadata.name : user.email,
+        email: user.email,
+        phone: typeof user.user_metadata?.phone === "string" ? user.user_metadata.phone : "",
+      })
+      .select("*")
+      .single();
+
+    if (insert.error) throw insert.error;
+    return mapClient(insert.data);
+  },
+
+  async updateCurrentUserPassword(password: string): Promise<void> {
+    const update = await supabase.auth.updateUser({ password });
+    if (update.error) throw update.error;
   },
 
   async getCategories(): Promise<Category[]> {
@@ -119,6 +167,7 @@ export const api = {
     const query = await supabase
       .from("clients")
       .update({
+        auth_id: updates.authId,
         name: updates.name,
         email: updates.email,
         phone: updates.phone,
