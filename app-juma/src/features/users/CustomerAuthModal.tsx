@@ -10,7 +10,7 @@ type CustomerAuthModalProps = {
 };
 
 export default function CustomerAuthModal({ onClose, onSuccess, allowGuest, onGuestContinue }: CustomerAuthModalProps): React.ReactElement {
-  const [tab, setTab] = useState<"login" | "register" | "guest">("login");
+  const [tab, setTab] = useState<"login" | "register" | "guest" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -37,6 +37,12 @@ export default function CustomerAuthModal({ onClose, onSuccess, allowGuest, onGu
         setSuccessMessage("Te enviamos un correo para activar tu cuenta. Revisá tu email antes de ingresar.");
         setPassword("");
         setTab("login");
+      } else if (tab === "forgot") {
+        if (!email.trim()) {
+          throw new Error("Ingresa tu correo para enviarte el restablecimiento.");
+        }
+        await api.requestClientPasswordReset(email.trim());
+        setSuccessMessage("Te enviamos un correo para restablecer tu cuenta. Revisa tu email.");
       } else if (tab === "guest" && onGuestContinue) {
         if (!name.trim() || !phone.trim() || !email.trim()) {
            throw new Error("Por favor completa tus datos básicos de facturación.");
@@ -61,9 +67,10 @@ export default function CustomerAuthModal({ onClose, onSuccess, allowGuest, onGu
         </button>
 
         <h3 className="font-serif text-3xl font-light text-slate-800 mb-6 text-center">
-          {tab === "login" ? "Ingresa a tu cuenta" : tab === "register" ? "Crea una cuenta" : "Checkout Rápido"}
+          {tab === "login" ? "Ingresa a tu cuenta" : tab === "register" ? "Crea una cuenta" : tab === "forgot" ? "Restablecer acceso" : "Checkout Rápido"}
         </h3>
 
+        {tab !== "forgot" ? (
         <div className="flex bg-slate-100 p-1 rounded-lg mb-6">
           <button 
             type="button"
@@ -89,6 +96,22 @@ export default function CustomerAuthModal({ onClose, onSuccess, allowGuest, onGu
             </button>
           )}
         </div>
+        ) : (
+          <div className="mb-6">
+            <button
+              type="button"
+              className="text-sm font-bold text-primary hover:underline"
+              onClick={() => {
+                setError("");
+                setSuccessMessage("");
+                setPassword("");
+                setTab("login");
+              }}
+            >
+              Volver al inicio de sesión
+            </button>
+          </div>
+        )}
 
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           {(tab === "register" || tab === "guest") && (
@@ -130,12 +153,27 @@ export default function CustomerAuthModal({ onClose, onSuccess, allowGuest, onGu
             />
           )}
 
+          {tab === "login" ? (
+            <button
+              type="button"
+              className="self-start text-sm font-bold text-primary hover:underline"
+              onClick={() => {
+                setError("");
+                setSuccessMessage("");
+                setPassword("");
+                setTab("forgot");
+              }}
+            >
+              Olvidé mi contraseña
+            </button>
+          ) : null}
+
           <button 
             type="submit" 
             disabled={loading}
             className="bg-primary text-white w-full py-4 rounded-md font-bold uppercase tracking-wider hover:bg-primary/90 transition-all transform hover:-translate-y-1 shadow-lg shadow-primary/30 mt-2 disabled:opacity-50"
           >
-            {loading ? "Procesando..." : (tab === "login" ? "Entrar" : tab === "register" ? "Crear Cuenta" : "Continuar como Invitado")}
+            {loading ? "Procesando..." : (tab === "login" ? "Entrar" : tab === "register" ? "Crear Cuenta" : tab === "forgot" ? "Enviar correo" : "Continuar como Invitado")}
           </button>
           
           {error && (

@@ -698,6 +698,26 @@ function App() {
       console.error(err);
     }
   };
+  void deleteUser;
+
+  const toggleClientActive = async (client: Client) => {
+    try {
+      setError("");
+      await api.updateClient(client.id, { isActive: !client.isActive });
+      setClients((prev) =>
+        prev.map((row) => (row.id === client.id ? { ...row, isActive: !client.isActive } : row)),
+      );
+      if (currentClient?.id === client.id && client.isActive) {
+        localStorage.removeItem(CLIENT_SESSION_KEY);
+        setCurrentClient(null);
+        setFavorites([]);
+        setActiveTab("catalogo");
+      }
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err, "No se pudo actualizar el estado del usuario."));
+    }
+  };
 
   const startEditingUser = (client: Client) => {
     setEditingUserId(client.id);
@@ -1585,7 +1605,7 @@ function App() {
                   onClientFormChange={setClientForm}
                   onAddClient={saveUser}
                   onEditClick={startEditingUser}
-                  onDeleteClick={deleteUser}
+                  onToggleActive={toggleClientActive}
                   onResetPassword={resetClientPassword}
                   editingClientId={editingUserId}
                   onCancelEdit={() => {

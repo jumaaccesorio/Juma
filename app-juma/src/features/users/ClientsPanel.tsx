@@ -16,7 +16,7 @@ type ClientsPanelProps = {
   onClientFormChange: (next: ClientForm) => void;
   onAddClient: (event: FormEvent<HTMLFormElement>) => void;
   onEditClick: (client: Client) => void;
-  onDeleteClick: (id: number) => void;
+  onToggleActive: (client: Client) => void;
   onResetPassword: (client: Client) => void;
   editingClientId: number | null;
   onCancelEdit: () => void;
@@ -28,7 +28,7 @@ function ClientsPanel({
   onClientFormChange, 
   onAddClient, 
   onEditClick, 
-  onDeleteClick, 
+  onToggleActive, 
   onResetPassword,
   editingClientId, 
   onCancelEdit 
@@ -136,11 +136,15 @@ function ClientsPanel({
                       <span className="material-symbols-outlined text-lg">lock_reset</span>
                     </button>
                   ) : null}
+                  <button
+                    onClick={() => onToggleActive(row.client)}
+                    className={`rounded-lg p-2 ${row.client.isActive ? "bg-warning/18 text-[#9a6d48]" : "bg-emerald-100 text-emerald-700"}`}
+                    title={row.client.isActive ? "Marcar como inactivo" : "Reactivar usuario"}
+                  >
+                    <span className="material-symbols-outlined text-lg">{row.client.isActive ? "person_off" : "person_check"}</span>
+                  </button>
                   <button onClick={() => onEditClick(row.client)} className="rounded-lg bg-tertiary/18 p-2 text-[#4f6780]">
                     <span className="material-symbols-outlined text-lg">edit</span>
-                  </button>
-                  <button onClick={() => onDeleteClick(row.client.id)} className="rounded-lg bg-warning/18 p-2 text-[#9a6d48]">
-                    <span className="material-symbols-outlined text-lg">delete</span>
                   </button>
                 </div>
               </div>
@@ -148,6 +152,12 @@ function ClientsPanel({
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-500">Usuario</span>
                   <span className="font-medium text-slate-700">{row.client.email || "Sin acceso"}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500">Estado</span>
+                  <span className={`font-bold uppercase tracking-[0.14em] ${row.client.isActive ? "text-emerald-600" : "text-amber-700"}`}>
+                    {row.client.isActive ? "Activo" : "Inactivo"}
+                  </span>
                 </div>
                 {row.client.phone ? <p>{row.client.phone}</p> : null}
                 {row.client.email ? <p className="break-all">{row.client.email}</p> : null}
@@ -194,7 +204,9 @@ function ClientsPanel({
                     {row.client.email ? (
                       <div className="flex flex-col gap-1">
                         <span className="font-medium text-slate-800 dark:text-slate-200">{row.client.email}</span>
-                        <span className="text-xs uppercase tracking-[0.14em] text-emerald-600">Acceso activo</span>
+                        <span className={`text-xs uppercase tracking-[0.14em] ${row.client.isActive ? "text-emerald-600" : "text-amber-700"}`}>
+                          {row.client.isActive ? "Acceso activo" : "Acceso inactivo"}
+                        </span>
                       </div>
                     ) : (
                       <span className="text-slate-400 italic">Sin acceso</span>
@@ -226,18 +238,18 @@ function ClientsPanel({
                         </button>
                       ) : null}
                       <button 
+                        onClick={() => onToggleActive(row.client)}
+                        className={`p-2 rounded-lg transition-colors ${row.client.isActive ? "text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20" : "text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"}`}
+                        title={row.client.isActive ? "Marcar como inactivo" : "Reactivar usuario"}
+                      >
+                        <span className="material-symbols-outlined">{row.client.isActive ? "person_off" : "person_check"}</span>
+                      </button>
+                      <button 
                         onClick={() => onEditClick(row.client)}
                         className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                         title="Editar usuario"
                       >
                         <span className="material-symbols-outlined">edit</span>
-                      </button>
-                      <button 
-                        onClick={() => onDeleteClick(row.client.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        title="Eliminar usuario"
-                      >
-                        <span className="material-symbols-outlined">delete</span>
                       </button>
                     </div>
                   </td>

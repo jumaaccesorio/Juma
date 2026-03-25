@@ -23,8 +23,12 @@ CREATE TABLE IF NOT EXISTS clients (
   name       TEXT NOT NULL,
   email      TEXT NOT NULL UNIQUE,
   phone      TEXT NOT NULL DEFAULT '',
+  is_active  BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE clients
+  ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
 
 -- ============================================================
 -- 3. PRODUCTOS

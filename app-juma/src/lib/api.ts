@@ -51,6 +51,7 @@ export const api = {
         name,
         email,
         phone: phone || "",
+        is_active: true,
       })
       .select("*")
       .single();
@@ -65,6 +66,7 @@ export const api = {
 
     const client = await getClientByEmailOrAuth(email, login.data.user?.id);
     if (!client) throw new Error("No se encontro el perfil del cliente.");
+    if (!client.isActive) throw new Error("Esta cuenta se encuentra inactiva. Contacta al administrador.");
     return client;
   },
 
@@ -100,6 +102,7 @@ export const api = {
         name: typeof user.user_metadata?.name === "string" ? user.user_metadata.name : user.email,
         email: user.email,
         phone: typeof user.user_metadata?.phone === "string" ? user.user_metadata.phone : "",
+        is_active: true,
       })
       .select("*")
       .single();
@@ -151,14 +154,14 @@ export const api = {
   async getClients(): Promise<Client[]> {
     const query = await supabase
       .from("clients")
-      .select("id, auth_id, name, email, phone, created_at")
+      .select("id, auth_id, name, email, phone, is_active, created_at")
       .order("created_at", { ascending: false });
     if (query.error) throw query.error;
     return (query.data ?? []).map(mapClient);
   },
 
   async addClient(client: { name: string; phone: string; email: string }): Promise<Client> {
-    const query = await supabase.from("clients").insert(client).select("*").single();
+    const query = await supabase.from("clients").insert({ ...client, is_active: true }).select("*").single();
     if (query.error) throw query.error;
     return mapClient(query.data);
   },
@@ -171,6 +174,7 @@ export const api = {
         name: updates.name,
         email: updates.email,
         phone: updates.phone,
+        is_active: updates.isActive,
       })
       .eq("id", id);
     if (query.error) throw query.error;
@@ -565,6 +569,7 @@ function mapClient(row: any): Client {
     name: row.name,
     email: row.email,
     phone: row.phone ?? "",
+    isActive: row.is_active ?? true,
     createdAt: row.created_at ?? "",
   };
 }
