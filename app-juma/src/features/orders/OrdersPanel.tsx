@@ -54,8 +54,28 @@ function OrdersPanel({
   const [statusFilter, setStatusFilter] = useState<"ALL" | OrderStatus>("ALL");
   const [mobileProductsPage, setMobileProductsPage] = useState(1);
   const [desktopProductsPage, setDesktopProductsPage] = useState(1);
+  const [expandedOrderIds, setExpandedOrderIds] = useState<number[]>([]);
   const mobileProductsRef = useRef<HTMLDivElement | null>(null);
   const desktopProductsRef = useRef<HTMLDivElement | null>(null);
+
+  const toggleOrderExpanded = (orderId: number) => {
+    setExpandedOrderIds((prev) =>
+      prev.includes(orderId) ? prev.filter((id) => id !== orderId) : [...prev, orderId],
+    );
+  };
+
+  const getOrderItemsDetail = (order: Order) =>
+    order.items
+      .map((item) => {
+        const product = products.find((row) => row.id === item.productId);
+        return {
+          ...item,
+          productName: product ? getProductDisplayName(product) : `Producto #${item.productId}`,
+          productImage: product?.image ?? "",
+          subtotal: item.quantity * item.unitSalePrice,
+        };
+      })
+      .filter((item) => item.quantity > 0);
 
   const scrollToSectionStart = (element: HTMLDivElement | null) => {
     if (!element) return;
@@ -346,6 +366,8 @@ function OrdersPanel({
             const clientName = order.clientId ? getClientName(order.clientId) : order.guestName || "Invitado";
             const total = getOrderTotal(order);
             const isCompleted = order.status === "REALIZADO";
+            const isExpanded = expandedOrderIds.includes(order.id);
+            const itemsDetail = getOrderItemsDetail(order);
             const accent = isCompleted
               ? "bg-primary-container/20 text-on-primary-container"
               : "bg-tertiary-container/20 text-on-tertiary-container";
@@ -411,20 +433,53 @@ function OrdersPanel({
                       {new Date(order.date).toLocaleDateString("es-AR", { year: "numeric", month: "short", day: "numeric" })}
                     </p>
                   </div>
-                  {order.status === "PENDIENTE" ? (
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => onMarkOrderAsRealized(order.id)}
-                      className="rounded-full bg-primary px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-white"
+                      onClick={() => toggleOrderExpanded(order.id)}
+                      className="rounded-full border border-outline-variant/30 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary"
                     >
-                      Enviado
+                      {isExpanded ? "Ocultar detalle" : "Ver detalle"}
                     </button>
-                  ) : (
-                    <span className="rounded-full bg-secondary-container px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-on-secondary-container">
-                      Cerrado
-                    </span>
-                  )}
+                    {order.status === "PENDIENTE" ? (
+                      <button
+                        type="button"
+                        onClick={() => onMarkOrderAsRealized(order.id)}
+                        className="rounded-full bg-primary px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-white"
+                      >
+                        Enviado
+                      </button>
+                    ) : (
+                      <span className="rounded-full bg-secondary-container px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-on-secondary-container">
+                        Cerrado
+                      </span>
+                    )}
+                  </div>
                 </div>
+
+                {isExpanded ? (
+                  <div className="mt-4 space-y-3 border-t border-outline-variant/15 pt-4">
+                    {itemsDetail.map((item, itemIndex) => (
+                      <div key={`${order.id}-editorial-item-${itemIndex}`} className="flex items-center gap-3 rounded-sm bg-white/80 p-3">
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-surface-container-low">
+                          {item.productImage ? (
+                            <img src={item.productImage} alt={item.productName} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="material-symbols-outlined text-slate-300">image</span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium text-on-surface">{item.productName}</p>
+                          <p className="text-xs text-secondary">
+                            {item.quantity} x ${item.unitSalePrice.toLocaleString("es-AR")}
+                          </p>
+                        </div>
+                        <p className="text-sm font-bold text-primary">${item.subtotal.toLocaleString("es-AR")}</p>
+                      </div>
+                    ))}
+                    {itemsDetail.length === 0 ? <p className="text-sm text-secondary">Este pedido no tiene productos cargados.</p> : null}
+                  </div>
+                ) : null}
               </div>
             );
           })}
@@ -631,6 +686,8 @@ function OrdersPanel({
           {orders.map((order) => {
             const clientName = order.clientId ? getClientName(order.clientId) : order.guestName || "Invitado";
             const needsRestock = order.status === "PENDIENTE" && hasInsufficientStock(order.items);
+            const isExpanded = expandedOrderIds.includes(order.id);
+            const itemsDetail = getOrderItemsDetail(order);
             return (
               <div key={`mobile-${order.id}`} className="rounded-xl border border-line bg-background p-4 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
@@ -665,7 +722,37 @@ function OrdersPanel({
                     Requiere reposicion
                   </div>
                 ) : null}
+                {isExpanded ? (
+                  <div className="mt-4 space-y-3 border-t border-line pt-4">
+                    {itemsDetail.map((item, itemIndex) => (
+                      <div key={`${order.id}-mobile-item-${itemIndex}`} className="flex items-center gap-3 rounded-lg bg-white p-3">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
+                          {item.productImage ? (
+                            <img src={item.productImage} alt={item.productName} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="material-symbols-outlined text-slate-300">image</span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-bold text-slate-900">{item.productName}</p>
+                          <p className="text-xs text-slate-500">
+                            {item.quantity} x ${item.unitSalePrice.toLocaleString("es-AR")}
+                          </p>
+                        </div>
+                        <p className="text-sm font-bold text-primary">${item.subtotal.toLocaleString("es-AR")}</p>
+                      </div>
+                    ))}
+                    {itemsDetail.length === 0 ? <p className="text-sm text-slate-500">Este pedido no tiene productos cargados.</p> : null}
+                  </div>
+                ) : null}
                 <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => toggleOrderExpanded(order.id)}
+                    className="inline-flex items-center justify-center rounded-lg border border-line px-3 py-2 text-xs font-bold text-slate-600"
+                  >
+                    {isExpanded ? "Ocultar" : "Ver detalle"}
+                  </button>
                   {order.status === "PENDIENTE" ? (
                     <button 
                       type="button" 
@@ -750,11 +837,19 @@ function OrdersPanel({
                     ${getOrderTotal(order).toLocaleString("es-AR")}
                   </td>
                   <td className="p-4 text-right">
+                    <button
+                      type="button"
+                      onClick={() => toggleOrderExpanded(order.id)}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+                      {expandedOrderIds.includes(order.id) ? "Ocultar" : "Ver detalle"}
+                    </button>
                     {order.status === "PENDIENTE" ? (
                       <button 
                         type="button" 
                         onClick={() => onMarkOrderAsRealized(order.id)}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg transition-colors"
+                        className="ml-2 inline-flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg transition-colors"
                       >
                         <span className="material-symbols-outlined text-[16px]">check_circle</span>
                         Marcar Envío
@@ -787,6 +882,61 @@ function OrdersPanel({
             </tbody>
           </table>
         </div>
+
+        {expandedOrderIds.length > 0 ? (
+          <div className="border-t border-neutral-soft p-4">
+            <div className="space-y-4">
+              {filteredOrders
+                .filter((order) => expandedOrderIds.includes(order.id))
+                .map((order) => {
+                  const clientName = order.clientId ? getClientName(order.clientId) : order.guestName || "Invitado";
+                  const itemsDetail = getOrderItemsDetail(order);
+                  return (
+                    <div key={`detail-panel-${order.id}`} className="rounded-xl border border-line bg-slate-50/70 p-4">
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">Detalle del pedido</p>
+                          <p className="mt-1 text-base font-bold text-slate-900">
+                            #{String(order.id).padStart(5, "0")} · {clientName}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => toggleOrderExpanded(order.id)}
+                          className="rounded-lg border border-line px-3 py-2 text-xs font-bold text-slate-600"
+                        >
+                          Cerrar
+                        </button>
+                      </div>
+                      <div className="grid gap-3">
+                        {itemsDetail.map((item, itemIndex) => (
+                          <div key={`${order.id}-detail-item-${itemIndex}`} className="flex items-center gap-3 rounded-lg bg-white p-3 shadow-sm">
+                            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
+                              {item.productImage ? (
+                                <img src={item.productImage} alt={item.productName} className="h-full w-full object-cover" />
+                              ) : (
+                                <span className="material-symbols-outlined text-slate-300">image</span>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-bold text-slate-900">{item.productName}</p>
+                              <p className="text-sm text-slate-500">
+                                Cantidad: {item.quantity} · Unitario: ${item.unitSalePrice.toLocaleString("es-AR")}
+                              </p>
+                            </div>
+                            <p className="text-sm font-bold text-primary">${item.subtotal.toLocaleString("es-AR")}</p>
+                          </div>
+                        ))}
+                        {itemsDetail.length === 0 ? (
+                          <p className="text-sm text-slate-500">Este pedido no tiene productos cargados.</p>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        ) : null}
       </div>
       </div>
     </div>

@@ -17,10 +17,12 @@ export default function CustomerAuthModal({ onClose, onSuccess, allowGuest, onGu
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccessMessage("");
     setLoading(true);
 
     try {
@@ -31,8 +33,10 @@ export default function CustomerAuthModal({ onClose, onSuccess, allowGuest, onGu
         if (!name.trim() || !phone.trim() || !email.trim() || !password.trim()) {
            throw new Error("Por favor completa todos los campos.");
         }
-        const client = await api.signUpClient(email, password, name, phone);
-        onSuccess(client);
+        await api.signUpClient(email, password, name, phone);
+        setSuccessMessage("Te enviamos un correo para activar tu cuenta. Revisá tu email antes de ingresar.");
+        setPassword("");
+        setTab("login");
       } else if (tab === "guest" && onGuestContinue) {
         if (!name.trim() || !phone.trim() || !email.trim()) {
            throw new Error("Por favor completa tus datos básicos de facturación.");
@@ -136,6 +140,9 @@ export default function CustomerAuthModal({ onClose, onSuccess, allowGuest, onGu
           
           {error && (
             <p className="text-red-500 text-sm font-bold text-center mt-2">{error}</p>
+          )}
+          {successMessage && (
+            <p className="text-emerald-600 text-sm font-bold text-center mt-2">{successMessage}</p>
           )}
 
         </form>
