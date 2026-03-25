@@ -10,9 +10,11 @@ type StoreHeaderProps = {
   cartTotal: number;
   categories: Category[];
   selectedCatalogCategoryId: number | null;
+  catalogSearchQuery: string;
   currentClient: Client | null;
   onSetActiveTab: (tab: Tab) => void;
   onSelectCatalogCategory: (categoryId: number | null) => void;
+  onCatalogSearchChange: (value: string) => void;
   onAdminFormChange: (form: any) => void;
   onLoginAdmin: (e: React.FormEvent<HTMLFormElement>) => void;
   onLogoutAdmin: () => void;
@@ -29,9 +31,11 @@ export default function StoreHeader({
   cartTotal,
   categories,
   selectedCatalogCategoryId,
+  catalogSearchQuery,
   currentClient,
   onSetActiveTab,
   onSelectCatalogCategory,
+  onCatalogSearchChange,
   onAdminFormChange,
   onLoginAdmin,
   onLogoutAdmin,
@@ -44,6 +48,11 @@ export default function StoreHeader({
 
   const scrollToPageTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const openCatalogWithSearch = (value: string) => {
+    onCatalogSearchChange(value);
+    if (activeTab !== "catalogo") onSetActiveTab("catalogo");
   };
 
   const visibleCategories = useMemo(
@@ -96,7 +105,15 @@ export default function StoreHeader({
                 <div className="text-primary flex items-center justify-center pl-4">
                   <span className="material-symbols-outlined">search</span>
                 </div>
-                <input className="form-input flex w-full min-w-0 flex-1 border-none bg-transparent focus:ring-0 placeholder:text-primary/40 px-3 text-sm" placeholder="Buscar joyas..." />
+                <input
+                  className="form-input flex w-full min-w-0 flex-1 border-none bg-transparent focus:ring-0 placeholder:text-primary/40 px-3 text-sm"
+                  placeholder="Buscar joyas..."
+                  value={catalogSearchQuery}
+                  onFocus={() => {
+                    if (activeTab !== "catalogo") onSetActiveTab("catalogo");
+                  }}
+                  onChange={(e) => openCatalogWithSearch(e.target.value)}
+                />
               </div>
             </label>
             

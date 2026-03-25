@@ -12,6 +12,8 @@ type CatalogPanelProps = {
   favoriteProductIds: Set<number>;
   onToggleFavorite: (productId: number) => void;
   initialCategory: number | null;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
   onCategoryChange: (cat: number | null) => void;
   onPanelCategoryClick: (categoryId: number | null) => void;
 };
@@ -26,57 +28,108 @@ function CatalogPanel({
   favoriteProductIds,
   onToggleFavorite,
   initialCategory,
+  searchQuery,
+  onSearchChange,
   onCategoryChange,
   onPanelCategoryClick,
 }: CatalogPanelProps) {
   const PRODUCTS_PER_PAGE = 16;
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(initialCategory);
+  const [selectedRootCategory, setSelectedRootCategory] = useState<number | null>(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const productsGridRef = useRef<HTMLElement | null>(null);
-  const categoryChips = useMemo(
+  const rootCategories = useMemo(
+    () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
+    [categories],
+  );
+  const subcategories = useMemo(
     () =>
       categories
-        .map((category) => {
-          const parent = category.parentId ? categories.find((row) => row.id === category.parentId) ?? null : null;
-          return {
-            id: category.id,
-            label: parent ? `${parent.name} / ${category.name}` : category.name,
-            isSubcategory: Boolean(parent),
-          };
-        })
-        .sort((a, b) => a.label.localeCompare(b.label)),
-    [categories],
+        .filter((category) => category.parentId === selectedRootCategory)
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [categories, selectedRootCategory],
   );
 
   useEffect(() => {
-    setSelectedCategory(initialCategory);
-  }, [initialCategory]);
+    if (!initialCategory) {
+      setSelectedRootCategory(null);
+      setSelectedSubcategory(null);
+      return;
+    }
+
+    const currentCategory = categories.find((category) => category.id === initialCategory) ?? null;
+    if (!currentCategory) {
+      setSelectedRootCategory(null);
+      setSelectedSubcategory(null);
+      return;
+    }
+
+    if (currentCategory.parentId) {
+      setSelectedRootCategory(currentCategory.parentId);
+      setSelectedSubcategory(currentCategory.id);
+      return;
+    }
+
+    setSelectedRootCategory(currentCategory.id);
+    setSelectedSubcategory(null);
+  }, [categories, initialCategory]);
 
   const handleCategoryChange = (category: number | null) => {
-    setSelectedCategory(category);
+    setSelectedRootCategory(category);
+    setSelectedSubcategory(null);
     setPage(1);
     onCategoryChange(category);
   };
 
+  const handleSubcategoryChange = (category: number | null) => {
+    setSelectedSubcategory(category);
+    setPage(1);
+    onCategoryChange(category ?? selectedRootCategory);
+  };
+
+  const normalizeText = (value: string) =>
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+
   const heroTitleLines = heroBanner?.title.split("\n") ?? [];
-  const selectedCategoryName = selectedCategory ? categories.find((category) => category.id === selectedCategory)?.name ?? null : null;
+  const selectedCategoryName = selectedSubcategory
+    ? categories.find((category) => category.id === selectedSubcategory)?.name ?? null
+    : selectedRootCategory
+      ? categories.find((category) => category.id === selectedRootCategory)?.name ?? null
+      : null;
   const filteredProducts = useMemo(() => {
-    if (!selectedCategory) return products;
+    const activeCategoryId = selectedSubcategory ?? selectedRootCategory;
+    const normalizedSearch = normalizeText(searchQuery);
+    let filtered = products;
 
-    const includedCategoryIds = new Set<number>();
-    const queue = [selectedCategory];
+    if (activeCategoryId) {
+      const includedCategoryIds = new Set<number>();
+      const queue = [activeCategoryId];
 
-    while (queue.length > 0) {
-      const currentCategoryId = queue.shift();
-      if (!currentCategoryId || includedCategoryIds.has(currentCategoryId)) continue;
-      includedCategoryIds.add(currentCategoryId);
-      categories
-        .filter((category) => category.parentId === currentCategoryId)
-        .forEach((category) => queue.push(category.id));
+      while (queue.length > 0) {
+        const currentCategoryId = queue.shift();
+        if (!currentCategoryId || includedCategoryIds.has(currentCategoryId)) continue;
+        includedCategoryIds.add(currentCategoryId);
+        categories
+          .filter((category) => category.parentId === currentCategoryId)
+          .forEach((category) => queue.push(category.id));
+      }
+
+      filtered = filtered.filter((product) => product.categoryId != null && includedCategoryIds.has(product.categoryId));
     }
 
-    return products.filter((product) => product.categoryId != null && includedCategoryIds.has(product.categoryId));
-  }, [categories, products, selectedCategory]);
+    if (!normalizedSearch) return filtered;
+
+    return filtered.filter((product) => {
+      const haystack = normalizeText(
+        [product.name, product.subName, product.categoryName].filter(Boolean).join(" "),
+      );
+      return haystack.includes(normalizedSearch);
+    });
+  }, [categories, products, searchQuery, selectedRootCategory, selectedSubcategory]);
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
   const visibleProducts = useMemo(
     () => filteredProducts.slice((page - 1) * PRODUCTS_PER_PAGE, page * PRODUCTS_PER_PAGE),
@@ -92,6 +145,10 @@ function CatalogPanel({
     const top = productsGridRef.current.getBoundingClientRect().top + window.scrollY - 110;
     window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
   }, [page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery]);
 
   return (
     <div className="flex flex-col">
@@ -165,34 +222,81 @@ function CatalogPanel({
           </div>
           <button
             onClick={() => handleCategoryChange(null)}
-            className={`text-sm font-bold uppercase tracking-[0.18em] flex items-center gap-2 border-b pb-1 transition-colors ${selectedCategory ? "text-primary border-primary/30 hover:border-primary" : "text-muted border-transparent cursor-default"}`}
+            className={`text-sm font-bold uppercase tracking-[0.18em] flex items-center gap-2 border-b pb-1 transition-colors ${selectedRootCategory || selectedSubcategory || searchQuery ? "text-primary border-primary/30 hover:border-primary" : "text-muted border-transparent cursor-default"}`}
           >
-            Ver todo el catalogo <span className="material-symbols-outlined text-sm">{selectedCategory ? "close" : "open_in_new"}</span>
+            Ver todo el catalogo <span className="material-symbols-outlined text-sm">{selectedRootCategory || selectedSubcategory || searchQuery ? "close" : "open_in_new"}</span>
           </button>
+        </div>
+        <div className="mb-8">
+          <label className="flex max-w-xl flex-col">
+            <div className="flex items-center rounded-full border border-primary/15 bg-white shadow-subtle">
+              <span className="material-symbols-outlined pl-4 text-primary">search</span>
+              <input
+                className="w-full border-none bg-transparent px-3 py-3 text-sm text-ink placeholder:text-primary/40 focus:ring-0"
+                placeholder="Buscar por nombre, subnombre o categoría..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+              />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange("")}
+                  className="pr-4 text-muted transition-colors hover:text-primary"
+                >
+                  <span className="material-symbols-outlined text-lg">close</span>
+                </button>
+              ) : null}
+            </div>
+          </label>
         </div>
         <div className="mb-10 flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => handleCategoryChange(null)}
             className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
-              selectedCategory == null ? "border-primary bg-primary text-white" : "border-primary/20 bg-white text-primary hover:border-primary"
+              selectedRootCategory == null ? "border-primary bg-primary text-white" : "border-primary/20 bg-white text-primary hover:border-primary"
             }`}
           >
             Todas
           </button>
-          {categoryChips.map((category) => (
+          {rootCategories.map((category) => (
             <button
               key={category.id}
               type="button"
               onClick={() => handleCategoryChange(category.id)}
               className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
-                selectedCategory === category.id ? "border-primary bg-primary text-white" : "border-primary/20 bg-white text-primary hover:border-primary"
+                selectedRootCategory === category.id ? "border-primary bg-primary text-white" : "border-primary/20 bg-white text-primary hover:border-primary"
               }`}
             >
-              {category.label}
+              {category.name}
             </button>
           ))}
         </div>
+        {selectedRootCategory && subcategories.length > 0 ? (
+          <div className="mb-10 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => handleSubcategoryChange(null)}
+              className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
+                selectedSubcategory == null ? "border-carbon bg-carbon text-white" : "border-carbon/20 bg-white text-carbon hover:border-carbon"
+              }`}
+            >
+              Todas las de {categories.find((category) => category.id === selectedRootCategory)?.name ?? "esta categoría"}
+            </button>
+            {subcategories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => handleSubcategoryChange(category.id)}
+                className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
+                  selectedSubcategory === category.id ? "border-carbon bg-carbon text-white" : "border-carbon/20 bg-white text-carbon hover:border-carbon"
+                }`}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {filteredProducts.length === 0 ? (
             <div className="col-span-full text-center py-20 text-muted">No hay productos cargados en el catalogo.</div>

@@ -165,6 +165,7 @@ function App() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<number | null>(null);
+  const [catalogSearchQuery, setCatalogSearchQuery] = useState("");
   const [featuredPanels, setFeaturedPanels] = useState<FeaturedPanel[]>([]);
   const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
   const [isHomeContentLoaded, setIsHomeContentLoaded] = useState(false);
@@ -1321,6 +1322,8 @@ function App() {
                   favoriteProductIds={new Set(favorites.map(f => f.productId))}
                   onToggleFavorite={toggleFavorite}
                   initialCategory={catalogCategoryFilter}
+                  searchQuery={catalogSearchQuery}
+                  onSearchChange={setCatalogSearchQuery}
                   onCategoryChange={setCatalogCategoryFilter}
                   onPanelCategoryClick={navigateToCategoryInCatalog}
                 />
@@ -1512,9 +1515,11 @@ function App() {
         cartTotal={cartTotal}
         categories={categories}
         selectedCatalogCategoryId={catalogCategoryFilter}
+        catalogSearchQuery={catalogSearchQuery}
         currentClient={currentClient}
         onSetActiveTab={setActiveTab}
         onSelectCatalogCategory={navigateToCategoryInCatalog}
+        onCatalogSearchChange={setCatalogSearchQuery}
         onAdminFormChange={setAdminForm}
         onLoginAdmin={loginAdmin}
         onLogoutAdmin={logoutAdmin}
@@ -1621,6 +1626,8 @@ function App() {
           favoriteProductIds={new Set(favorites.map(f => f.productId))}
           onToggleFavorite={toggleFavorite}
           initialCategory={catalogCategoryFilter}
+          searchQuery={catalogSearchQuery}
+          onSearchChange={setCatalogSearchQuery}
           onCategoryChange={setCatalogCategoryFilter}
           onPanelCategoryClick={navigateToCategoryInCatalog}
         />
