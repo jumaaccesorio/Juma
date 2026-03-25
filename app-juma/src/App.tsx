@@ -25,6 +25,7 @@ import CustomerAuthModal from "./features/users/CustomerAuthModal";
 import type { CartItem, Client, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, Product, Tab, Category } from "./types";
 import { api } from "./lib/api";
 import { getProductDisplayName } from "./lib/productLabel";
+import { optimizeFileForPreview } from "./lib/imageUpload";
 
 const CLIENT_SESSION_KEY = "juma_client";
 
@@ -1055,13 +1056,14 @@ function App() {
   const updateFeaturedPanelImage = (id: string, file: File | null) => {
     if (!file) return;
     setHomeConfigDirty(true);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = typeof reader.result === "string" ? reader.result : "";
-      if (!dataUrl) return;
-      setFeaturedPanels((prev) => prev.map((panel) => (panel.id === id ? { ...panel, image: dataUrl } : panel)));
-    };
-    reader.readAsDataURL(file);
+    void (async () => {
+      try {
+        const { previewUrl } = await optimizeFileForPreview(file, "panel");
+        setFeaturedPanels((prev) => prev.map((panel) => (panel.id === id ? { ...panel, image: previewUrl } : panel)));
+      } catch (err) {
+        console.error("No se pudo preparar la imagen del panel.", err);
+      }
+    })();
   };
 
   const addFeaturedPanel = () => {
@@ -1098,23 +1100,26 @@ function App() {
   const updateHeroImage = (file: File | null) => {
     if (!file) return;
     setHomeConfigDirty(true);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = typeof reader.result === "string" ? reader.result : "";
-      if (!dataUrl) return;
-      setHeroBanner((prev) => {
-        const next: HeroBanner = { ...(prev ?? DEFAULT_HERO_BANNER), image: dataUrl };
-        return next;
-      });
-    };
-    reader.readAsDataURL(file);
+    void (async () => {
+      try {
+        const { previewUrl } = await optimizeFileForPreview(file, "hero");
+        setHeroBanner((prev) => {
+          const next: HeroBanner = { ...(prev ?? DEFAULT_HERO_BANNER), image: previewUrl };
+          return next;
+        });
+      } catch (err) {
+        console.error("No se pudo preparar la imagen del hero.", err);
+      }
+    })();
   };
 
   const saveHomeConfiguration = async () => {
     try {
       setError("");
       setIsSavingHomeConfig(true);
-      await api.saveHomeConfiguration(heroBanner ?? DEFAULT_HERO_BANNER, featuredPanels);
+      const savedConfiguration = await api.saveHomeConfiguration(heroBanner ?? DEFAULT_HERO_BANNER, featuredPanels);
+      setHeroBanner(savedConfiguration.heroBanner);
+      setFeaturedPanels(savedConfiguration.featuredPanels);
       setHomeConfigDirty(false);
     } catch (err) {
       console.error(err);
@@ -1130,14 +1135,15 @@ function App() {
       setProductImageData("");
       return;
     }
-    setProductImageFile(file);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = typeof reader.result === "string" ? reader.result : "";
-      if (!dataUrl) return;
-      setProductImageData(dataUrl);
-    };
-    reader.readAsDataURL(file);
+    void (async () => {
+      try {
+        const { previewUrl } = await optimizeFileForPreview(file, "product");
+        setProductImageFile(file);
+        setProductImageData(previewUrl);
+      } catch (err) {
+        console.error("No se pudo preparar la imagen del producto.", err);
+      }
+    })();
   };
 
   const updateExistingProductImage = (productId: number, file: File | null) => {

@@ -1,5 +1,6 @@
 import type { Category, Client, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, Order, OrderItem, Product } from "../types";
 import { supabase } from "./supabase";
+import { dataUrlToOptimizedFile, optimizeImageFile, type UploadImageVariant } from "./imageUpload";
 
 const PRODUCT_IMAGES_BUCKET = "products";
 const PRODUCT_PUBLIC_PREFIX = `/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/`;
@@ -363,11 +364,14 @@ export const api = {
       .maybeSingle();
     if (query.error) throw query.error;
     if (!query.data) return null;
+
+    const signedImage = await resolveSignedStorageImage(query.data.image);
+
     return {
       tag: query.data.tag,
       title: query.data.title,
       subtitle: query.data.subtitle,
-      image: query.data.image,
+      image: signedImage ?? query.data.image,
     };
   },
 
@@ -376,7 +380,8 @@ export const api = {
       .from("featured_panels")
       .select("id, title, cta, image, class_name, category_id");
     if (query.error) throw query.error;
-    return (query.data ?? []).map((panel: any) => ({
+
+    const panels = (query.data ?? []).map((panel: any) => ({
       id: String(panel.id),
       title: panel.title,
       cta: panel.cta,
@@ -384,33 +389,78 @@ export const api = {
       className: panel.class_name as FeaturedPanel["className"],
       categoryId: panel.category_id ?? null,
     }));
+
+    const signable = panels
+      .map((panel) => ({ id: panel.id, path: extractProductStoragePath(panel.image) }))
+      .filter((panel): panel is { id: string; path: string } => Boolean(panel.path));
+
+    if (signable.length === 0) return panels;
+
+    const signed = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).createSignedUrls(
+      signable.map((panel) => panel.path),
+      60 * 60 * 24 * 7,
+    );
+
+    if (signed.error) throw signed.error;
+
+    const signedMap = new Map<string, string>();
+    signable.forEach((panel, index) => {
+      const signedUrl = signed.data?.[index]?.signedUrl;
+      if (signedUrl) signedMap.set(panel.id, signedUrl);
+    });
+
+    return panels.map((panel) => ({
+      ...panel,
+      image: signedMap.get(panel.id) ?? panel.image,
+    }));
   },
 
-  async saveHomeConfiguration(heroBanner: HeroBanner, featuredPanels: FeaturedPanel[]): Promise<void> {
+  async saveHomeConfiguration(
+    heroBanner: HeroBanner,
+    featuredPanels: FeaturedPanel[],
+  ): Promise<{ heroBanner: HeroBanner; featuredPanels: FeaturedPanel[] }> {
+    let resolvedHeroImage = heroBanner.image;
+    if (resolvedHeroImage.startsWith("data:image/")) {
+      const heroFile = await dataUrlToOptimizedFile(resolvedHeroImage, "hero", "hero-banner");
+      resolvedHeroImage = await this.uploadImage(heroFile, { variant: "hero", folder: "home/hero" });
+    }
+
+    const resolvedPanels = await Promise.all(
+      featuredPanels.map(async (panel) => {
+        if (!panel.image.startsWith("data:image/")) return panel;
+        const panelFile = await dataUrlToOptimizedFile(panel.image, "panel", `featured-panel-${panel.id}`);
+        const image = await this.uploadImage(panelFile, { variant: "panel", folder: "home/panels" });
+        return { ...panel, image };
+      }),
+    );
+
     const heroQuery = await supabase.from("hero_banner").upsert(
       {
         id: 1,
         tag: heroBanner.tag,
         title: heroBanner.title,
         subtitle: heroBanner.subtitle,
-        image: heroBanner.image,
+        image: resolvedHeroImage,
       },
       { onConflict: "id" },
     );
     if (heroQuery.error) throw heroQuery.error;
 
-    if (featuredPanels.length === 0) {
+    if (resolvedPanels.length === 0) {
       const deleteAll = await supabase.from("featured_panels").delete().not("id", "is", null);
       if (deleteAll.error) throw deleteAll.error;
-      return;
+      return {
+        heroBanner: { ...heroBanner, image: resolvedHeroImage },
+        featuredPanels: [],
+      };
     }
 
-    const panelIdsSql = `(${featuredPanels.map((panel) => `"${panel.id}"`).join(",")})`;
+    const panelIdsSql = `(${resolvedPanels.map((panel) => `"${panel.id}"`).join(",")})`;
     const deleteMissing = await supabase.from("featured_panels").delete().not("id", "in", panelIdsSql);
     if (deleteMissing.error) throw deleteMissing.error;
 
     const upsertPanels = await supabase.from("featured_panels").upsert(
-      featuredPanels.map((panel) => ({
+      resolvedPanels.map((panel) => ({
         id: panel.id,
         title: panel.title,
         cta: panel.cta,
@@ -421,18 +471,25 @@ export const api = {
       { onConflict: "id" },
     );
     if (upsertPanels.error) throw upsertPanels.error;
+
+    return {
+      heroBanner: { ...heroBanner, image: resolvedHeroImage },
+      featuredPanels: resolvedPanels,
+    };
   },
 
-  async uploadImage(file: File): Promise<string> {
+  async uploadImage(file: File, options?: { variant?: UploadImageVariant; folder?: string }): Promise<string> {
     try {
-      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const variant = options?.variant ?? "product";
+      const optimizedFile = await optimizeImageFile(file, variant);
+      const extension = optimizedFile.name.split(".").pop()?.toLowerCase() || "webp";
       const fileName = `${crypto.randomUUID()}.${extension}`;
-      const filePath = fileName;
+      const filePath = options?.folder ? `${options.folder}/${fileName}` : fileName;
 
-      const upload = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).upload(filePath, file, {
-        cacheControl: "3600",
+      const upload = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).upload(filePath, optimizedFile, {
+        cacheControl: "31536000",
         upsert: false,
-        contentType: file.type || undefined,
+        contentType: optimizedFile.type || undefined,
       });
 
       if (upload.error) throw upload.error;
@@ -506,6 +563,15 @@ function extractProductStoragePath(image: string): string | null {
   }
 
   return image.trim() || null;
+}
+
+async function resolveSignedStorageImage(image: string): Promise<string | null> {
+  const path = extractProductStoragePath(image);
+  if (!path) return null;
+
+  const signed = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).createSignedUrl(path, 60 * 60 * 24 * 7);
+  if (signed.error) throw signed.error;
+  return signed.data.signedUrl ?? null;
 }
 
 function mapOrder(row: any): Order {
