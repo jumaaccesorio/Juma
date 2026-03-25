@@ -58,6 +58,13 @@ export const api = {
     return client;
   },
 
+  async requestClientPasswordReset(email: string): Promise<void> {
+    const reset = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    });
+    if (reset.error) throw reset.error;
+  },
+
   async getCategories(): Promise<Category[]> {
     const query = await supabase
       .from("categories")

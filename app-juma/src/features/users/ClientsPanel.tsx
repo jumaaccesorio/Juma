@@ -1,7 +1,7 @@
 import type { FormEvent } from "react";
 import type { Client, Order } from "../../types";
 
-type ClientForm = { name: string; phone: string; email: string };
+type ClientForm = { name: string; phone: string; email: string; password: string };
 
 type ClientStat = {
   client: Client;
@@ -17,6 +17,7 @@ type ClientsPanelProps = {
   onAddClient: (event: FormEvent<HTMLFormElement>) => void;
   onEditClick: (client: Client) => void;
   onDeleteClick: (id: number) => void;
+  onResetPassword: (client: Client) => void;
   editingClientId: number | null;
   onCancelEdit: () => void;
 };
@@ -28,6 +29,7 @@ function ClientsPanel({
   onAddClient, 
   onEditClick, 
   onDeleteClick, 
+  onResetPassword,
   editingClientId, 
   onCancelEdit 
 }: ClientsPanelProps) {
@@ -71,7 +73,7 @@ function ClientsPanel({
             </button>
           )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-700">Nombre Completo</label>
             <input required className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="Ej. Nicolas Garcia" value={clientForm.name} onChange={(e) => onClientFormChange({ ...clientForm, name: e.target.value })} />
@@ -83,6 +85,23 @@ function ClientsPanel({
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-700">Email (Opcional)</label>
             <input type="email" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="Ej. correo@ejemplo.com" value={clientForm.email} onChange={(e) => onClientFormChange({ ...clientForm, email: e.target.value })} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">
+              {editingClientId ? "Nueva Contraseña (Opcional)" : "Contraseña (Opcional)"}
+            </label>
+            <input
+              type="password"
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              placeholder={editingClientId ? "Restablece el acceso por email" : "Minimo 6 caracteres"}
+              value={clientForm.password}
+              onChange={(e) => onClientFormChange({ ...clientForm, password: e.target.value })}
+            />
+            <p className="text-xs text-slate-500">
+              {editingClientId
+                ? "Para usuarios existentes, el admin puede enviar un restablecimiento de contraseña."
+                : "Si completas email y contraseña, el usuario queda listo para iniciar sesión."}
+            </p>
           </div>
         </div>
         <div className="flex justify-end pt-4 border-t border-neutral-soft dark:border-slate-800">
@@ -112,6 +131,11 @@ function ClientsPanel({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {row.client.email ? (
+                    <button onClick={() => onResetPassword(row.client)} className="rounded-lg bg-primary/12 p-2 text-primary" title="Restablecer acceso">
+                      <span className="material-symbols-outlined text-lg">lock_reset</span>
+                    </button>
+                  ) : null}
                   <button onClick={() => onEditClick(row.client)} className="rounded-lg bg-tertiary/18 p-2 text-[#4f6780]">
                     <span className="material-symbols-outlined text-lg">edit</span>
                   </button>
@@ -121,6 +145,10 @@ function ClientsPanel({
                 </div>
               </div>
               <div className="mt-4 space-y-2 text-sm text-slate-600">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500">Usuario</span>
+                  <span className="font-medium text-slate-700">{row.client.email || "Sin acceso"}</span>
+                </div>
                 {row.client.phone ? <p>{row.client.phone}</p> : null}
                 {row.client.email ? <p className="break-all">{row.client.email}</p> : null}
                 {!row.client.phone && !row.client.email ? <p className="italic text-slate-400">Sin datos</p> : null}
@@ -143,6 +171,7 @@ function ClientsPanel({
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50">
                 <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Cliente</th>
+                <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Usuario</th>
                 <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Contacto</th>
                 <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-center">Pedidos</th>
                 <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Última Compra</th>
@@ -162,6 +191,16 @@ function ClientsPanel({
                     </div>
                   </td>
                   <td className="p-4 text-sm text-slate-600 dark:text-slate-400">
+                    {row.client.email ? (
+                      <div className="flex flex-col gap-1">
+                        <span className="font-medium text-slate-800 dark:text-slate-200">{row.client.email}</span>
+                        <span className="text-xs uppercase tracking-[0.14em] text-emerald-600">Acceso activo</span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 italic">Sin acceso</span>
+                    )}
+                  </td>
+                  <td className="p-4 text-sm text-slate-600 dark:text-slate-400">
                     <div className="flex flex-col gap-1">
                       {row.client.phone && <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[16px] text-slate-400">call</span> {row.client.phone}</span>}
                       {row.client.email && <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[16px] text-slate-400">mail</span> {row.client.email}</span>}
@@ -177,6 +216,15 @@ function ClientsPanel({
                   <td className="p-4 text-right font-bold text-primary text-base">${row.totalSpent.toLocaleString("es-AR")}</td>
                   <td className="p-4">
                     <div className="flex items-center justify-center gap-2">
+                      {row.client.email ? (
+                        <button 
+                          onClick={() => onResetPassword(row.client)}
+                          className="p-2 text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
+                          title="Restablecer acceso"
+                        >
+                          <span className="material-symbols-outlined">lock_reset</span>
+                        </button>
+                      ) : null}
                       <button 
                         onClick={() => onEditClick(row.client)}
                         className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
@@ -197,7 +245,7 @@ function ClientsPanel({
               ))}
               {clientStats.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-500 font-medium">No se encontraron clientes registrados.</td>
+                  <td colSpan={7} className="p-8 text-center text-slate-500 font-medium">No se encontraron clientes registrados.</td>
                 </tr>
               )}
             </tbody>

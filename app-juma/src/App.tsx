@@ -202,7 +202,7 @@ function App() {
     cartTotal: number;
   } | null>(null);
 
-  const [clientForm, setClientForm] = useState({ name: "", phone: "", email: "" });
+  const [clientForm, setClientForm] = useState({ name: "", phone: "", email: "", password: "" });
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [productForm, setProductForm] = useState({
     name: "",
@@ -545,25 +545,51 @@ function App() {
     event.preventDefault();
     if (!clientForm.name.trim()) return;
     try {
+      setError("");
+      if (clientForm.password.trim() && !clientForm.email.trim()) {
+        setError("Para crear acceso de usuario, completa tambien el email.");
+        return;
+      }
+
+      if (clientForm.password.trim() && clientForm.password.trim().length < 6) {
+        setError("La contraseña debe tener al menos 6 caracteres.");
+        return;
+      }
+
       if (editingUserId) {
+        if (clientForm.password.trim()) {
+          setError("Para usuarios existentes, usa el boton de restablecer acceso. El admin no puede cambiar contraseñas ajenas directamente desde esta pantalla.");
+          return;
+        }
         await api.updateClient(editingUserId, { 
           name: clientForm.name.trim(), 
           phone: clientForm.phone.trim(), 
           email: clientForm.email.trim() 
         });
-        setClients(prev => prev.map(c => c.id === editingUserId ? { ...c, ...clientForm } : c));
+        setClients(prev => prev.map(c => c.id === editingUserId ? {
+          ...c,
+          name: clientForm.name.trim(),
+          phone: clientForm.phone.trim(),
+          email: clientForm.email.trim(),
+        } : c));
         setEditingUserId(null);
       } else {
-        const newClient = await api.addClient({ 
-          name: clientForm.name.trim(), 
-          phone: clientForm.phone.trim(), 
-          email: clientForm.email.trim() 
-        });
+        const trimmedEmail = clientForm.email.trim();
+        const trimmedPassword = clientForm.password.trim();
+        const newClient =
+          trimmedEmail && trimmedPassword
+            ? await api.signUpClient(trimmedEmail, trimmedPassword, clientForm.name.trim(), clientForm.phone.trim())
+            : await api.addClient({ 
+                name: clientForm.name.trim(), 
+                phone: clientForm.phone.trim(), 
+                email: trimmedEmail
+              });
         setClients((prev) => [newClient, ...prev]);
       }
-      setClientForm({ name: "", phone: "", email: "" });
+      setClientForm({ name: "", phone: "", email: "", password: "" });
     } catch (err) {
       console.error(err);
+      setError(getErrorMessage(err, "No se pudo guardar el usuario."));
     }
   };
 
@@ -574,7 +600,7 @@ function App() {
       setClients(prev => prev.filter(c => c.id !== id));
       if (editingUserId === id) {
         setEditingUserId(null);
-        setClientForm({ name: "", phone: "", email: "" });
+        setClientForm({ name: "", phone: "", email: "", password: "" });
       }
     } catch (err) {
       console.error(err);
@@ -583,8 +609,24 @@ function App() {
 
   const startEditingUser = (client: Client) => {
     setEditingUserId(client.id);
-    setClientForm({ name: client.name, phone: client.phone, email: client.email });
+    setClientForm({ name: client.name, phone: client.phone, email: client.email, password: "" });
     // Tab switching or scrolling is handled by the UI or implicitly by the switch
+  };
+
+  const resetClientPassword = async (client: Client) => {
+    if (!client.email) {
+      setError("Este usuario no tiene email asociado para restablecer acceso.");
+      return;
+    }
+
+    try {
+      setError("");
+      await api.requestClientPasswordReset(client.email);
+      window.alert(`Se envio un email de restablecimiento a ${client.email}.`);
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err, "No se pudo enviar el restablecimiento de acceso."));
+    }
   };
 
   const addProduct = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -1452,10 +1494,11 @@ function App() {
                   onAddClient={saveUser}
                   onEditClick={startEditingUser}
                   onDeleteClick={deleteUser}
+                  onResetPassword={resetClientPassword}
                   editingClientId={editingUserId}
                   onCancelEdit={() => {
                     setEditingUserId(null);
-                    setClientForm({ name: "", phone: "", email: "" });
+                    setClientForm({ name: "", phone: "", email: "", password: "" });
                   }}
                 />
               </div>
@@ -1583,8 +1626,8 @@ function App() {
       />
 
       {cartSuccessToast ? (
-        <div className="fixed right-4 top-24 z-[120] w-[min(92vw,420px)] overflow-hidden rounded-sm border border-line bg-white shadow-2xl shadow-black/15">
-          <div className="flex items-start justify-between border-b border-line px-5 py-4">
+        <div className="fixed right-4 top-24 z-[120] w-[min(86vw,360px)] overflow-hidden rounded-sm border border-line bg-white shadow-2xl shadow-black/15">
+          <div className="flex items-start justify-between border-b border-line px-4 py-3">
             <div>
               <p className="text-xl font-bold text-[#6f7f80]">¡Agregado al carrito!</p>
             </div>
@@ -1596,8 +1639,8 @@ function App() {
               <span className="material-symbols-outlined text-lg">close</span>
             </button>
           </div>
-          <div className="flex gap-4 px-5 py-4">
-            <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden bg-secondary">
+          <div className="flex gap-3 px-4 py-3">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden bg-secondary">
               {cartSuccessToast.image ? (
                 <img src={cartSuccessToast.image} alt={cartSuccessToast.name} className="h-full w-full object-cover" />
               ) : (
@@ -1605,28 +1648,28 @@ function App() {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xl leading-6 text-[#6f7f80]">{cartSuccessToast.name}</p>
-              <p className="mt-2 text-[1.1rem] text-[#6f7f80]">
+              <p className="text-lg leading-6 text-[#6f7f80]">{cartSuccessToast.name}</p>
+              <p className="mt-1 text-base text-[#6f7f80]">
                 {cartSuccessToast.quantity} x ${cartSuccessToast.price.toLocaleString("es-AR")}
               </p>
-              <div className="mt-6 flex items-center justify-between border-t border-line pt-4">
+              <div className="mt-4 flex items-center justify-between border-t border-line pt-3">
                 <div>
-                  <p className="text-[1rem] font-bold text-[#6f7f80]">
+                  <p className="text-sm font-bold text-[#6f7f80]">
                     Total ({cartSuccessToast.cartItemsCount} producto{cartSuccessToast.cartItemsCount === 1 ? "" : "s"}):
                   </p>
                 </div>
-                <p className="text-[2rem] font-black text-[#6f7f80]">${cartSuccessToast.cartTotal.toLocaleString("es-AR")}</p>
+                <p className="text-[1.75rem] font-black leading-none text-[#6f7f80]">${cartSuccessToast.cartTotal.toLocaleString("es-AR")}</p>
               </div>
             </div>
           </div>
-          <div className="px-5 pb-5">
+          <div className="px-4 pb-4">
             <button
               type="button"
               onClick={() => {
                 setCartSuccessToast(null);
                 setActiveTab("carrito");
               }}
-              className="w-full border-b-2 border-primary/35 pb-3 text-center text-sm font-bold uppercase tracking-[0.22em] text-muted transition-colors hover:text-primary"
+              className="w-full border-b-2 border-primary/35 pb-2.5 text-center text-xs font-bold uppercase tracking-[0.22em] text-muted transition-colors hover:text-primary"
             >
               Ver carrito
             </button>
