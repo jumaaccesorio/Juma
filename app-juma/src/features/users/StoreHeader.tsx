@@ -11,10 +11,14 @@ type StoreHeaderProps = {
   categories: Category[];
   selectedCatalogCategoryId: number | null;
   catalogSearchQuery: string;
+  catalogViewMode: "home" | "catalog" | "search";
   currentClient: Client | null;
   onSetActiveTab: (tab: Tab) => void;
+  onOpenCatalogHome: () => void;
+  onOpenFullCatalog: () => void;
   onSelectCatalogCategory: (categoryId: number | null) => void;
   onCatalogSearchChange: (value: string) => void;
+  onCatalogSearchSubmit: () => void;
   onAdminFormChange: (form: any) => void;
   onLoginAdmin: (e: React.FormEvent<HTMLFormElement>) => void;
   onLogoutAdmin: () => void;
@@ -32,10 +36,14 @@ export default function StoreHeader({
   categories,
   selectedCatalogCategoryId,
   catalogSearchQuery,
+  catalogViewMode,
   currentClient,
   onSetActiveTab,
+  onOpenCatalogHome,
+  onOpenFullCatalog,
   onSelectCatalogCategory,
   onCatalogSearchChange,
+  onCatalogSearchSubmit,
   onAdminFormChange,
   onLoginAdmin,
   onLogoutAdmin,
@@ -59,8 +67,8 @@ export default function StoreHeader({
     () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
     [categories],
   );
-  const isHomeActive = activeTab === "catalogo" && selectedCatalogCategoryId == null && !showCatalogMenu;
-  const isCatalogActive = showCatalogMenu || selectedCatalogCategoryId != null;
+  const isHomeActive = activeTab === "catalogo" && catalogViewMode === "home" && selectedCatalogCategoryId == null && !showCatalogMenu;
+  const isCatalogActive = activeTab === "catalogo" && (showCatalogMenu || catalogViewMode !== "home" || selectedCatalogCategoryId != null);
 
   useEffect(() => {
     if (isAdminLogged) {
@@ -94,7 +102,7 @@ export default function StoreHeader({
       {/* Header */}
       <header className="flex flex-col items-center gap-4 border-b border-primary/10 bg-background/80 backdrop-blur-md sticky top-0 z-50 px-6 md:px-20 py-4 shadow-sm">
         <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex flex-col items-start cursor-pointer group" onClick={() => onSetActiveTab("catalogo")}>
+          <div className="flex flex-col items-start cursor-pointer group" onClick={onOpenCatalogHome}>
             <h2 className="font-serif text-primary text-3xl font-black leading-tight tracking-tight uppercase group-hover:text-primary/80 transition-colors">Juma Accessory</h2>
             <p className="text-primary/60 text-[10px] tracking-[0.2em] uppercase font-bold">Plata 925, accesorios de acero blanco y dorado</p>
           </div>
@@ -113,6 +121,12 @@ export default function StoreHeader({
                     if (activeTab !== "catalogo") onSetActiveTab("catalogo");
                   }}
                   onChange={(e) => openCatalogWithSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      onCatalogSearchSubmit();
+                    }
+                  }}
                 />
               </div>
             </label>
@@ -204,11 +218,7 @@ export default function StoreHeader({
         <nav className="relative z-20 mt-2 flex w-full items-center gap-8 overflow-visible py-2 pb-0 text-sm font-bold uppercase tracking-widest text-slate-400">
           <button
             className={`hover:text-primary transition-colors pb-2 border-b-2 ${isHomeActive ? "text-primary border-primary" : "border-transparent"}`}
-            onClick={() => {
-              onSelectCatalogCategory(null);
-              onSetActiveTab("catalogo");
-              scrollToPageTop();
-            }}
+            onClick={onOpenCatalogHome}
           >
             Inicio
           </button>
@@ -216,7 +226,10 @@ export default function StoreHeader({
             <button
               type="button"
               className={`flex items-center gap-1 pb-2 border-b-2 transition-colors ${isCatalogActive ? "text-primary border-primary" : "border-transparent hover:text-primary"}`}
-              onClick={() => setShowCatalogMenu((prev) => !prev)}
+              onClick={() => {
+                onOpenFullCatalog();
+                setShowCatalogMenu((prev) => !prev);
+              }}
             >
               Catalogo
               <span className={`material-symbols-outlined text-sm transition-transform ${showCatalogMenu ? "rotate-180" : ""}`}>expand_more</span>
@@ -231,7 +244,6 @@ export default function StoreHeader({
                       type="button"
                       onClick={() => {
                         onSelectCatalogCategory(category.id);
-                        onSetActiveTab("catalogo");
                         setShowCatalogMenu(false);
                       }}
                       className="block w-full px-6 py-3 text-left text-[15px] font-medium normal-case tracking-normal text-ink transition-colors hover:bg-secondary/40 hover:text-primary"

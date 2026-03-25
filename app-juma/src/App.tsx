@@ -156,7 +156,17 @@ function parseImportedProducts(csvText: string): ImportedProductRow[] {
 }
 
 function App() {
+  const scrollToCatalogSection = () => {
+    window.setTimeout(() => {
+      const catalogSection = document.getElementById("catalog-products-section");
+      if (catalogSection) {
+        catalogSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 120);
+  };
+
   const [activeTab, setActiveTab] = useState<Tab>("catalogo");
+  const [catalogViewMode, setCatalogViewMode] = useState<"home" | "catalog" | "search">("home");
   const [clients, setClients] = useState<Client[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -486,13 +496,31 @@ function App() {
 
   const navigateToCategoryInCatalog = (categoryId: number | null) => {
     setCatalogCategoryFilter(categoryId);
+    setCatalogViewMode("catalog");
     setActiveTab("catalogo");
-    window.setTimeout(() => {
-      const catalogSection = document.getElementById("catalog-products-section");
-      if (catalogSection) {
-        catalogSection.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }, 120);
+    scrollToCatalogSection();
+  };
+
+  const openCatalogHome = () => {
+    setCatalogSearchQuery("");
+    setCatalogCategoryFilter(null);
+    setCatalogViewMode("home");
+    setActiveTab("catalogo");
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  };
+
+  const openFullCatalog = () => {
+    setCatalogViewMode("catalog");
+    setActiveTab("catalogo");
+    scrollToCatalogSection();
+  };
+
+  const submitCatalogSearch = () => {
+    setCatalogViewMode("search");
+    setActiveTab("catalogo");
+    scrollToCatalogSection();
   };
 
   const updateCategory = async (id: number, name: string) => {
@@ -1319,6 +1347,7 @@ function App() {
                   featuredPanels={featuredPanels}
                   heroBanner={heroBanner}
                   isHomeContentLoaded={isHomeContentLoaded}
+                  viewMode={catalogViewMode}
                   favoriteProductIds={new Set(favorites.map(f => f.productId))}
                   onToggleFavorite={toggleFavorite}
                   initialCategory={catalogCategoryFilter}
@@ -1326,6 +1355,7 @@ function App() {
                   onSearchChange={setCatalogSearchQuery}
                   onCategoryChange={setCatalogCategoryFilter}
                   onPanelCategoryClick={navigateToCategoryInCatalog}
+                  onOpenFullCatalog={openFullCatalog}
                 />
               </div>
             )}
@@ -1516,10 +1546,14 @@ function App() {
         categories={categories}
         selectedCatalogCategoryId={catalogCategoryFilter}
         catalogSearchQuery={catalogSearchQuery}
+        catalogViewMode={catalogViewMode}
         currentClient={currentClient}
         onSetActiveTab={setActiveTab}
+        onOpenCatalogHome={openCatalogHome}
+        onOpenFullCatalog={openFullCatalog}
         onSelectCatalogCategory={navigateToCategoryInCatalog}
         onCatalogSearchChange={setCatalogSearchQuery}
+        onCatalogSearchSubmit={submitCatalogSearch}
         onAdminFormChange={setAdminForm}
         onLoginAdmin={loginAdmin}
         onLogoutAdmin={logoutAdmin}
@@ -1623,6 +1657,7 @@ function App() {
           featuredPanels={featuredPanels}
           heroBanner={heroBanner}
           isHomeContentLoaded={isHomeContentLoaded}
+          viewMode={catalogViewMode}
           favoriteProductIds={new Set(favorites.map(f => f.productId))}
           onToggleFavorite={toggleFavorite}
           initialCategory={catalogCategoryFilter}
@@ -1630,6 +1665,7 @@ function App() {
           onSearchChange={setCatalogSearchQuery}
           onCategoryChange={setCatalogCategoryFilter}
           onPanelCategoryClick={navigateToCategoryInCatalog}
+          onOpenFullCatalog={openFullCatalog}
         />
       ) : null}
 

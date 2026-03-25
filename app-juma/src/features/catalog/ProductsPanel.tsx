@@ -21,6 +21,7 @@ type ProductDraft = {
   purchasePrice: string;
   salePrice: string;
   stock: string;
+  isFeatured: boolean;
 };
 
 type ProductsPanelProps = {
@@ -46,6 +47,7 @@ function buildDraft(product: Product): ProductDraft {
     purchasePrice: String(product.purchasePrice ?? 0),
     salePrice: String(product.salePrice ?? 0),
     stock: String(product.stock ?? 0),
+    isFeatured: Boolean(product.isFeatured),
   };
 }
 
@@ -118,7 +120,7 @@ function ProductsPanel({
 
   const outOfStockCount = products.filter((product) => product.stock <= 0).length;
 
-  const updateDraft = (productId: number, key: keyof ProductDraft, value: string) => {
+  const updateDraft = (productId: number, key: keyof ProductDraft, value: string | boolean) => {
     setDrafts((prev) => ({
       ...prev,
       [productId]: {
@@ -150,6 +152,7 @@ function ProductsPanel({
       purchasePrice,
       salePrice,
       stock,
+      isFeatured: draft.isFeatured,
     });
   };
 
@@ -505,8 +508,8 @@ function ProductsPanel({
           ) : null}
         </div>
 
-        <div className="hidden overflow-x-auto md:block">
-          <table className="w-full text-left border-collapse">
+        <div className="hidden overflow-x-auto px-2 pb-2 md:block">
+          <table className="w-full min-w-[1100px] text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50">
                 <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Producto</th>
@@ -515,7 +518,7 @@ function ProductsPanel({
                 <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Precio Venta</th>
                 <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Stock</th>
                 <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Estado</th>
-                <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Acciones</th>
+                <th className="p-4 pr-8 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-soft dark:divide-slate-800">
@@ -574,7 +577,7 @@ function ProductsPanel({
                         {product.enabled ? "Visible" : "Oculto"}
                       </button>
                     </td>
-                    <td className="p-4 text-right">
+                    <td className="p-4 pr-8 text-right">
                       <div className="flex justify-end gap-2">
                         <button
                           type="button"
@@ -722,6 +725,21 @@ function ProductsPanel({
                     value={editingDraft.salePrice}
                     onChange={(e) => updateDraft(editingProduct.id, "salePrice", e.target.value)}
                   />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Inicio</label>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={editingDraft.isFeatured}
+                      onChange={(e) => updateDraft(editingProduct.id, "isFeatured", e.target.checked)}
+                    />
+                    <div className="h-6 w-11 rounded-full bg-slate-200 transition peer-checked:bg-primary peer-checked:after:translate-x-full after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-['']" />
+                    <span className="ms-3 text-sm font-bold text-slate-700">
+                      Mostrar este producto en destacados del inicio
+                    </span>
+                  </label>
                 </div>
               </div>
             </div>

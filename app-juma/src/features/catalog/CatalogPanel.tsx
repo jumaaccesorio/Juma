@@ -9,6 +9,7 @@ type CatalogPanelProps = {
   featuredPanels: FeaturedPanel[];
   heroBanner: HeroBanner | null;
   isHomeContentLoaded: boolean;
+  viewMode: "home" | "catalog" | "search";
   favoriteProductIds: Set<number>;
   onToggleFavorite: (productId: number) => void;
   initialCategory: number | null;
@@ -16,6 +17,7 @@ type CatalogPanelProps = {
   onSearchChange: (value: string) => void;
   onCategoryChange: (cat: number | null) => void;
   onPanelCategoryClick: (categoryId: number | null) => void;
+  onOpenFullCatalog: () => void;
 };
 
 function CatalogPanel({
@@ -25,6 +27,7 @@ function CatalogPanel({
   featuredPanels,
   heroBanner,
   isHomeContentLoaded,
+  viewMode,
   favoriteProductIds,
   onToggleFavorite,
   initialCategory,
@@ -32,6 +35,7 @@ function CatalogPanel({
   onSearchChange,
   onCategoryChange,
   onPanelCategoryClick,
+  onOpenFullCatalog,
 }: CatalogPanelProps) {
   const PRODUCTS_PER_PAGE = 16;
   const [selectedRootCategory, setSelectedRootCategory] = useState<number | null>(null);
@@ -42,6 +46,7 @@ function CatalogPanel({
     () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
     [categories],
   );
+  const featuredProducts = useMemo(() => products.filter((product) => product.isFeatured).slice(0, 8), [products]);
   const subcategories = useMemo(
     () =>
       categories
@@ -100,6 +105,12 @@ function CatalogPanel({
     : selectedRootCategory
       ? categories.find((category) => category.id === selectedRootCategory)?.name ?? null
       : null;
+  const sectionTitle =
+    viewMode === "search" && searchQuery.trim()
+      ? "Resultados de busqueda"
+      : selectedCategoryName
+        ? `Categoria: ${selectedCategoryName}`
+        : "Catalogo completo";
   const filteredProducts = useMemo(() => {
     const activeCategoryId = selectedSubcategory ?? selectedRootCategory;
     const normalizedSearch = normalizeText(searchQuery);
@@ -152,6 +163,8 @@ function CatalogPanel({
 
   return (
     <div className="flex flex-col">
+      {viewMode === "home" ? (
+        <>
       <section className="relative h-[716px] min-h-[500px] w-full overflow-hidden">
         {isHomeContentLoaded && heroBanner ? (
           <>
@@ -211,14 +224,67 @@ function CatalogPanel({
           </div>
         </section>
       ) : null}
+      <section className="bg-background px-6 py-20 md:px-40">
+        <div className="mb-12 flex flex-col items-center text-center">
+          <span className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-primary">Piezas elegidas</span>
+          <h2 className="font-headline text-3xl font-light text-carbon">Destacados del inicio</h2>
+          <p className="mt-3 max-w-2xl text-sm text-muted">Acá aparecen solamente los productos que marques como destacados desde el editor.</p>
+        </div>
+        {featuredProducts.length === 0 ? (
+          <div className="rounded border border-dashed border-line bg-secondary/35 px-6 py-14 text-center text-sm text-muted">
+            Todavia no hay productos destacados para mostrar en el inicio.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {featuredProducts.map((product) => (
+              <div key={`featured-${product.id}`} className="group rounded bg-white p-4 shadow-subtle transition-shadow hover:shadow-md">
+                <div className="relative mb-4 aspect-square overflow-hidden rounded bg-secondary/60">
+                  {product.image ? (
+                    <img className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" src={product.image} alt={getProductDisplayName(product)} />
+                  ) : (
+                    <div className="flex h-full items-center justify-center">
+                      <span className="material-symbols-outlined text-6xl text-slate-300">image</span>
+                    </div>
+                  )}
+                </div>
+                <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.24em] text-primary/70">{product.categoryName || "Categoria"}</p>
+                <h3 className="font-headline text-center text-[1.35rem] text-carbon">{getProductDisplayName(product)}</h3>
+                <p className="mt-2 text-center text-lg font-semibold text-carbon">${product.salePrice.toLocaleString("es-AR")}</p>
+                <button
+                  type="button"
+                  onClick={() => onAddToCart(product.id)}
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded bg-primary py-3 text-sm font-bold uppercase tracking-[0.18em] text-white transition-all hover:opacity-90"
+                >
+                  <span className="material-symbols-outlined text-sm">{product.stock <= 0 ? "inventory_2" : "add_shopping_cart"}</span>
+                  {product.stock <= 0 ? "Pedir por encargo" : "Agregar al carrito"}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="mt-12 flex justify-center">
+          <button
+            type="button"
+            onClick={onOpenFullCatalog}
+            className="inline-flex items-center gap-2 rounded border border-primary bg-background px-5 py-3 text-xs font-bold uppercase tracking-[0.18em] text-primary transition-all hover:bg-primary hover:text-white"
+          >
+            Ver todo el catalogo
+            <span className="material-symbols-outlined text-sm">south</span>
+          </button>
+        </div>
+      </section>
+        </>
+      ) : null}
 
+      {viewMode !== "home" ? (
       <section ref={productsGridRef} id="catalog-products-section" className="bg-primary/[0.03] px-6 md:px-40 py-20">
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
           <div className="flex flex-col">
-            <span className="text-primary font-bold tracking-[0.3em] uppercase text-xs mb-2">Catalogo Online</span>
-            <h2 className="font-headline text-carbon text-3xl font-light">
-              {selectedCategoryName ? `Categoria: ${selectedCategoryName}` : "Novedades"}
-            </h2>
+            <span className="text-primary font-bold tracking-[0.3em] uppercase text-xs mb-2">{viewMode === "search" ? "Busqueda" : "Catalogo Online"}</span>
+            <h2 className="font-headline text-carbon text-3xl font-light">{sectionTitle}</h2>
+            {viewMode === "search" && searchQuery.trim() ? (
+              <p className="mt-3 text-sm text-muted">Mostrando coincidencias para "{searchQuery}".</p>
+            ) : null}
           </div>
           <button
             onClick={() => handleCategoryChange(null)}
@@ -363,6 +429,7 @@ function CatalogPanel({
           </div>
         )}
       </section>
+      ) : null}
 
       <section className="px-6 md:px-40 py-20 bg-background">
         <div className="rounded bg-secondary/45 border border-line p-8 md:p-16 flex flex-col items-center text-center gap-6 shadow-subtle">
