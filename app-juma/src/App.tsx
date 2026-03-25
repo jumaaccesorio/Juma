@@ -242,6 +242,15 @@ function App() {
   const normalizeProducts = (rows: Product[]) =>
     rows.map((row) => ({ ...row, enabled: row.enabled ?? true, image: row.image ?? "" }));
 
+  const refreshClients = async () => {
+    try {
+      const nextClients = await api.getClients();
+      setClients(nextClients);
+    } catch (error) {
+      console.warn("No se pudieron refrescar los clientes.", error);
+    }
+  };
+
   useEffect(() => {
     async function loadPublicData() {
       setError("");
@@ -388,6 +397,11 @@ function App() {
       cancelled = true;
     };
   }, [isAdminLogged, hasLoadedAdminData]);
+
+  useEffect(() => {
+    if (!isAdminLogged || activeTab !== "clientes") return;
+    void refreshClients();
+  }, [activeTab, isAdminLogged]);
 
   useEffect(() => {
     if (!cartSuccessToast) return;
