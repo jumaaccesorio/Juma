@@ -508,8 +508,17 @@ function ProductsPanel({
           ) : null}
         </div>
 
-        <div className="hidden overflow-x-auto px-2 pb-2 md:block">
-          <table className="w-full min-w-[1100px] text-left border-collapse">
+        <div className="hidden px-2 pb-2 md:block">
+          <table className="w-full table-fixed text-left border-collapse">
+            <colgroup>
+              <col className="w-[42%]" />
+              <col className="w-[19%]" />
+              <col className="w-[8.5%]" />
+              <col className="w-[8.5%]" />
+              <col className="w-[10%]" />
+              <col className="w-[8%]" />
+              <col className="w-[96px]" />
+            </colgroup>
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50">
                 <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Producto</th>
@@ -535,21 +544,27 @@ function ProductsPanel({
                             <span className="material-symbols-outlined text-slate-400 text-xl">image</span>
                           )}
                         </div>
-                        <div className="min-w-0">
-                          <span className="font-bold text-sm text-ink leading-tight block">{displayName}</span>
+                        <div className="min-w-0 max-w-full">
+                          <span className="block truncate font-bold text-sm text-ink leading-tight">{displayName}</span>
                           {product.subName && product.name.trim() && (
                             <span className="text-xs text-slate-400 block truncate">{product.subName}</span>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 text-sm text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap">
-                      {product.categoryName || <span className="text-slate-400 italic">Sin Categoria</span>}
-                      {product.isFeatured && (
-                        <span className="ml-2 inline-flex items-center rounded-full bg-quaternary px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary" title="Destacado en Inicio">
-                          Featured
-                        </span>
-                      )}
+                    <td className="p-4 text-sm text-slate-600 dark:text-slate-400 font-medium">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {product.categoryName ? (
+                          <span className="truncate">{product.categoryName}</span>
+                        ) : (
+                          <span className="italic text-slate-400">Sin Categoria</span>
+                        )}
+                        {product.isFeatured && (
+                          <span className="inline-flex items-center rounded-full bg-quaternary px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary" title="Destacado en Inicio">
+                            Featured
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-4 text-sm font-medium text-slate-500">${product.purchasePrice.toLocaleString("es-AR")}</td>
                     <td className="p-4 text-sm font-bold text-primary">${product.salePrice.toLocaleString("es-AR")}</td>
@@ -577,8 +592,8 @@ function ProductsPanel({
                         {product.enabled ? "Visible" : "Oculto"}
                       </button>
                     </td>
-                    <td className="p-4 pr-8 text-right">
-                      <div className="flex justify-end gap-2">
+                    <td className="p-4 pr-6 text-right">
+                      <div className="flex justify-end gap-1.5">
                         <button
                           type="button"
                           onClick={() => openEditor(product)}

@@ -13,6 +13,7 @@ import AdminTopNav from "./features/admin/AdminTopNav";
 import QuickSalePanel from "./features/admin/QuickSalePanel";
 import CartPanel from "./features/cart/CartPanel";
 import CatalogPanel from "./features/catalog/CatalogPanel";
+import ProductDetailPanel from "./features/catalog/ProductDetailPanel";
 import CategoriesPanel from "./features/catalog/CategoriesPanel";
 import InventoryPanel from "./features/catalog/InventoryPanel";
 import ProductsPanel from "./features/catalog/ProductsPanel";
@@ -167,6 +168,7 @@ function App() {
 
   const [activeTab, setActiveTab] = useState<Tab>("catalogo");
   const [catalogViewMode, setCatalogViewMode] = useState<"home" | "catalog" | "search">("home");
+  const [selectedCatalogProductId, setSelectedCatalogProductId] = useState<number | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -504,6 +506,7 @@ function App() {
   const openCatalogHome = () => {
     setCatalogSearchQuery("");
     setCatalogCategoryFilter(null);
+    setSelectedCatalogProductId(null);
     setCatalogViewMode("home");
     setActiveTab("catalogo");
     window.requestAnimationFrame(() => {
@@ -512,12 +515,14 @@ function App() {
   };
 
   const openFullCatalog = () => {
+    setSelectedCatalogProductId(null);
     setCatalogViewMode("catalog");
     setActiveTab("catalogo");
     scrollToCatalogSection();
   };
 
   const submitCatalogSearch = () => {
+    setSelectedCatalogProductId(null);
     setCatalogViewMode("search");
     setActiveTab("catalogo");
     scrollToCatalogSection();
@@ -1018,41 +1023,51 @@ function App() {
 
   const orderTotal = (order: Order) => order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0);
 
-  const addToCart = (productId: number) => {
+  const openProductDetail = (productId: number) => {
+    setSelectedCatalogProductId(productId);
+    setActiveTab("catalogo");
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  };
+
+  const addToCart = (productId: number, quantity = 1) => {
     setError("");
     setLastOrderConfirmation(null);
     const product = productMap.get(productId);
+    if (quantity <= 0) return;
     if (!product) return;
     setCartItems((prev) => {
       const existing = prev.find((item) => item.productId === productId);
+      const nextQuantity = existing ? existing.quantity + quantity : quantity;
+      const nextItemsCount = prev.reduce((acc, item) => acc + item.quantity, 0) + quantity;
+      const nextCartTotal =
+        prev.reduce((acc, item) => {
+          const currentProduct = productMap.get(item.productId);
+          return acc + (currentProduct ? currentProduct.salePrice * item.quantity : 0);
+        }, 0) + product.salePrice * quantity;
       if (!existing) {
         setCartSuccessToast({
           productId: product.id,
           name: getProductDisplayName(product),
           image: product.image,
           price: product.salePrice,
-          quantity: 1,
-          cartItemsCount: prev.reduce((acc, item) => acc + item.quantity, 0) + 1,
-          cartTotal: prev.reduce((acc, item) => {
-            const currentProduct = productMap.get(item.productId);
-            return acc + (currentProduct ? currentProduct.salePrice * item.quantity : 0);
-          }, 0) + product.salePrice,
+          quantity,
+          cartItemsCount: nextItemsCount,
+          cartTotal: nextCartTotal,
         });
-        return [...prev, { productId, quantity: 1 }];
+        return [...prev, { productId, quantity }];
       }
       setCartSuccessToast({
         productId: product.id,
         name: getProductDisplayName(product),
         image: product.image,
         price: product.salePrice,
-        quantity: existing.quantity + 1,
-        cartItemsCount: prev.reduce((acc, item) => acc + item.quantity, 0) + 1,
-        cartTotal: prev.reduce((acc, item) => {
-          const currentProduct = productMap.get(item.productId);
-          return acc + (currentProduct ? currentProduct.salePrice * item.quantity : 0);
-        }, 0) + product.salePrice,
+        quantity: nextQuantity,
+        cartItemsCount: nextItemsCount,
+        cartTotal: nextCartTotal,
       });
-      return prev.map((item) => (item.productId === productId ? { ...item, quantity: item.quantity + 1 } : item));
+      return prev.map((item) => (item.productId === productId ? { ...item, quantity: nextQuantity } : item));
     });
   };
 
@@ -1344,6 +1359,7 @@ function App() {
                   products={catalogProducts}
                   categories={categories}
                   onAddToCart={addToCart}
+                  onOpenProduct={openProductDetail}
                   featuredPanels={featuredPanels}
                   heroBanner={heroBanner}
                   isHomeContentLoaded={isHomeContentLoaded}
@@ -1650,23 +1666,45 @@ function App() {
       <main className="flex flex-col grow">
 
       {activeTab === "catalogo" ? (
-        <CatalogPanel
-          products={catalogProducts}
-          categories={categories}
-          onAddToCart={addToCart}
-          featuredPanels={featuredPanels}
-          heroBanner={heroBanner}
-          isHomeContentLoaded={isHomeContentLoaded}
-          viewMode={catalogViewMode}
-          favoriteProductIds={new Set(favorites.map(f => f.productId))}
-          onToggleFavorite={toggleFavorite}
-          initialCategory={catalogCategoryFilter}
-          searchQuery={catalogSearchQuery}
-          onSearchChange={setCatalogSearchQuery}
-          onCategoryChange={setCatalogCategoryFilter}
-          onPanelCategoryClick={navigateToCategoryInCatalog}
-          onOpenFullCatalog={openFullCatalog}
-        />
+        selectedCatalogProductId ? (
+          (() => {
+            const selectedProduct =
+              catalogProducts.find((product) => product.id === selectedCatalogProductId) ??
+              products.find((product) => product.id === selectedCatalogProductId);
+
+            if (!selectedProduct) return null;
+
+            return (
+              <ProductDetailPanel
+                product={selectedProduct}
+                onBack={() => {
+                  setSelectedCatalogProductId(null);
+                  setActiveTab("catalogo");
+                }}
+                onAddToCart={addToCart}
+              />
+            );
+          })()
+        ) : (
+          <CatalogPanel
+            products={catalogProducts}
+            categories={categories}
+            onAddToCart={addToCart}
+            onOpenProduct={openProductDetail}
+            featuredPanels={featuredPanels}
+            heroBanner={heroBanner}
+            isHomeContentLoaded={isHomeContentLoaded}
+            viewMode={catalogViewMode}
+            favoriteProductIds={new Set(favorites.map(f => f.productId))}
+            onToggleFavorite={toggleFavorite}
+            initialCategory={catalogCategoryFilter}
+            searchQuery={catalogSearchQuery}
+            onSearchChange={setCatalogSearchQuery}
+            onCategoryChange={setCatalogCategoryFilter}
+            onPanelCategoryClick={navigateToCategoryInCatalog}
+            onOpenFullCatalog={openFullCatalog}
+          />
+        )
       ) : null}
 
       {activeTab === "carrito" ? (

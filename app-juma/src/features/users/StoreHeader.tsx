@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Tab, Client, Category } from "../../types";
 
 type StoreHeaderProps = {
@@ -53,6 +53,7 @@ export default function StoreHeader({
   const [showLogin, setShowLogin] = useState(false);
   const [showCatalogMenu, setShowCatalogMenu] = useState(false);
   const [showClientMenu, setShowClientMenu] = useState(false);
+  const catalogMenuRef = useRef<HTMLDivElement | null>(null);
 
   const scrollToPageTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -85,6 +86,19 @@ export default function StoreHeader({
       setShowClientMenu(false);
     }
   }, [currentClient]);
+
+  useEffect(() => {
+    if (!showCatalogMenu) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!catalogMenuRef.current) return;
+      if (catalogMenuRef.current.contains(event.target as Node)) return;
+      setShowCatalogMenu(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [showCatalogMenu]);
 
   return (
     <>
@@ -222,7 +236,7 @@ export default function StoreHeader({
           >
             Inicio
           </button>
-          <div className="relative shrink-0">
+          <div ref={catalogMenuRef} className="relative shrink-0">
             <button
               type="button"
               className={`flex items-center gap-1 pb-2 border-b-2 transition-colors ${isCatalogActive ? "text-primary border-primary" : "border-transparent hover:text-primary"}`}

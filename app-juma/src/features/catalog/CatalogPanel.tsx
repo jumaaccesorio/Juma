@@ -6,6 +6,7 @@ type CatalogPanelProps = {
   products: Product[];
   categories: Category[];
   onAddToCart: (productId: number) => void;
+  onOpenProduct: (productId: number) => void;
   featuredPanels: FeaturedPanel[];
   heroBanner: HeroBanner | null;
   isHomeContentLoaded: boolean;
@@ -24,6 +25,7 @@ function CatalogPanel({
   products,
   categories,
   onAddToCart,
+  onOpenProduct,
   featuredPanels,
   heroBanner,
   isHomeContentLoaded,
@@ -237,7 +239,11 @@ function CatalogPanel({
         ) : (
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {featuredProducts.map((product) => (
-              <div key={`featured-${product.id}`} className="group rounded bg-white p-4 shadow-subtle transition-shadow hover:shadow-md">
+              <div
+                key={`featured-${product.id}`}
+                className="group flex h-full cursor-pointer flex-col rounded bg-white p-4 shadow-subtle transition-shadow hover:shadow-md"
+                onClick={() => onOpenProduct(product.id)}
+              >
                 <div className="relative mb-4 aspect-square overflow-hidden rounded bg-secondary/60">
                   {product.image ? (
                     <img className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" src={product.image} alt={getProductDisplayName(product)} />
@@ -247,12 +253,17 @@ function CatalogPanel({
                     </div>
                   )}
                 </div>
-                <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.24em] text-primary/70">{product.categoryName || "Categoria"}</p>
-                <h3 className="font-headline text-center text-[1.35rem] text-carbon">{getProductDisplayName(product)}</h3>
-                <p className="mt-2 text-center text-lg font-semibold text-carbon">${product.salePrice.toLocaleString("es-AR")}</p>
+                <div className="flex flex-1 flex-col">
+                  <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.24em] text-primary/70">{product.categoryName || "Categoria"}</p>
+                  <h3 className="min-h-[5.5rem] text-center font-headline text-[1.35rem] leading-tight text-carbon">{getProductDisplayName(product)}</h3>
+                  <p className="mt-2 text-center text-lg font-semibold text-carbon">${product.salePrice.toLocaleString("es-AR")}</p>
+                </div>
                 <button
                   type="button"
-                  onClick={() => onAddToCart(product.id)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onAddToCart(product.id);
+                  }}
                   className="mt-5 flex w-full items-center justify-center gap-2 rounded bg-primary py-3 text-sm font-bold uppercase tracking-[0.18em] text-white transition-all hover:opacity-90"
                 >
                   <span className="material-symbols-outlined text-sm">{product.stock <= 0 ? "inventory_2" : "add_shopping_cart"}</span>
@@ -368,7 +379,11 @@ function CatalogPanel({
             <div className="col-span-full text-center py-20 text-muted">No hay productos cargados en el catalogo.</div>
           ) : (
             visibleProducts.map((product) => (
-              <div key={product.id} className="group bg-white rounded p-4 shadow-subtle transition-shadow hover:shadow-md">
+              <div
+                key={product.id}
+                className="group flex h-full cursor-pointer flex-col rounded bg-white p-4 shadow-subtle transition-shadow hover:shadow-md"
+                onClick={() => onOpenProduct(product.id)}
+              >
                 <div className="relative aspect-square overflow-hidden rounded mb-4 bg-secondary/60 flex items-center justify-center">
                   {product.image ? (
                     <img className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src={product.image} alt={getProductDisplayName(product)} />
@@ -379,7 +394,10 @@ function CatalogPanel({
                     className={`absolute top-3 right-3 backdrop-blur rounded-full p-2 transition-all ${
                       favoriteProductIds.has(product.id) ? "bg-red-100 text-red-500 hover:bg-red-200" : "bg-white/85 text-muted hover:text-red-400"
                     }`}
-                    onClick={() => onToggleFavorite(product.id)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onToggleFavorite(product.id);
+                    }}
                     title={favoriteProductIds.has(product.id) ? "Quitar de favoritos" : "Guardar en favoritos"}
                   >
                     <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: favoriteProductIds.has(product.id) ? "'FILL' 1" : "'FILL' 0" }}>
@@ -388,14 +406,19 @@ function CatalogPanel({
                   </button>
                   {product.stock <= 0 && <span className="absolute top-3 left-3 rounded bg-carbon px-2 py-1 text-[10px] font-bold uppercase text-white">Por encargo</span>}
                 </div>
-                <p className="text-primary/70 text-[10px] font-bold uppercase tracking-[0.24em] mb-2 text-center">{product.categoryName || "Categoria"}</p>
-                <h4 className="font-headline text-carbon text-center text-[1.35rem] leading-tight">{getProductDisplayName(product)}</h4>
-                <p className="text-carbon font-semibold mt-2 text-lg text-center">${product.salePrice.toLocaleString("es-AR")}</p>
-                <p className="mt-2 text-center text-xs text-muted">
-                  {product.stock > 0 ? `${product.stock} disponibles` : "Sin stock inmediato. Se puede pedir por encargo."}
-                </p>
+                <div className="flex flex-1 flex-col">
+                  <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.24em] text-primary/70">{product.categoryName || "Categoria"}</p>
+                  <h4 className="min-h-[5.5rem] text-center font-headline text-[1.35rem] leading-tight text-carbon">{getProductDisplayName(product)}</h4>
+                  <p className="mt-2 text-center text-lg font-semibold text-carbon">${product.salePrice.toLocaleString("es-AR")}</p>
+                  <p className="mt-2 min-h-[2.5rem] text-center text-xs text-muted">
+                    {product.stock > 0 ? `${product.stock} disponibles` : "Sin stock inmediato. Se puede pedir por encargo."}
+                  </p>
+                </div>
                 <button
-                  onClick={() => onAddToCart(product.id)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onAddToCart(product.id);
+                  }}
                   className="mt-5 flex w-full items-center justify-center gap-2 rounded bg-primary py-3 text-sm font-bold uppercase tracking-[0.18em] text-white transition-all hover:opacity-90"
                 >
                   <span className="material-symbols-outlined text-sm">{product.stock <= 0 ? "inventory_2" : "add_shopping_cart"}</span>
