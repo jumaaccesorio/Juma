@@ -95,7 +95,13 @@ function CartPanel({
                   <div key={row.product.id} className="flex flex-col items-center gap-6 rounded-xl border border-primary/5 bg-white p-6 shadow-sm dark:bg-slate-900/50 sm:flex-row">
                     <div className="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
                       {row.product.image ? (
-                        <img className="h-full w-full object-cover" alt={getProductDisplayName(row.product)} src={row.product.image} />
+                        <img
+                          className="h-full w-full object-cover"
+                          alt={getProductDisplayName(row.product)}
+                          src={row.product.image}
+                          loading="lazy"
+                          decoding="async"
+                        />
                       ) : (
                         <span className="material-symbols-outlined text-4xl text-slate-300">image</span>
                       )}

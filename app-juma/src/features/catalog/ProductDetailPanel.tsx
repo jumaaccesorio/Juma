@@ -32,7 +32,14 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
         <div className="overflow-hidden rounded bg-white p-4 shadow-subtle">
           <div className="aspect-square overflow-hidden rounded bg-secondary/60">
             {product.image ? (
-              <img src={product.image} alt={getProductDisplayName(product)} className="h-full w-full object-cover" />
+              <img
+                src={product.image}
+                alt={getProductDisplayName(product)}
+                className="h-full w-full object-cover"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+              />
             ) : (
               <div className="flex h-full items-center justify-center">
                 <span className="material-symbols-outlined text-7xl text-slate-300">image</span>

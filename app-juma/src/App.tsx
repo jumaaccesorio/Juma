@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ADMIN_PASS,
   ADMIN_SESSION_KEY,
@@ -231,6 +231,7 @@ function App() {
   const [productImageData, setProductImageData] = useState("");
   const [productImageFile, setProductImageFile] = useState<File | null>(null);
   const [hydratedProductImageIds, setHydratedProductImageIds] = useState<number[]>([]);
+  const [requestedProductImageIds, setRequestedProductImageIds] = useState<number[]>([]);
   const [orderForm, setOrderForm] = useState({
     clientId: "",
     date: new Date().toISOString().slice(0, 10),
@@ -241,6 +242,11 @@ function App() {
 
   const normalizeProducts = (rows: Product[]) =>
     rows.map((row) => ({ ...row, enabled: row.enabled ?? true, image: row.image ?? "" }));
+
+  const requestProductImages = useCallback((productIds: number[]) => {
+    if (productIds.length === 0) return;
+    setRequestedProductImageIds((prev) => [...new Set([...prev, ...productIds])]);
+  }, []);
 
   const refreshClients = async () => {
     try {
@@ -305,11 +311,12 @@ function App() {
   useEffect(() => {
     const knownIds = new Set(products.map((product) => product.id));
     setHydratedProductImageIds((prev) => prev.filter((id) => knownIds.has(id)));
+    setRequestedProductImageIds((prev) => prev.filter((id) => knownIds.has(id)));
   }, [products]);
 
   useEffect(() => {
     const hydratedSet = new Set(hydratedProductImageIds);
-    const pendingIds = products.map((product) => product.id).filter((id) => !hydratedSet.has(id));
+    const pendingIds = requestedProductImageIds.filter((id) => !hydratedSet.has(id));
     if (pendingIds.length === 0) return;
 
     let cancelled = false;
@@ -352,7 +359,12 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [products, hydratedProductImageIds]);
+  }, [hydratedProductImageIds, requestedProductImageIds]);
+
+  useEffect(() => {
+    if (cartItems.length === 0) return;
+    requestProductImages(cartItems.map((item) => item.productId));
+  }, [cartItems, requestProductImages]);
 
   useEffect(() => {
     if (!isAdminLogged || hasLoadedAdminData) return;
@@ -1178,6 +1190,7 @@ function App() {
   const orderTotal = (order: Order) => order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0);
 
   const openProductDetail = (productId: number) => {
+    requestProductImages([productId]);
     setSelectedCatalogProductId(productId);
     setActiveTab("catalogo");
     window.requestAnimationFrame(() => {
@@ -1514,6 +1527,7 @@ function App() {
                   categories={categories}
                   onAddToCart={addToCart}
                   onOpenProduct={openProductDetail}
+                  onRequestProductImages={requestProductImages}
                   featuredPanels={featuredPanels}
                   heroBanner={heroBanner}
                   isHomeContentLoaded={isHomeContentLoaded}
@@ -1858,14 +1872,15 @@ function App() {
             );
           })()
         ) : (
-          <CatalogPanel
-            products={catalogProducts}
-            categories={categories}
-            onAddToCart={addToCart}
-            onOpenProduct={openProductDetail}
-            featuredPanels={featuredPanels}
-            heroBanner={heroBanner}
-            isHomeContentLoaded={isHomeContentLoaded}
+            <CatalogPanel
+              products={catalogProducts}
+              categories={categories}
+              onAddToCart={addToCart}
+              onOpenProduct={openProductDetail}
+              onRequestProductImages={requestProductImages}
+              featuredPanels={featuredPanels}
+              heroBanner={heroBanner}
+              isHomeContentLoaded={isHomeContentLoaded}
             viewMode={catalogViewMode}
             favoriteProductIds={new Set(favorites.map(f => f.productId))}
             onToggleFavorite={toggleFavorite}

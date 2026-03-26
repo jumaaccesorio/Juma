@@ -7,6 +7,7 @@ type CatalogPanelProps = {
   categories: Category[];
   onAddToCart: (productId: number) => void;
   onOpenProduct: (productId: number) => void;
+  onRequestProductImages: (productIds: number[]) => void;
   featuredPanels: FeaturedPanel[];
   heroBanner: HeroBanner | null;
   isHomeContentLoaded: boolean;
@@ -26,6 +27,7 @@ function CatalogPanel({
   categories,
   onAddToCart,
   onOpenProduct,
+  onRequestProductImages,
   featuredPanels,
   heroBanner,
   isHomeContentLoaded,
@@ -39,6 +41,7 @@ function CatalogPanel({
   onPanelCategoryClick,
   onOpenFullCatalog,
 }: CatalogPanelProps) {
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const [selectedRootCategory, setSelectedRootCategory] = useState<number | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<number | null>(null);
   const productsGridRef = useRef<HTMLElement | null>(null);
@@ -139,17 +142,61 @@ function CatalogPanel({
       return haystack.includes(normalizedSearch);
     });
   }, [categories, products, searchQuery, selectedRootCategory, selectedSubcategory]);
+
+  useEffect(() => {
+    const root = panelRef.current;
+    if (!root) return;
+
+    const productCards = Array.from(root.querySelectorAll<HTMLElement>("[data-product-card-id]"));
+    if (productCards.length === 0) return;
+
+    if (!("IntersectionObserver" in window)) {
+      onRequestProductImages(
+        productCards
+          .slice(0, 12)
+          .map((card) => Number(card.dataset.productCardId))
+          .filter((id) => Number.isFinite(id)),
+      );
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const nextIds: number[] = [];
+
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const productId = Number((entry.target as HTMLElement).dataset.productCardId);
+          if (Number.isFinite(productId)) nextIds.push(productId);
+          observer.unobserve(entry.target);
+        });
+
+        if (nextIds.length > 0) onRequestProductImages(nextIds);
+      },
+      { rootMargin: "240px 0px" },
+    );
+
+    productCards.forEach((card) => observer.observe(card));
+
+    return () => observer.disconnect();
+  }, [featuredProducts, filteredProducts, onRequestProductImages, viewMode]);
+
   return (
-    <div className="flex flex-col">
+    <div ref={panelRef} className="flex flex-col">
       {viewMode === "home" ? (
         <>
       <section className="relative h-[716px] min-h-[500px] w-full overflow-hidden">
         {isHomeContentLoaded && heroBanner ? (
           <>
-            <div
-              className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
-              style={{ backgroundImage: `linear-gradient(to right, rgba(45, 45, 45, 0.58), transparent), url("${heroBanner.image}")` }}
+            <img
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-1000 hover:scale-105"
+              src={heroBanner.image}
+              alt={heroBanner.title}
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
             />
+            <div className="absolute inset-0 bg-gradient-to-r from-[rgba(45,45,45,0.58)] to-transparent" />
             <div className="relative h-full flex flex-col items-start justify-center px-6 md:px-40 gap-6">
               <div className="max-w-xl">
                 <h1 className="font-headline text-white text-5xl md:text-7xl font-light leading-tight tracking-tight">
@@ -184,10 +231,14 @@ function CatalogPanel({
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {featuredPanels.map((panel) => (
               <div key={panel.id} className="group relative aspect-[4/5] overflow-hidden rounded bg-slate-200 shadow-subtle">
-                <div
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                  style={{ backgroundImage: `linear-gradient(0deg, rgba(45, 45, 45, 0.45) 0%, transparent 50%), url("${panel.image}")` }}
+                <img
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  src={panel.image}
+                  alt={panel.title}
+                  loading="lazy"
+                  decoding="async"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-[rgba(45,45,45,0.45)] to-transparent" />
                 <div className="absolute inset-0 flex flex-col justify-end p-6">
                   <h3 className="font-headline text-xl font-medium tracking-tight text-white">{panel.title}</h3>
                   <button
@@ -217,12 +268,19 @@ function CatalogPanel({
             {featuredProducts.map((product) => (
               <div
                 key={`featured-${product.id}`}
+                data-product-card-id={product.id}
                 className="group flex h-full cursor-pointer flex-col rounded bg-white p-4 shadow-subtle transition-shadow hover:shadow-md"
                 onClick={() => onOpenProduct(product.id)}
               >
                 <div className="relative mb-4 aspect-square overflow-hidden rounded bg-secondary/60">
                   {product.image ? (
-                    <img className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" src={product.image} alt={getProductDisplayName(product)} />
+                    <img
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      src={product.image}
+                      alt={getProductDisplayName(product)}
+                      loading="lazy"
+                      decoding="async"
+                    />
                   ) : (
                     <div className="flex h-full items-center justify-center">
                       <span className="material-symbols-outlined text-6xl text-slate-300">image</span>
@@ -357,12 +415,19 @@ function CatalogPanel({
             filteredProducts.map((product) => (
               <div
                 key={product.id}
+                data-product-card-id={product.id}
                 className="group flex h-full cursor-pointer flex-col rounded bg-white p-4 shadow-subtle transition-shadow hover:shadow-md"
                 onClick={() => onOpenProduct(product.id)}
               >
                 <div className="relative aspect-square overflow-hidden rounded mb-4 bg-secondary/60 flex items-center justify-center">
                   {product.image ? (
-                    <img className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src={product.image} alt={getProductDisplayName(product)} />
+                    <img
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      src={product.image}
+                      alt={getProductDisplayName(product)}
+                      loading="lazy"
+                      decoding="async"
+                    />
                   ) : (
                     <span className="material-symbols-outlined text-6xl text-slate-300">image</span>
                   )}
