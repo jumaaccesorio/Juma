@@ -39,10 +39,8 @@ function CatalogPanel({
   onPanelCategoryClick,
   onOpenFullCatalog,
 }: CatalogPanelProps) {
-  const PRODUCTS_PER_PAGE = 16;
   const [selectedRootCategory, setSelectedRootCategory] = useState<number | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<number | null>(null);
-  const [page, setPage] = useState(1);
   const productsGridRef = useRef<HTMLElement | null>(null);
   const rootCategories = useMemo(
     () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
@@ -84,13 +82,11 @@ function CatalogPanel({
   const handleCategoryChange = (category: number | null) => {
     setSelectedRootCategory(category);
     setSelectedSubcategory(null);
-    setPage(1);
     onCategoryChange(category);
   };
 
   const handleSubcategoryChange = (category: number | null) => {
     setSelectedSubcategory(category);
-    setPage(1);
     onCategoryChange(category ?? selectedRootCategory);
   };
 
@@ -143,26 +139,6 @@ function CatalogPanel({
       return haystack.includes(normalizedSearch);
     });
   }, [categories, products, searchQuery, selectedRootCategory, selectedSubcategory]);
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
-  const visibleProducts = useMemo(
-    () => filteredProducts.slice((page - 1) * PRODUCTS_PER_PAGE, page * PRODUCTS_PER_PAGE),
-    [filteredProducts, page],
-  );
-
-  useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
-
-  useEffect(() => {
-    if (!productsGridRef.current) return;
-    const top = productsGridRef.current.getBoundingClientRect().top + window.scrollY - 110;
-    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-  }, [page]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery]);
-
   return (
     <div className="flex flex-col">
       {viewMode === "home" ? (
@@ -378,7 +354,7 @@ function CatalogPanel({
           {filteredProducts.length === 0 ? (
             <div className="col-span-full text-center py-20 text-muted">No hay productos cargados en el catalogo.</div>
           ) : (
-            visibleProducts.map((product) => (
+            filteredProducts.map((product) => (
               <div
                 key={product.id}
                 className="group flex h-full cursor-pointer flex-col rounded bg-white p-4 shadow-subtle transition-shadow hover:shadow-md"
@@ -428,29 +404,6 @@ function CatalogPanel({
             ))
           )}
         </div>
-        {totalPages > 1 && (
-          <div className="mt-10 flex items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-              disabled={page === 1}
-              className="rounded border border-primary/20 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-primary disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Anterior
-            </button>
-            <span className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
-              Pagina {page} de {totalPages}
-            </span>
-            <button
-              type="button"
-              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-              disabled={page === totalPages}
-              className="rounded border border-primary/20 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-primary disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Siguiente
-            </button>
-          </div>
-        )}
       </section>
       ) : null}
 
