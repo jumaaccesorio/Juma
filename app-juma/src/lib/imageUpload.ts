@@ -7,8 +7,8 @@ type VariantPreset = {
 
 const VARIANT_PRESETS: Record<UploadImageVariant, VariantPreset> = {
   product_thumb: { maxWidth: 240, quality: 0.72 },
-  product_card: { maxWidth: 520, quality: 0.76 },
-  product_full: { maxWidth: 1200, quality: 0.82 },
+  product_card: { maxWidth: 720, quality: 0.8 },
+  product_full: { maxWidth: 1800, quality: 0.9 },
   panel: { maxWidth: 1100, quality: 0.82 },
   hero: { maxWidth: 1400, quality: 0.82 },
 };

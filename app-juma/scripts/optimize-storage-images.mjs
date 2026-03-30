@@ -184,7 +184,7 @@ async function optimizeProducts() {
       const update = await supabase
         .from("products")
         .update({
-          image: variants.product_thumb,
+          image: variants.product_full,
           image_thumb: variants.product_thumb,
           image_card: variants.product_card,
           image_full: variants.product_full,

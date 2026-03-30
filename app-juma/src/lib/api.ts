@@ -650,7 +650,7 @@ export const api = {
         imageThumb,
         imageCard,
         imageFull,
-        image: imageThumb,
+        image: imageFull,
       };
     } catch (error) {
       throw new Error(toErrorMessage(error, "Error generando variantes de imagen"));
