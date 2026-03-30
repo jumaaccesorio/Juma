@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { Client, NewOrderItem, Order, OrderStatus, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
+import { getProductImage } from "../../lib/productImages";
 
 type OrderForm = {
   clientId: string;
@@ -71,7 +72,7 @@ function OrdersPanel({
         return {
           ...item,
           productName: product ? getProductDisplayName(product) : `Producto #${item.productId}`,
-          productImage: product?.image ?? "",
+          productImage: product ? getProductImage(product, "thumb") : "",
           subtotal: item.quantity * item.unitSalePrice,
         };
       })
@@ -592,8 +593,8 @@ function OrdersPanel({
                   className="flex flex-col items-center rounded-lg border border-slate-200 bg-white p-3 text-center shadow-sm transition-all hover:border-primary/50 hover:shadow-md active:scale-95"
                 >
                   <div className="h-16 w-16 mb-2 rounded bg-slate-100 flex items-center justify-center overflow-hidden">
-                    {product.image ? (
-                      <img src={product.image} alt={getProductDisplayName(product)} className="h-full w-full object-cover" />
+                    {getProductImage(product, "thumb") ? (
+                      <img src={getProductImage(product, "thumb")} alt={getProductDisplayName(product)} className="h-full w-full object-cover" />
                     ) : (
                       <span className="material-symbols-outlined text-slate-300">image</span>
                     )}
@@ -627,8 +628,8 @@ function OrdersPanel({
                 {selectedRows.map((row) => (
                   <div key={`row-${row.index}`} className="flex items-center gap-4 p-3 bg-white border border-slate-200 rounded-lg shadow-sm">
                     <div className="h-12 w-12 rounded bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
-                      {row.product.image ? (
-                        <img src={row.product.image} alt={getProductDisplayName(row.product)} className="h-full w-full object-cover" />
+                      {getProductImage(row.product, "thumb") ? (
+                        <img src={getProductImage(row.product, "thumb")} alt={getProductDisplayName(row.product)} className="h-full w-full object-cover" />
                       ) : (
                         <span className="material-symbols-outlined text-slate-300">image</span>
                       )}

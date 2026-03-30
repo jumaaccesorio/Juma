@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import type { Category, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
+import { getProductImage } from "../../lib/productImages";
 
 type ProductForm = {
   name: string;
@@ -436,12 +437,13 @@ function ProductsPanel({
         <div className="space-y-3 p-4 md:hidden">
           {filteredProducts.map((product) => {
             const displayName = getProductDisplayName(product);
+            const cardImage = getProductImage(product, "card");
             return (
               <div key={`mobile-${product.id}`} className="rounded-xl border border-line bg-white p-4 shadow-sm">
                 <div className="flex items-start gap-3">
                   <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
-                    {product.image ? (
-                      <img className="h-full w-full object-cover" src={product.image} alt={displayName} />
+                    {cardImage ? (
+                      <img className="h-full w-full object-cover" src={cardImage} alt={displayName} />
                     ) : (
                       <span className="material-symbols-outlined text-slate-400">image</span>
                     )}
@@ -533,13 +535,14 @@ function ProductsPanel({
             <tbody className="divide-y divide-neutral-soft dark:divide-slate-800">
               {filteredProducts.map((product) => {
                 const displayName = getProductDisplayName(product);
+                const thumbImage = getProductImage(product, "thumb");
                 return (
                   <tr key={product.id} className="hover:bg-secondary/35 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="h-12 w-12 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                          {product.image ? (
-                            <img className="h-full w-full object-cover" src={product.image} alt={displayName} />
+                          {thumbImage ? (
+                            <img className="h-full w-full object-cover" src={thumbImage} alt={displayName} />
                           ) : (
                             <span className="material-symbols-outlined text-slate-400 text-xl">image</span>
                           )}
@@ -650,8 +653,8 @@ function ProductsPanel({
               <div className="space-y-4">
                 <div className="overflow-hidden rounded-xl border border-line bg-secondary">
                   <div className="flex aspect-square items-center justify-center">
-                    {editingProduct.image ? (
-                      <img className="h-full w-full object-cover" src={editingProduct.image} alt={getProductDisplayName(editingProduct)} />
+                    {getProductImage(editingProduct, "card") ? (
+                      <img className="h-full w-full object-cover" src={getProductImage(editingProduct, "card")} alt={getProductDisplayName(editingProduct)} />
                     ) : (
                       <span className="material-symbols-outlined text-5xl text-muted">image</span>
                     )}

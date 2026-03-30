@@ -1,5 +1,6 @@
 import type { Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
+import { getProductImage } from "../../lib/productImages";
 
 type CartRow = { product: Product; quantity: number; subtotal: number };
 type OrderConfirmation = { orderId: number; customerName?: string };
@@ -90,15 +91,16 @@ function CartPanel({
             <>
               {cartRows.map((row) => {
                 const isBackorder = row.product.stock < row.quantity;
+                const cartImage = getProductImage(row.product, "thumb");
 
                 return (
                   <div key={row.product.id} className="flex flex-col items-center gap-6 rounded-xl border border-primary/5 bg-white p-6 shadow-sm dark:bg-slate-900/50 sm:flex-row">
                     <div className="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
-                      {row.product.image ? (
+                      {cartImage ? (
                         <img
                           className="h-full w-full object-cover"
                           alt={getProductDisplayName(row.product)}
-                          src={row.product.image}
+                          src={cartImage}
                           loading="lazy"
                           decoding="async"
                         />

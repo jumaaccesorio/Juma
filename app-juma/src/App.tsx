@@ -28,6 +28,7 @@ import ResetPasswordPanel from "./features/users/ResetPasswordPanel";
 import type { CartItem, Client, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, Product, Tab, Category } from "./types";
 import { api } from "./lib/api";
 import { getProductDisplayName } from "./lib/productLabel";
+import { getProductImage } from "./lib/productImages";
 import { optimizeFileForPreview } from "./lib/imageUpload";
 
 const CLIENT_SESSION_KEY = "juma_client";
@@ -1291,7 +1292,7 @@ function App() {
         setCartSuccessToast({
           productId: product.id,
           name: getProductDisplayName(product),
-          image: product.image,
+          image: getProductImage(product, "card"),
           price: product.salePrice,
           quantity,
           cartItemsCount: nextItemsCount,
@@ -1302,7 +1303,7 @@ function App() {
       setCartSuccessToast({
         productId: product.id,
         name: getProductDisplayName(product),
-        image: product.image,
+        image: getProductImage(product, "card"),
         price: product.salePrice,
         quantity: nextQuantity,
         cartItemsCount: nextItemsCount,
