@@ -315,7 +315,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
               <p className="text-sm text-muted">No encontramos productos para ese filtro.</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {mobileProductsPage.map((product) => {
                 const inCart = cart.find((item) => item.product.id === product.id)?.quantity ?? 0;
                 return (
@@ -323,51 +323,47 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                     key={product.id}
                     type="button"
                     onClick={() => addToCart(product)}
-                    className={`group flex items-center justify-between w-full overflow-hidden rounded-xl text-left transition-all border p-3 ${
-                      inCart > 0
-                        ? "border-primary/40 bg-primary/[0.05] shadow-sm"
-                        : "border-line/50 bg-white hover:border-primary/40"
-                    }`}
+                    className="group relative flex flex-col w-full overflow-hidden rounded-xl text-left transition-all border border-line bg-secondary/30 hover:border-primary/50 shadow-sm"
                   >
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className="relative size-14 shrink-0 rounded-lg bg-secondary/50 overflow-hidden border border-line/30">
-                        {product.image ? (
-                          <img
-                            src={product.image}
-                            alt={getProductDisplayName(product)}
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center">
-                            <span className="material-symbols-outlined text-2xl text-muted/25">image</span>
-                          </div>
-                        )}
-                        {/* Stock badge */}
-                        {product.stock <= 3 && (
-                          <div className="absolute top-1 right-1 rounded bg-red-500 px-1 py-0.5 text-[8px] font-bold text-white leading-none shadow-sm">
-                            {product.stock}
-                          </div>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1 pr-2">
-                        <h4 className="truncate text-sm font-semibold text-ink">{getProductDisplayName(product)}</h4>
-                        <p className="mt-0.5 text-[10px] uppercase font-bold text-muted/60 truncate">{product.categoryName || "Sin categoría"}</p>
-                        <p className="mt-1 text-[13px] font-bold text-primary">
-                          ${product.salePrice.toLocaleString("es-AR")}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="shrink-0 flex items-center justify-center">
-                      {inCart > 0 ? (
-                        <div className="flex items-center justify-center size-8 rounded-full bg-primary text-white shadow-md transition-transform active:scale-95">
-                          <span className="font-bold text-sm leading-none">{inCart}</span>
-                        </div>
+                    {/* Image Area */}
+                    <div className="relative aspect-square w-full bg-white overflow-hidden">
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={getProductDisplayName(product)}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
                       ) : (
-                        <div className="flex items-center justify-center size-8 rounded-full bg-secondary/80 text-primary group-hover:bg-primary/10 group-hover:text-primary transition-colors active:scale-95">
-                          <span className="material-symbols-outlined text-[18px]">add</span>
+                        <div className="flex h-full w-full items-center justify-center">
+                          <span className="material-symbols-outlined text-3xl text-muted/20">image</span>
                         </div>
                       )}
+
+                      {/* Top Left Price Pill */}
+                      <div className="absolute top-0 left-0 bg-ink rounded-br-lg px-2 py-1 shadow-sm">
+                        <span className="text-[11px] font-bold text-white tracking-wide">
+                          ${product.salePrice.toLocaleString("es-AR")}
+                        </span>
+                      </div>
+
+                      {/* Top Right Quantity Pill */}
+                      {inCart > 0 && (
+                        <div className="absolute top-0 right-0 bg-primary rounded-bl-lg px-2 py-1 shadow-md z-10 transition-transform active:scale-95">
+                          <span className="text-[11px] font-black text-white">{inCart}x</span>
+                        </div>
+                      )}
+
+                      {/* Stock Badge (Low Stock) - Positioned below quantity if needed, or top right if empty */}
+                      {product.stock <= 3 && inCart === 0 && (
+                        <div className="absolute top-2 right-2 rounded-md bg-red-500 px-1.5 py-0.5 shadow-sm">
+                          <span className="text-[9px] font-bold text-white">¡{product.stock} left!</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bottom Title Bar */}
+                    <div className={`w-full p-2.5 transition-colors ${inCart > 0 ? "bg-primary text-white" : "bg-ink text-white"}`}>
+                      <h4 className="truncate text-xs font-bold text-center uppercase tracking-wider">{getProductDisplayName(product)}</h4>
                     </div>
                   </button>
                 );
