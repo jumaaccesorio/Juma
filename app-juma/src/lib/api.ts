@@ -699,17 +699,17 @@ function mapCategory(row: any): Category {
 function mapProductImageRows(rows: any[]): Array<{ id: number; image: string }> {
   return rows.map((row: any) => ({
     id: Number(row.id),
-    image: normalizeRenderableProductImage(row.image_thumb ?? row.image_card ?? row.image_full ?? row.image),
+    image: pickRawProductImage(row),
   }));
 }
 
 function mapProduct(row: any): Product {
   const rawName = typeof row.name === "string" ? row.name.trim() : "";
   const rawSubName = typeof row.sub_name === "string" ? row.sub_name.trim() : "";
-  const normalizedThumb = normalizeRenderableProductImage(row.image_thumb);
-  const normalizedCard = normalizeRenderableProductImage(row.image_card);
-  const normalizedFull = normalizeRenderableProductImage(row.image_full);
-  const normalizedLegacy = normalizeRenderableProductImage(row.image);
+  const normalizedThumb = normalizeRenderableProductImage(row.image_thumb, false);
+  const normalizedCard = normalizeRenderableProductImage(row.image_card, false);
+  const normalizedFull = normalizeRenderableProductImage(row.image_full, false);
+  const normalizedLegacy = normalizeRenderableProductImage(row.image, false);
   const normalizedImage = normalizedThumb || normalizedCard || normalizedFull || normalizedLegacy;
   return {
     id: row.id,
@@ -745,7 +745,7 @@ function extractProductStoragePath(image: string): string | null {
     try {
       const url = new URL(image);
       if (url.pathname.includes(PRODUCT_PUBLIC_PREFIX)) {
-        return null;
+        return decodeURIComponent(url.pathname.split(PRODUCT_PUBLIC_PREFIX)[1] ?? "").trim() || null;
       }
       if (url.pathname.includes(PRODUCT_SIGNED_PREFIX)) {
         return decodeURIComponent(url.pathname.split(PRODUCT_SIGNED_PREFIX)[1] ?? "").trim() || null;
@@ -759,12 +759,28 @@ function extractProductStoragePath(image: string): string | null {
   return image.trim() || null;
 }
 
-function normalizeRenderableProductImage(image: unknown): string {
+function pickRawProductImage(row: any): string {
+  const candidate = row.image_thumb ?? row.image_card ?? row.image_full ?? row.image;
+  return typeof candidate === "string" ? candidate.trim() : "";
+}
+
+function normalizeRenderableProductImage(image: unknown, allowStoragePublicUrl = false): string {
   if (typeof image !== "string") return "";
   const value = image.trim();
   if (!value) return "";
   if (value.startsWith("data:image/")) return value;
-  if (/^https?:\/\//i.test(value)) return value;
+  if (/^https?:\/\//i.test(value)) {
+    try {
+      const url = new URL(value);
+      if (url.pathname.includes(PRODUCT_SIGNED_PREFIX)) return value;
+      if (url.pathname.includes(PRODUCT_PUBLIC_PREFIX)) {
+        return allowStoragePublicUrl ? value : "";
+      }
+      return value;
+    } catch {
+      return value;
+    }
+  }
   return "";
 }
 
