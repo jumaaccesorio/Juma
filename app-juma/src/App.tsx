@@ -1568,6 +1568,18 @@ function App() {
     }
   };
 
+  const handleQuickSalePlaced = async (newOrder: Order) => {
+    setOrders((prev) => [newOrder, ...prev]);
+    setLoadedAdminSlices((prev) => ({ ...prev, orders: true }));
+
+    try {
+      const refreshedOrders = await api.getOrders();
+      setOrders(refreshedOrders);
+    } catch (error) {
+      console.warn("No se pudieron refrescar los pedidos despues de la venta rapida.", error);
+    }
+  };
+
   const isAdminTab = isAdminLogged && ["dashboard", "catalogo", "venta_rapida", "inicio_admin", "categorias", "productos", "clientes", "inventario", "pedidos", "finanzas"].includes(activeTab);
 
   if (isAdminTab) {
@@ -1638,7 +1650,7 @@ function App() {
                   categories={categories}
                   clients={clients}
                   onRequestProductImages={requestProductImages}
-                  onOrderPlaced={(order) => setOrders(prev => [order, ...prev])}
+                  onOrderPlaced={handleQuickSalePlaced}
                   onUpdateStock={(productId, newStock) => setProducts(prev => prev.map(p => p.id === productId ? { ...p, stock: newStock } : p))}
                 />
               </div>
