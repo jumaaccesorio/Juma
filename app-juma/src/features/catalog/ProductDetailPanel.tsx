@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
-import { getProductImage } from "../../lib/productImages";
 
 type ProductDetailPanelProps = {
   product: Product;
@@ -11,7 +10,7 @@ type ProductDetailPanelProps = {
 
 function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanelProps) {
   const [quantity, setQuantity] = useState(1);
-  const detailImage = getProductImage(product, "full");
+  const detailImage = product.imageFull || product.imageCard || product.image;
 
   const description = useMemo(() => {
     if (product.subName?.trim()) return product.subName.trim();

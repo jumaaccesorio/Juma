@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Category, Client, Order, OrderItem, Product } from "../../types";
 import { api } from "../../lib/api";
 import { getProductDisplayName } from "../../lib/productLabel";
-import { getProductImage } from "../../lib/productImages";
 
 type QuickSaleItem = {
   product: Product;
@@ -118,7 +117,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   useEffect(() => {
     const idsToRequest = Array.from(new Set(
       visibleProductsPage
-        .filter((product) => !getProductImage(product, "thumb"))
+        .filter((product) => !product.image)
         .map((product) => product.id),
     ));
     if (idsToRequest.length > 0) {
@@ -402,9 +401,9 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                   >
                     {/* Image Area */}
                     <div className="relative aspect-square w-full bg-white overflow-hidden">
-                      {getProductImage(product, "thumb") ? (
+                      {product.image ? (
                         <img
-                          src={getProductImage(product, "thumb")}
+                          src={product.image}
                           alt={getProductDisplayName(product)}
                           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
@@ -512,8 +511,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                       className="flex items-start justify-between gap-3 border-b border-line/40 pb-4 last:border-0 last:pb-0"
                     >
                       <div className="size-16 shrink-0 rounded-lg bg-secondary border border-line overflow-hidden">
-                        {getProductImage(item.product, "thumb") ? (
-                          <img src={getProductImage(item.product, "thumb")} className="h-full w-full object-cover" alt={getProductDisplayName(item.product)} />
+                        {item.product.image ? (
+                          <img src={item.product.image} className="h-full w-full object-cover" alt={getProductDisplayName(item.product)} />
                         ) : (
                           <div className="flex h-full items-center justify-center text-muted/30">
                             <span className="material-symbols-outlined">image</span>
@@ -745,8 +744,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                     className="bg-white rounded-2xl p-3 border border-line/60 hover:border-primary hover:shadow-xl hover:shadow-primary/5 transition-all group cursor-pointer flex flex-col h-full"
                   >
                     <div className="aspect-square rounded-xl bg-secondary mb-3 relative overflow-hidden">
-                      {getProductImage(product, "thumb") ? (
-                        <img src={getProductImage(product, "thumb")} alt={getProductDisplayName(product)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      {product.image ? (
+                        <img src={product.image} alt={getProductDisplayName(product)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <span className="material-symbols-outlined text-4xl text-muted/25">image</span>
@@ -800,8 +799,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           ) : cart.map(item => (
             <div key={item.product.id} className="flex items-center gap-4">
               <div className="size-16 rounded-xl overflow-hidden bg-secondary flex-shrink-0">
-                {getProductImage(item.product, "thumb") ? (
-                  <img src={getProductImage(item.product, "thumb")} alt={getProductDisplayName(item.product)} className="w-full h-full object-cover" />
+                {item.product.image ? (
+                  <img src={item.product.image} alt={getProductDisplayName(item.product)} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <span className="material-symbols-outlined text-muted/30">image</span>

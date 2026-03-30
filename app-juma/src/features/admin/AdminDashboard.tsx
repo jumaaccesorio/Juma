@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import type { Client, Order, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
-import { getProductImage } from "../../lib/productImages";
 
 type AdminDashboardProps = {
   orders: Order[];
@@ -315,8 +314,8 @@ export default function AdminDashboard({ orders, clients, lowStockProducts, onSe
                     onClick={() => onSetActiveTab("inventario")}
                   >
                     <div className="size-10 rounded-lg bg-secondary overflow-hidden flex-shrink-0">
-                      {getProductImage(product, "thumb") ? (
-                        <img src={getProductImage(product, "thumb")} alt={getProductDisplayName(product)} className="w-full h-full object-cover" />
+                      {product.image ? (
+                        <img src={product.image} alt={getProductDisplayName(product)} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-muted/40">
                           <span className="material-symbols-outlined text-[16px]">image</span>

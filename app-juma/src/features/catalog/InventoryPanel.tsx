@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Category, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
-import { getProductImage } from "../../lib/productImages";
 
 type InventoryPanelProps = {
   products: Product[];
@@ -102,8 +101,8 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
           {filteredProducts.map((product) => (
             <div key={`atelier-mobile-${product.id}`} className="flex items-center gap-4 bg-surface-container-lowest p-5 shadow-[0_12px_40px_rgba(45,45,45,0.04)]">
               <div className="h-24 w-24 shrink-0 overflow-hidden bg-surface-container-low">
-                {getProductImage(product, "thumb") ? (
-                  <img src={getProductImage(product, "thumb")} alt={getProductDisplayName(product)} className="h-full w-full object-cover" />
+                {product.image ? (
+                  <img src={product.image} alt={getProductDisplayName(product)} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-slate-300">
                     <span className="material-symbols-outlined">image</span>
@@ -209,8 +208,8 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
             <div key={`mobile-${product.id}`} className="rounded-xl border border-line bg-white p-4 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded bg-slate-100">
-                  {getProductImage(product, "thumb") ? (
-                    <img src={getProductImage(product, "thumb")} alt={getProductDisplayName(product)} className="h-full w-full object-cover" />
+                  {product.image ? (
+                    <img src={product.image} alt={getProductDisplayName(product)} className="h-full w-full object-cover" />
                   ) : (
                     <span className="material-symbols-outlined text-slate-300">image</span>
                   )}
@@ -295,8 +294,8 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded shrink-0 bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
-                        {getProductImage(product, "thumb") ? (
-                          <img src={getProductImage(product, "thumb")} alt={getProductDisplayName(product)} className="h-full w-full object-cover" />
+                        {product.image ? (
+                          <img src={product.image} alt={getProductDisplayName(product)} className="h-full w-full object-cover" />
                         ) : (
                           <span className="material-symbols-outlined text-slate-300">image</span>
                         )}
