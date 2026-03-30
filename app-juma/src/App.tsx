@@ -250,7 +250,14 @@ function App() {
   });
 
   const normalizeProducts = (rows: Product[]) =>
-    rows.map((row) => ({ ...row, enabled: row.enabled ?? true, image: row.image ?? "" }));
+    rows.map((row) => ({
+      ...row,
+      enabled: row.enabled ?? true,
+      image: row.image ?? row.imageThumb ?? row.imageCard ?? row.imageFull ?? "",
+      imageThumb: row.imageThumb ?? row.image ?? "",
+      imageCard: row.imageCard ?? row.imageFull ?? row.image ?? "",
+      imageFull: row.imageFull ?? row.imageCard ?? row.image ?? "",
+    }));
 
   const requestProductImages = useCallback((productIds: number[]) => {
     if (productIds.length === 0) return;
@@ -794,7 +801,7 @@ function App() {
     if (Number.isNaN(stock) || stock < 0) return;
     
     try {
-      const uploadedImageUrl = productImageFile ? await api.uploadImage(productImageFile) : productImageData;
+      const uploadedImages = productImageFile ? await api.uploadProductImages(productImageFile) : null;
       const newProduct = await api.addProduct({
         name: productForm.name.trim() || productForm.subName.trim(),
         subName: productForm.subName.trim(),
@@ -805,7 +812,10 @@ function App() {
         stock,
         initialStock: stock,
         enabled: true,
-        image: uploadedImageUrl,
+        image: uploadedImages?.image ?? productImageData,
+        imageThumb: uploadedImages?.imageThumb ?? productImageData,
+        imageCard: uploadedImages?.imageCard ?? productImageData,
+        imageFull: uploadedImages?.imageFull ?? productImageData,
         sourceUrl: productForm.sourceUrl.trim(),
       });
       setProducts((prev) => [newProduct, ...prev]);
@@ -1412,7 +1422,7 @@ function App() {
     }
     void (async () => {
       try {
-        const { previewUrl } = await optimizeFileForPreview(file, "product");
+        const { previewUrl } = await optimizeFileForPreview(file, "product_card");
         setProductImageFile(file);
         setProductImageData(previewUrl);
       } catch (err) {
@@ -1425,9 +1435,21 @@ function App() {
     if (!file) return;
     void (async () => {
       try {
-        const imageUrl = await api.uploadImage(file);
-        await api.updateProduct(productId, { image: imageUrl });
-        setProducts((prev) => prev.map((product) => (product.id === productId ? { ...product, image: imageUrl } : product)));
+        const nextImages = await api.uploadProductImages(file);
+        await api.updateProduct(productId, nextImages);
+        setProducts((prev) =>
+          prev.map((product) =>
+            product.id === productId
+              ? {
+                  ...product,
+                  image: nextImages.image,
+                  imageThumb: nextImages.imageThumb,
+                  imageCard: nextImages.imageCard,
+                  imageFull: nextImages.imageFull,
+                }
+              : product,
+          ),
+        );
         setHydratedProductImageIds((prev) => [...new Set([...prev, productId])]);
       } catch (err) {
         console.error("Error updating image", err);

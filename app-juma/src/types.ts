@@ -39,6 +39,9 @@ export type Product = {
   initialStock: number;
   enabled: boolean;
   image: string;
+  imageThumb?: string;
+  imageCard?: string;
+  imageFull?: string;
   sourceUrl: string;
   createdAt: string;
 };

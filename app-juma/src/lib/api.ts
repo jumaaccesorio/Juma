@@ -1,6 +1,6 @@
 import type { Category, Client, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, Order, OrderItem, Product } from "../types";
 import { supabase } from "./supabase";
-import { dataUrlToOptimizedFile, optimizeImageFile, type UploadImageVariant } from "./imageUpload";
+import { dataUrlToOptimizedFile, optimizeImageFile, optimizeProductImageVariants, type UploadImageVariant } from "./imageUpload";
 
 const PRODUCT_IMAGES_BUCKET = "products";
 const PRODUCT_PUBLIC_PREFIX = `/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/`;
@@ -8,6 +8,7 @@ const PRODUCT_SIGNED_PREFIX = `/storage/v1/object/sign/${PRODUCT_IMAGES_BUCKET}/
 const SIGNED_IMAGE_TTL_SECONDS = 60 * 60 * 24 * 7;
 const SIGNED_IMAGE_CACHE_TTL_MS = 1000 * 60 * 60 * 6;
 const resolvedStorageImageCache = new Map<string, { url: string; expiresAt: number }>();
+let supportsProductImageVariants: boolean | null = null;
 
 function toErrorMessage(error: unknown, fallback = "Ocurrio un error inesperado.") {
   if (error && typeof error === "object" && "message" in error && typeof (error as { message?: unknown }).message === "string") {
@@ -189,23 +190,45 @@ export const api = {
   },
 
   async getProducts(): Promise<Product[]> {
+    const selectWithVariants =
+      "id, name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, image_thumb, image_card, image_full, source_url, created_at, categories(name)";
+    const selectLegacy =
+      "id, name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, source_url, created_at, categories(name)";
+
     const query = await supabase
       .from("products")
-      .select("id, name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, source_url, created_at, categories(name)")
+      .select(supportsProductImageVariants === false ? selectLegacy : selectWithVariants)
       .order("created_at", { ascending: false });
+
+    if (query.error && supportsProductImageVariants !== false && isMissingColumnError(query.error, "image_thumb")) {
+      supportsProductImageVariants = false;
+      const legacyQuery = await supabase.from("products").select(selectLegacy).order("created_at", { ascending: false });
+      if (legacyQuery.error) throw legacyQuery.error;
+      return (legacyQuery.data ?? []).map((row: any) => mapProduct({ ...row, category_name: row.categories?.name ?? null }));
+    }
+
     if (query.error) throw query.error;
+    if (supportsProductImageVariants !== false) supportsProductImageVariants = true;
     return (query.data ?? []).map((row: any) => mapProduct({ ...row, category_name: row.categories?.name ?? null }));
   },
 
   async getProductImages(productIds: number[]): Promise<Array<{ id: number; image: string }>> {
     if (productIds.length === 0) return [];
-    const query = await supabase.from("products").select("id, image").in("id", productIds);
+    const selectWithVariants = "id, image, image_thumb, image_card, image_full";
+    const selectLegacy = "id, image";
+    const query = await supabase
+      .from("products")
+      .select(supportsProductImageVariants === false ? selectLegacy : selectWithVariants)
+      .in("id", productIds);
+    if (query.error && supportsProductImageVariants !== false && isMissingColumnError(query.error, "image_thumb")) {
+      supportsProductImageVariants = false;
+      const legacyQuery = await supabase.from("products").select(selectLegacy).in("id", productIds);
+      if (legacyQuery.error) throw legacyQuery.error;
+      return mapProductImageRows(legacyQuery.data ?? []);
+    }
     if (query.error) throw query.error;
-
-    const rows = (query.data ?? []).map((row: any) => ({
-      id: Number(row.id),
-      image: typeof row.image === "string" ? row.image : "",
-    }));
+    if (supportsProductImageVariants !== false) supportsProductImageVariants = true;
+    const rows = mapProductImageRows(query.data ?? []);
 
     const signable = rows
       .map((row) => ({ id: row.id, path: extractProductStoragePath(row.image) }))
@@ -246,7 +269,7 @@ export const api = {
   },
 
   async addProduct(product: Partial<Product>): Promise<Product> {
-    const payload = {
+    const basePayload = {
       name: product.name ?? "",
       sub_name: product.subName ?? "",
       category_id: product.categoryId ?? null,
@@ -256,34 +279,80 @@ export const api = {
       stock: product.stock ?? 0,
       initial_stock: product.initialStock ?? product.stock ?? 0,
       enabled: product.enabled ?? true,
-      image: product.image ?? "",
+      image: product.imageFull ?? product.imageCard ?? product.imageThumb ?? product.image ?? "",
       source_url: product.sourceUrl ?? "",
     };
+
+    const payload =
+      supportsProductImageVariants === false
+        ? basePayload
+        : {
+            ...basePayload,
+            image_thumb: product.imageThumb ?? product.image ?? "",
+            image_card: product.imageCard ?? product.image ?? "",
+            image_full: product.imageFull ?? product.imageCard ?? product.imageThumb ?? product.image ?? "",
+          };
 
     const insert = await supabase
       .from("products")
       .insert(payload)
-      .select("*, categories(name)")
+      .select(supportsProductImageVariants === false ? "*, categories(name)" : "*, categories(name)")
       .single();
+    if (insert.error && supportsProductImageVariants !== false && isMissingColumnError(insert.error, "image_thumb")) {
+      supportsProductImageVariants = false;
+      const legacyInsert = await supabase.from("products").insert(basePayload).select("*, categories(name)").single();
+      if (legacyInsert.error) throw legacyInsert.error;
+      return mapProduct({ ...legacyInsert.data, category_name: legacyInsert.data.categories?.name ?? null });
+    }
     if (insert.error) throw insert.error;
+    if (supportsProductImageVariants !== false) supportsProductImageVariants = true;
     return mapProduct({ ...insert.data, category_name: insert.data.categories?.name ?? null });
   },
 
   async updateProduct(id: number, updates: Partial<Product>): Promise<void> {
-    const payload: Record<string, unknown> = {};
-    if (updates.name !== undefined) payload.name = updates.name;
-    if (updates.subName !== undefined) payload.sub_name = updates.subName;
-    if (updates.categoryId !== undefined) payload.category_id = updates.categoryId;
-    if (updates.isFeatured !== undefined) payload.is_featured = updates.isFeatured;
-    if (updates.purchasePrice !== undefined) payload.purchase_price = updates.purchasePrice;
-    if (updates.salePrice !== undefined) payload.sale_price = updates.salePrice;
-    if (updates.stock !== undefined) payload.stock = updates.stock;
-    if (updates.enabled !== undefined) payload.enabled = updates.enabled;
-    if (updates.image !== undefined) payload.image = updates.image;
-    if (updates.sourceUrl !== undefined) payload.source_url = updates.sourceUrl;
+    const basePayload: Record<string, unknown> = {};
+    if (updates.name !== undefined) basePayload.name = updates.name;
+    if (updates.subName !== undefined) basePayload.sub_name = updates.subName;
+    if (updates.categoryId !== undefined) basePayload.category_id = updates.categoryId;
+    if (updates.isFeatured !== undefined) basePayload.is_featured = updates.isFeatured;
+    if (updates.purchasePrice !== undefined) basePayload.purchase_price = updates.purchasePrice;
+    if (updates.salePrice !== undefined) basePayload.sale_price = updates.salePrice;
+    if (updates.stock !== undefined) basePayload.stock = updates.stock;
+    if (updates.enabled !== undefined) basePayload.enabled = updates.enabled;
+    if (updates.image !== undefined) basePayload.image = updates.image;
+    if (updates.sourceUrl !== undefined) basePayload.source_url = updates.sourceUrl;
+
+    const payload =
+      supportsProductImageVariants === false
+        ? basePayload
+        : {
+            ...basePayload,
+            ...(updates.imageThumb !== undefined ? { image_thumb: updates.imageThumb } : {}),
+            ...(updates.imageCard !== undefined ? { image_card: updates.imageCard } : {}),
+            ...(updates.imageFull !== undefined ? { image_full: updates.imageFull } : {}),
+            ...(updates.imageFull !== undefined || updates.imageCard !== undefined || updates.imageThumb !== undefined
+              ? { image: updates.imageFull ?? updates.imageCard ?? updates.imageThumb ?? updates.image ?? "" }
+              : {}),
+          };
 
     const query = await supabase.from("products").update(payload).eq("id", id);
+    if (query.error && supportsProductImageVariants !== false && isMissingColumnError(query.error, "image_thumb")) {
+      supportsProductImageVariants = false;
+      const fallbackPayload = { ...basePayload };
+      if (
+        updates.image !== undefined ||
+        updates.imageThumb !== undefined ||
+        updates.imageCard !== undefined ||
+        updates.imageFull !== undefined
+      ) {
+        fallbackPayload.image = updates.imageFull ?? updates.imageCard ?? updates.imageThumb ?? updates.image ?? "";
+      }
+      const fallbackQuery = await supabase.from("products").update(fallbackPayload).eq("id", id);
+      if (fallbackQuery.error) throw fallbackQuery.error;
+      return;
+    }
     if (query.error) throw query.error;
+    if (supportsProductImageVariants !== false) supportsProductImageVariants = true;
   },
 
   async updateStock(id: number, stock: number): Promise<void> {
@@ -547,7 +616,7 @@ export const api = {
 
   async uploadImage(file: File, options?: { variant?: UploadImageVariant; folder?: string }): Promise<string> {
     try {
-      const variant = options?.variant ?? "product";
+      const variant = options?.variant ?? "product_full";
       const optimizedFile = await optimizeImageFile(file, variant);
       const extension = optimizedFile.name.split(".").pop()?.toLowerCase() || "webp";
       const fileName = `${crypto.randomUUID()}.${extension}`;
@@ -566,6 +635,43 @@ export const api = {
     } catch (error) {
       throw new Error(toErrorMessage(error, "Error subiendo imagen"));
     }
+  },
+
+  async uploadProductImages(file: File): Promise<{ imageThumb: string; imageCard: string; imageFull: string; image: string }> {
+    try {
+      const variants = await optimizeProductImageVariants(file);
+      const [imageThumb, imageCard, imageFull] = await Promise.all([
+        this.uploadRawOptimizedImage(variants.thumb, "products/thumbs"),
+        this.uploadRawOptimizedImage(variants.card, "products/cards"),
+        this.uploadRawOptimizedImage(variants.full, "products/full"),
+      ]);
+
+      return {
+        imageThumb,
+        imageCard,
+        imageFull,
+        image: imageThumb,
+      };
+    } catch (error) {
+      throw new Error(toErrorMessage(error, "Error generando variantes de imagen"));
+    }
+  },
+
+  async uploadRawOptimizedImage(file: File, folder: string): Promise<string> {
+    const extension = file.name.split(".").pop()?.toLowerCase() || "webp";
+    const fileName = `${crypto.randomUUID()}.${extension}`;
+    const filePath = `${folder}/${fileName}`;
+
+    const upload = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).upload(filePath, file, {
+      cacheControl: "31536000",
+      upsert: false,
+      contentType: file.type || undefined,
+    });
+
+    if (upload.error) throw upload.error;
+
+    const { data } = supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(filePath);
+    return data.publicUrl;
   },
 };
 
@@ -590,10 +696,21 @@ function mapCategory(row: any): Category {
   };
 }
 
+function mapProductImageRows(rows: any[]): Array<{ id: number; image: string }> {
+  return rows.map((row: any) => ({
+    id: Number(row.id),
+    image: normalizeRenderableProductImage(row.image_thumb ?? row.image_card ?? row.image_full ?? row.image),
+  }));
+}
+
 function mapProduct(row: any): Product {
   const rawName = typeof row.name === "string" ? row.name.trim() : "";
   const rawSubName = typeof row.sub_name === "string" ? row.sub_name.trim() : "";
-  const normalizedImage = normalizeRenderableProductImage(row.image);
+  const normalizedThumb = normalizeRenderableProductImage(row.image_thumb);
+  const normalizedCard = normalizeRenderableProductImage(row.image_card);
+  const normalizedFull = normalizeRenderableProductImage(row.image_full);
+  const normalizedLegacy = normalizeRenderableProductImage(row.image);
+  const normalizedImage = normalizedThumb || normalizedCard || normalizedFull || normalizedLegacy;
   return {
     id: row.id,
     name: rawName || rawSubName,
@@ -607,9 +724,17 @@ function mapProduct(row: any): Product {
     initialStock: Number(row.initial_stock ?? 0),
     enabled: Boolean(row.enabled),
     image: normalizedImage,
+    imageThumb: normalizedThumb || normalizedImage,
+    imageCard: normalizedCard || normalizedFull || normalizedImage,
+    imageFull: normalizedFull || normalizedCard || normalizedImage,
     sourceUrl: row.source_url ?? "",
     createdAt: row.created_at ?? "",
   };
+}
+
+function isMissingColumnError(error: unknown, columnName: string) {
+  const message = toErrorMessage(error, "");
+  return message.toLowerCase().includes(columnName.toLowerCase());
 }
 
 function extractProductStoragePath(image: string): string | null {

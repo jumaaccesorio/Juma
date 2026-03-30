@@ -14,7 +14,9 @@ const SIGNED_PREFIX = `/storage/v1/object/sign/${BUCKET}/`;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const PRESETS = {
-  product: { width: 800, quality: 80, folder: "optimized/products" },
+  product_thumb: { width: 240, quality: 72, folder: "products/thumbs" },
+  product_card: { width: 520, quality: 76, folder: "products/cards" },
+  product_full: { width: 1200, quality: 82, folder: "products/full" },
   panel: { width: 1100, quality: 82, folder: "optimized/home-panels" },
   hero: { width: 1400, quality: 82, folder: "optimized/hero" },
 };
@@ -94,6 +96,37 @@ async function uploadOptimizedImage({ image, presetKey, nameSeed }) {
   return data.publicUrl;
 }
 
+async function uploadProductVariants({ image, nameSeed }) {
+  const sourceBuffer = await readSourceBuffer(image);
+
+  const entries = await Promise.all(
+    ["product_thumb", "product_card", "product_full"].map(async (presetKey) => {
+      const preset = PRESETS[presetKey];
+      const optimizedBuffer = await sharp(sourceBuffer)
+        .rotate()
+        .resize({ width: preset.width, withoutEnlargement: true })
+        .webp({ quality: preset.quality })
+        .toBuffer();
+
+      const fileName = `${slugify(nameSeed, presetKey)}-${Date.now()}-${presetKey}.webp`;
+      const path = `${preset.folder}/${fileName}`;
+
+      const upload = await supabase.storage.from(BUCKET).upload(path, optimizedBuffer, {
+        contentType: "image/webp",
+        cacheControl: "31536000",
+        upsert: false,
+      });
+
+      if (upload.error) throw upload.error;
+
+      const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+      return [presetKey, data.publicUrl];
+    }),
+  );
+
+  return Object.fromEntries(entries);
+}
+
 async function optimizeHeroBanner() {
   const query = await supabase.from("hero_banner").select("id, title, image").eq("id", 1).maybeSingle();
   if (query.error) throw query.error;
@@ -132,7 +165,11 @@ async function optimizeFeaturedPanels() {
 }
 
 async function optimizeProducts() {
-  const query = await supabase.from("products").select("id, name, image").not("image", "is", null).neq("image", "");
+  const query = await supabase
+    .from("products")
+    .select("id, name, image, image_thumb, image_card, image_full")
+    .not("image", "is", null)
+    .neq("image", "");
   if (query.error) throw query.error;
 
   let updated = 0;
@@ -140,12 +177,19 @@ async function optimizeProducts() {
 
   for (const product of query.data ?? []) {
     try {
-      const nextImage = await uploadOptimizedImage({
+      const variants = await uploadProductVariants({
         image: product.image,
-        presetKey: "product",
         nameSeed: `${product.id}-${product.name || "producto"}`,
       });
-      const update = await supabase.from("products").update({ image: nextImage }).eq("id", product.id);
+      const update = await supabase
+        .from("products")
+        .update({
+          image: variants.product_thumb,
+          image_thumb: variants.product_thumb,
+          image_card: variants.product_card,
+          image_full: variants.product_full,
+        })
+        .eq("id", product.id);
       if (update.error) throw update.error;
       updated += 1;
       console.log(`Producto optimizado: ${product.id} - ${product.name}`);
