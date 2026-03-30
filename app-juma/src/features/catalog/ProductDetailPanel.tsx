@@ -31,12 +31,13 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="overflow-hidden rounded bg-white p-4 shadow-subtle">
-          <div className="aspect-square overflow-hidden rounded bg-gradient-to-br from-secondary/85 via-white to-secondary/65">
+          <div className="mx-auto w-full max-w-[560px] overflow-hidden rounded bg-white">
+            <div className="aspect-[4/5] overflow-hidden rounded bg-white">
             {detailImage ? (
               <img
                 src={detailImage}
                 alt={getProductDisplayName(product)}
-                className="h-full w-full object-contain"
+                className="h-full w-full object-cover object-center"
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
@@ -46,6 +47,7 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
                 <span className="material-symbols-outlined text-7xl text-slate-300">image</span>
               </div>
             )}
+            </div>
           </div>
         </div>
 
