@@ -14,8 +14,8 @@ const SIGNED_PREFIX = `/storage/v1/object/sign/${BUCKET}/`;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const PRESETS = {
-  product: { width: 960, quality: 84, folder: "optimized/products" },
-  panel: { width: 1280, quality: 85, folder: "optimized/home-panels" },
+  product: { width: 800, quality: 80, folder: "optimized/products" },
+  panel: { width: 1100, quality: 82, folder: "optimized/home-panels" },
   hero: { width: 1400, quality: 82, folder: "optimized/hero" },
 };
 

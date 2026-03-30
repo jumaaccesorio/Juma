@@ -6,9 +6,9 @@ type VariantPreset = {
 };
 
 const VARIANT_PRESETS: Record<UploadImageVariant, VariantPreset> = {
-  product: { maxWidth: 960, quality: 0.84 },
-  panel: { maxWidth: 1280, quality: 0.85 },
-  hero: { maxWidth: 1600, quality: 0.86 },
+  product: { maxWidth: 800, quality: 0.8 },
+  panel: { maxWidth: 1100, quality: 0.82 },
+  hero: { maxWidth: 1400, quality: 0.82 },
 };
 
 function loadImageFromUrl(url: string) {
