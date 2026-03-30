@@ -88,18 +88,18 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           type="button"
           onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={page === 1}
-          className="rounded-lg border border-line px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-primary disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-lg border border-line px-3 py-2 text-xs font-bold uppercase tracking-widest text-primary disabled:cursor-not-allowed disabled:opacity-40"
         >
           Anterior
         </button>
-        <span className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
-          Pagina {page} de {totalPages}
+        <span className="text-xs font-bold uppercase tracking-widest text-muted">
+          Página {page} de {totalPages}
         </span>
         <button
           type="button"
           onClick={() => onPageChange(Math.min(totalPages, page + 1))}
           disabled={page === totalPages}
-          className="rounded-lg border border-line px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-primary disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-lg border border-line px-3 py-2 text-xs font-bold uppercase tracking-widest text-primary disabled:cursor-not-allowed disabled:opacity-40"
         >
           Siguiente
         </button>
@@ -191,31 +191,40 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
     }
   };
 
+  const cartItemCount = cart.reduce((acc, i) => acc + i.quantity, 0);
+
   return (
     <>
-      <div className="mx-auto flex w-full max-w-md min-w-0 flex-1 flex-col overflow-x-hidden bg-surface px-4 py-4 pb-32 md:hidden">
+      {/* ══════════════════════════════════════════════════
+          MOBILE LAYOUT
+          ══════════════════════════════════════════════════ */}
+      <div className="mx-auto flex w-full max-w-md min-w-0 flex-1 flex-col overflow-x-hidden bg-background px-4 py-4 pb-32 md:hidden">
+        {/* Success message */}
         {successMsg && (
-          <div className="mb-6 rounded-2xl border border-[#C5A37F]/25 bg-[#C5A37F]/10 px-4 py-3 text-sm font-medium text-primary shadow-[0_12px_30px_rgba(117,89,58,0.08)]">
+          <div className="mb-5 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm font-semibold text-emerald-700 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">check_circle</span>
             {successMsg}
           </div>
         )}
 
-        <section ref={mobileCatalogRef} className="mb-8">
+        {/* Header */}
+        <section ref={mobileCatalogRef} className="mb-6">
           <div className="mb-4 min-w-0">
-            <h2 className="font-headline text-xl italic text-primary">Venta Rápida</h2>
-            <span className="mt-1 block text-[10px] font-medium uppercase tracking-[0.2em] text-secondary">Boutique Admin</span>
+            <h2 className="font-headline text-2xl text-ink">Venta Rápida</h2>
+            <span className="mt-0.5 block text-xs font-medium text-muted">Seleccioná productos y completá la venta</span>
           </div>
 
-          <div className="rounded-xl bg-white p-4 shadow-[0_12px_40px_rgba(45,45,45,0.06)]">
-            <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.1em] text-secondary">
-              Seleccionar Cliente
+          {/* Client selector */}
+          <div className="rounded-xl bg-white p-4 border border-line/50 shadow-sm">
+            <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-muted">
+              Cliente
             </label>
             <div className="relative flex items-center">
-              <span className="material-symbols-outlined pointer-events-none absolute left-3 text-sm text-secondary">
+              <span className="material-symbols-outlined pointer-events-none absolute left-3 text-[18px] text-primary">
                 person_search
               </span>
               <select
-                className="w-full rounded-lg border-none bg-surface-container-low py-3 pl-10 pr-4 text-sm text-on-surface outline-none ring-1 ring-transparent transition focus:ring-primary"
+                className="w-full rounded-lg border border-line bg-secondary/40 py-3 pl-10 pr-4 text-sm text-ink font-medium outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
                 value={selectedClientId}
                 onChange={(e) => setSelectedClientId(e.target.value)}
               >
@@ -228,13 +237,13 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
               </select>
             </div>
             {selectedClient && (
-              <div className="mt-3 flex gap-2">
-                <div className="flex items-center gap-2 rounded-lg border border-primary/10 bg-primary/5 px-3 py-2">
-                  <span className="text-xs font-medium text-primary">{selectedClient.name}</span>
+              <div className="mt-2 flex gap-2">
+                <div className="flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/20 px-3 py-1.5">
+                  <span className="text-xs font-semibold text-primary">{selectedClient.name}</span>
                   <button
                     type="button"
                     onClick={() => setSelectedClientId("")}
-                    className="material-symbols-outlined text-xs text-primary"
+                    className="material-symbols-outlined text-xs text-primary/70 hover:text-primary"
                   >
                     close
                   </button>
@@ -244,35 +253,38 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           </div>
         </section>
 
+        {/* Product Catalog */}
         <section className="mb-8">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">Catálogo Curado</h3>
-            <span className="material-symbols-outlined shrink-0 text-secondary">filter_list</span>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-ink/60">Catálogo</h3>
+            <span className="text-xs text-muted font-medium">{filteredProducts.length} productos</span>
           </div>
 
-          <div className="relative mb-4">
-            <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-secondary">
+          {/* Search */}
+          <div className="relative mb-3">
+            <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-muted/60">
               search
             </span>
             <input
-              className="w-full rounded-xl border border-outline-variant/20 bg-white py-3 pl-10 pr-4 text-sm text-on-surface outline-none transition focus:border-primary"
+              className="w-full rounded-xl border border-line bg-white py-3 pl-10 pr-4 text-sm text-ink placeholder:text-muted/50 outline-none transition focus:border-primary/40 focus:shadow-sm"
               placeholder="Buscar por nombre o categoría..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
-          <div className="mb-4 flex gap-2 overflow-x-auto pb-1 pr-2 [scrollbar-width:none]">
+          {/* Category chips */}
+          <div className="mb-4 flex gap-2 overflow-x-auto pb-1 pr-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               type="button"
               onClick={() => setSelectedCategoryId(null)}
-              className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-medium transition-colors ${
+              className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
                 !selectedCategoryId
-                  ? "bg-primary text-on-primary"
-                  : "bg-surface-container-low text-secondary hover:bg-secondary-container"
+                  ? "bg-primary text-white shadow-sm"
+                  : "bg-white border border-line text-ink/60 hover:border-primary/40"
               }`}
             >
-              All
+              Todos
             </button>
             {categoryChips.map((category) => (
               <button
@@ -283,10 +295,10 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                   setMobilePage(1);
                   setDesktopPage(1);
                 }}
-                className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-medium transition-colors ${
+                className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
                   selectedCategoryId === category.id
-                    ? "bg-primary text-on-primary"
-                    : "bg-surface-container-low text-secondary hover:bg-secondary-container"
+                    ? "bg-primary text-white shadow-sm"
+                    : "bg-white border border-line text-ink/60 hover:border-primary/40"
                 }`}
               >
                 {category.label}
@@ -294,10 +306,11 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
             ))}
           </div>
 
+          {/* Product grid */}
           {filteredProducts.length === 0 ? (
-            <div className="rounded-2xl bg-white px-5 py-10 text-center shadow-[0_12px_40px_rgba(45,45,45,0.04)]">
-              <span className="material-symbols-outlined text-4xl text-secondary">inventory_2</span>
-              <p className="mt-3 text-sm text-secondary">No encontramos productos para ese filtro.</p>
+            <div className="rounded-xl bg-white px-5 py-10 text-center border border-line/50">
+              <span className="material-symbols-outlined text-3xl text-muted/30 mb-2 block">inventory_2</span>
+              <p className="text-sm text-muted">No encontramos productos para ese filtro.</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
@@ -308,41 +321,50 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                     key={product.id}
                     type="button"
                     onClick={() => addToCart(product)}
-                    className={`group min-w-0 overflow-hidden rounded-xl text-left transition ${
-                      inCart > 0 ? "border border-primary/20 bg-primary/5" : "bg-surface-container-low"
+                    className={`group min-w-0 overflow-hidden rounded-xl text-left transition-all border ${
+                      inCart > 0
+                        ? "border-primary/30 bg-primary/[0.04] shadow-sm"
+                        : "border-line/50 bg-white hover:border-primary/30"
                     }`}
                   >
-                    <div className="relative aspect-square bg-surface-container-high">
+                    <div className="relative aspect-square bg-secondary/50">
                       {product.image ? (
                         <img
                           src={product.image}
                           alt={getProductDisplayName(product)}
-                          className="h-full w-full object-cover opacity-90 mix-blend-multiply transition-transform duration-500 group-hover:scale-105"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">
-                          <span className="material-symbols-outlined text-4xl text-secondary/40">image</span>
+                          <span className="material-symbols-outlined text-3xl text-muted/25">image</span>
                         </div>
                       )}
 
                       {inCart > 0 ? (
                         <>
-                          <div className="absolute left-2 top-2 rounded-full bg-primary px-2 py-0.5 text-[8px] uppercase tracking-tighter text-on-primary">
+                          <div className="absolute left-1.5 top-1.5 rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
                             {inCart} en bolsa
                           </div>
-                          <div className="absolute bottom-2 right-2 rounded-full bg-primary p-1.5 shadow-sm">
-                            <span className="material-symbols-outlined text-sm text-on-primary">check</span>
+                          <div className="absolute bottom-1.5 right-1.5 rounded-full bg-primary p-1.5 shadow-md">
+                            <span className="material-symbols-outlined text-[14px] text-white">check</span>
                           </div>
                         </>
                       ) : (
-                        <div className="absolute bottom-2 right-2 rounded-full bg-surface-container-lowest/80 p-1.5 shadow-sm backdrop-blur-md">
-                          <span className="material-symbols-outlined text-sm text-primary">add</span>
+                        <div className="absolute bottom-1.5 right-1.5 rounded-full bg-white/90 p-1.5 shadow-sm backdrop-blur-sm">
+                          <span className="material-symbols-outlined text-[14px] text-primary">add</span>
+                        </div>
+                      )}
+
+                      {/* Stock badge */}
+                      {product.stock <= 3 && (
+                        <div className="absolute top-1.5 right-1.5 rounded-md bg-red-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
+                          ¡{product.stock} left!
                         </div>
                       )}
                     </div>
-                    <div className="min-w-0 p-3">
-                      <h4 className="truncate font-headline text-sm italic text-on-surface">{getProductDisplayName(product)}</h4>
-                      <p className="mt-0.5 text-[11px] font-medium tracking-tight text-secondary">
+                    <div className="min-w-0 p-2.5">
+                      <h4 className="truncate text-sm font-semibold text-ink leading-tight">{getProductDisplayName(product)}</h4>
+                      <p className="mt-0.5 text-xs font-bold text-primary">
                         ${product.salePrice.toLocaleString("es-AR")}
                       </p>
                     </div>
@@ -354,64 +376,74 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           {renderPager(mobilePage, mobileTotalPages, setMobilePage)}
         </section>
 
+        {/* Order Summary (Mobile) */}
         <section className="mb-12">
-          <div className="rounded-2xl bg-surface-container-high/50 p-6">
-            <div className="mb-6 flex items-baseline justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">Resumen de Orden</span>
+          <div className="rounded-xl bg-white p-5 border border-line/50 shadow-sm">
+            <div className="mb-5 flex items-baseline justify-between">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-widest text-ink/60">Resumen de Orden</span>
+                {cartItemCount > 0 && (
+                  <span className="ml-2 inline-flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                    {cartItemCount}
+                  </span>
+                )}
+              </div>
               <span className="font-headline text-2xl text-primary">${total.toLocaleString("es-AR")}</span>
             </div>
 
-            <div className="mb-8 space-y-4">
+            <div className="mb-6 space-y-3">
               {cart.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-outline-variant/20 px-4 py-5 text-center text-sm text-secondary">
+                <div className="rounded-lg border-2 border-dashed border-line/50 px-4 py-5 text-center text-sm text-muted">
                   Seleccioná productos para comenzar la venta.
                 </div>
               ) : (
                 cart.map((item) => (
                   <div
                     key={item.product.id}
-                    className="flex items-start justify-between gap-3 border-b border-outline-variant/10 pb-2 text-sm"
+                    className="flex items-start justify-between gap-3 border-b border-line/30 pb-3"
                   >
                     <div className="min-w-0 flex-1">
-                      <span className="block truncate font-headline italic text-on-surface-variant">
+                      <span className="block truncate text-sm font-semibold text-ink">
                         {item.quantity}x {getProductDisplayName(item.product)}
                       </span>
-                      <div className="mt-1 flex items-center gap-2">
+                      <div className="mt-1.5 flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => updateQty(item.product.id, -1)}
-                          className="flex h-6 w-6 items-center justify-center rounded-full border border-outline-variant/20 text-primary"
+                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-line bg-secondary/50 text-ink/60"
                         >
-                          <span className="material-symbols-outlined text-sm">remove</span>
+                          <span className="material-symbols-outlined text-[14px]">remove</span>
                         </button>
+                        <span className="text-sm font-bold text-ink w-4 text-center">{item.quantity}</span>
                         <button
                           type="button"
                           onClick={() => updateQty(item.product.id, 1)}
-                          className="flex h-6 w-6 items-center justify-center rounded-full border border-outline-variant/20 text-primary"
+                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-line bg-secondary/50 text-ink/60"
                         >
-                          <span className="material-symbols-outlined text-sm">add</span>
+                          <span className="material-symbols-outlined text-[14px]">add</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => removeFromCart(item.product.id)}
-                          className="text-[10px] font-medium uppercase tracking-[0.1em] text-secondary"
+                          className="ml-1 text-[10px] font-bold uppercase tracking-widest text-red-400 hover:text-red-600"
                         >
-                          quitar
+                          Quitar
                         </button>
                       </div>
                     </div>
-                    <span className="shrink-0 font-medium">${(item.product.salePrice * item.quantity).toLocaleString("es-AR")}</span>
+                    <span className="shrink-0 font-semibold text-sm text-ink">${(item.product.salePrice * item.quantity).toLocaleString("es-AR")}</span>
                   </div>
                 ))
               )}
-              <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-secondary/60">
+              <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted">
                 <span>Impuestos (Incl.)</span>
                 <span>$0.00</span>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.1em] text-secondary">
+            {/* Payment method */}
+            <div className="space-y-2.5">
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-ink/60">
                 Método de Pago
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -420,28 +452,29 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                     key={method}
                     type="button"
                     onClick={() => setPaymentMethod(method)}
-                    className={`flex flex-col items-center justify-center rounded-lg border bg-surface-container-lowest p-3 transition-colors ${
+                    className={`flex flex-col items-center justify-center rounded-xl border-2 bg-white p-3 transition-all ${
                       paymentMethod === method
-                        ? "border-primary text-primary"
-                        : "border-outline-variant/30 text-secondary hover:border-primary/50"
+                        ? "border-primary text-primary shadow-sm"
+                        : "border-line/50 text-muted hover:border-primary/30"
                     }`}
                   >
-                    <span className="material-symbols-outlined mb-1">
-                      {method === "efectivo" ? "payments" : method === "tarjeta" ? "credit_card" : "sync_alt"}
+                    <span className="material-symbols-outlined mb-1 text-[20px]">
+                      {method === "efectivo" ? "payments" : method === "tarjeta" ? "credit_card" : "account_balance"}
                     </span>
-                    <span className="text-[9px] font-bold uppercase tracking-tighter">
-                      {method === "efectivo" ? "Cash" : method === "tarjeta" ? "Card" : "Transfer"}
+                    <span className="text-[9px] font-bold uppercase tracking-tight">
+                      {method === "efectivo" ? "Efectivo" : method === "tarjeta" ? "Tarjeta" : "Transfer"}
                     </span>
                   </button>
                 ))}
               </div>
             </div>
 
+            {/* Submit button */}
             <button
               type="button"
               onClick={handleFinalizeSale}
               disabled={cart.length === 0 || isSubmitting}
-              className="mt-8 w-full rounded-sm bg-gradient-to-br from-[#75593a] to-[#c5a37f] py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-white shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-6 w-full rounded-xl bg-gradient-to-r from-primary to-accent py-4 text-sm font-bold uppercase tracking-widest text-white shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? "Procesando..." : "Finalizar Venta"}
             </button>
@@ -449,12 +482,15 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         </section>
       </div>
 
-      <div className="hidden h-full flex-1 flex-col overflow-hidden bg-[#f8f6f6] md:flex xl:flex-row">
+      {/* ══════════════════════════════════════════════════
+          DESKTOP LAYOUT
+          ══════════════════════════════════════════════════ */}
+      <div className="hidden h-full flex-1 flex-col overflow-hidden bg-secondary/20 md:flex xl:flex-row">
 
       {/* Left: Product Selector */}
       <section ref={desktopCatalogRef} className="flex flex-1 flex-col space-y-5 overflow-hidden p-4 md:p-6">
         {successMsg && (
-          <div className="bg-green-50 border border-green-200 text-green-700 font-bold text-sm px-5 py-3 rounded-xl flex items-center gap-2">
+          <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-sm px-5 py-3 rounded-xl flex items-center gap-2">
             <span className="material-symbols-outlined">check_circle</span>{successMsg}
           </div>
         )}
@@ -464,7 +500,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary pointer-events-none">person_search</span>
             <select
-              className="w-full pl-12 pr-4 h-14 bg-white border border-[#F3EDE2] rounded-xl appearance-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-slate-700 font-medium"
+              className="w-full pl-12 pr-4 h-14 bg-white border border-line rounded-xl appearance-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-ink font-medium"
               value={selectedClientId}
               onChange={e => setSelectedClientId(e.target.value)}
             >
@@ -477,7 +513,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary pointer-events-none">search</span>
             <input
-              className="w-full pl-12 pr-4 h-14 bg-white border border-[#F3EDE2] rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-slate-700"
+              className="w-full pl-12 pr-4 h-14 bg-white border border-line rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-ink"
               placeholder="Buscar producto por nombre..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
@@ -486,11 +522,11 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         </div>
 
         {/* Category chips */}
-        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <button
             onClick={() => setSelectedCategoryId(null)}
             type="button"
-            className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${!selectedCategoryId ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-[#F3EDE2] text-slate-600 hover:border-primary"}`}
+            className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${!selectedCategoryId ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-line text-ink/60 hover:border-primary"}`}
           >
             Todos
           </button>
@@ -503,7 +539,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                 setMobilePage(1);
                 setDesktopPage(1);
               }}
-              className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${selectedCategoryId === cat.id ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-[#F3EDE2] text-slate-600 hover:border-primary"}`}
+              className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${selectedCategoryId === cat.id ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-line text-ink/60 hover:border-primary"}`}
             >
               {cat.label}
             </button>
@@ -511,11 +547,11 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         </div>
 
         {/* Product grid */}
-        <div className="flex-1 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin" }}>
+        <div className="flex-1 overflow-y-auto pr-1 admin-scrollbar">
           {filteredProducts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-slate-400 gap-3">
+            <div className="flex flex-col items-center justify-center h-64 text-muted/40 gap-3">
               <span className="material-symbols-outlined text-5xl">inventory_2</span>
-              <p className="font-medium">No hay productos en esta categoría</p>
+              <p className="font-medium text-muted">No hay productos en esta categoría</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-4">
@@ -526,27 +562,27 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                   <div
                     key={product.id}
                     onClick={() => addToCart(product)}
-                    className="bg-white rounded-2xl p-3 border border-[#F3EDE2] hover:border-primary hover:shadow-xl hover:shadow-primary/5 transition-all group cursor-pointer flex flex-col h-full"
+                    className="bg-white rounded-2xl p-3 border border-line/60 hover:border-primary hover:shadow-xl hover:shadow-primary/5 transition-all group cursor-pointer flex flex-col h-full"
                   >
-                    <div className="aspect-square rounded-xl bg-[#F3EDE2] mb-3 relative overflow-hidden">
+                    <div className="aspect-square rounded-xl bg-secondary mb-3 relative overflow-hidden">
                       {product.image ? (
                         <img src={product.image} alt={getProductDisplayName(product)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <span className="material-symbols-outlined text-4xl text-slate-300">image</span>
+                          <span className="material-symbols-outlined text-4xl text-muted/25">image</span>
                         </div>
                       )}
-                      <div className={`absolute top-2 right-2 backdrop-blur-sm px-2 py-1 rounded-lg text-[10px] font-bold ${lowStock ? "bg-red-100 text-red-600" : "bg-white/90 text-primary"}`}>
+                      <div className={`absolute top-2 right-2 backdrop-blur-sm px-2 py-1 rounded-lg text-[10px] font-bold ${lowStock ? "bg-red-100 text-red-600" : "bg-white/90 text-ink/70"}`}>
                         {product.stock} EN STOCK
                       </div>
                       {inCart > 0 && (
-                        <div className="absolute bottom-2 left-2 bg-primary text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+                        <div className="absolute bottom-2 left-2 bg-primary text-white text-[11px] font-bold px-2 py-0.5 rounded-full shadow-sm">
                           {inCart} en pedido
                         </div>
                       )}
                     </div>
-                    <h3 className="font-semibold text-slate-800 text-sm leading-tight mb-1 group-hover:text-primary transition-colors">{getProductDisplayName(product)}</h3>
-                    <p className="text-xs text-slate-400 mb-2">{product.categoryName || ""}</p>
+                    <h3 className="font-semibold text-ink text-sm leading-tight mb-1 group-hover:text-primary transition-colors">{getProductDisplayName(product)}</h3>
+                    <p className="text-xs text-muted mb-2">{product.categoryName || ""}</p>
                     <div className="mt-auto flex items-center justify-between">
                       <span className="text-primary font-bold">${product.salePrice.toLocaleString("es-AR")}</span>
                       <button
@@ -566,52 +602,52 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
       </section>
 
       {/* Right: Order Summary */}
-      <aside className="flex w-full flex-col border-t border-[#F3EDE2] bg-white shadow-xl xl:w-96 xl:border-l xl:border-t-0">
-        <div className="border-b border-[#F3EDE2] p-4 md:p-6">
-          <h3 className="font-serif text-xl font-bold text-slate-800 flex items-center gap-2">
+      <aside className="flex w-full flex-col border-t border-line bg-white shadow-xl xl:w-96 xl:border-l xl:border-t-0">
+        <div className="border-b border-line p-4 md:p-6">
+          <h3 className="font-headline text-xl font-bold text-ink flex items-center gap-2">
             <span className="material-symbols-outlined text-primary">point_of_sale</span>
             Resumen del Pedido
           </h3>
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto space-y-4 p-4 md:p-6" style={{ scrollbarWidth: "thin" }}>
+        <div className="flex-1 overflow-y-auto space-y-4 p-4 md:p-6 admin-scrollbar">
           {cart.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-48 text-slate-300 gap-3">
+            <div className="flex flex-col items-center justify-center h-48 text-muted/30 gap-3">
               <span className="material-symbols-outlined text-5xl">shopping_cart</span>
-              <p className="text-sm font-medium text-slate-400">Hacé clic en un producto para agregarlo</p>
+              <p className="text-sm font-medium text-muted">Hacé clic en un producto para agregarlo</p>
             </div>
           ) : cart.map(item => (
             <div key={item.product.id} className="flex items-center gap-4">
-              <div className="size-16 rounded-xl overflow-hidden bg-[#F3EDE2] flex-shrink-0">
+              <div className="size-16 rounded-xl overflow-hidden bg-secondary flex-shrink-0">
                 {item.product.image ? (
                   <img src={item.product.image} alt={getProductDisplayName(item.product)} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <span className="material-symbols-outlined text-slate-300">image</span>
+                    <span className="material-symbols-outlined text-muted/30">image</span>
                   </div>
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-semibold text-slate-800 truncate">{getProductDisplayName(item.product)}</h4>
+                <h4 className="text-sm font-semibold text-ink truncate">{getProductDisplayName(item.product)}</h4>
                 <p className="text-xs text-primary font-bold">${(item.product.salePrice * item.quantity).toLocaleString("es-AR")}</p>
                 <div className="flex items-center gap-3 mt-2">
                   <button
                     onClick={() => updateQty(item.product.id, -1)}
-                    className="size-6 rounded bg-[#F3EDE2] flex items-center justify-center text-slate-600 hover:bg-primary hover:text-white transition-colors"
+                    className="size-6 rounded-lg bg-secondary flex items-center justify-center text-ink/60 hover:bg-primary hover:text-white transition-colors"
                   >
                     <span className="material-symbols-outlined text-xs">remove</span>
                   </button>
-                  <span className="text-sm font-bold w-5 text-center">{item.quantity}</span>
+                  <span className="text-sm font-bold w-5 text-center text-ink">{item.quantity}</span>
                   <button
                     onClick={() => updateQty(item.product.id, 1)}
-                    className="size-6 rounded bg-[#F3EDE2] flex items-center justify-center text-slate-600 hover:bg-primary hover:text-white transition-colors"
+                    className="size-6 rounded-lg bg-secondary flex items-center justify-center text-ink/60 hover:bg-primary hover:text-white transition-colors"
                   >
                     <span className="material-symbols-outlined text-xs">add</span>
                   </button>
                 </div>
               </div>
-              <button onClick={() => removeFromCart(item.product.id)} className="text-slate-300 hover:text-red-500 transition-colors">
+              <button onClick={() => removeFromCart(item.product.id)} className="text-muted/40 hover:text-red-500 transition-colors">
                 <span className="material-symbols-outlined">delete</span>
               </button>
             </div>
@@ -619,27 +655,27 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         </div>
 
         {/* Totals + Payment */}
-        <div className="space-y-6 bg-[#F3EDE2] p-4 md:p-6">
+        <div className="space-y-6 bg-secondary/60 p-4 md:p-6 border-t border-line/50">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Subtotal</span>
-              <span className="text-slate-800 font-semibold">${subtotal.toLocaleString("es-AR")}</span>
+              <span className="text-muted">Subtotal</span>
+              <span className="text-ink font-semibold">${subtotal.toLocaleString("es-AR")}</span>
             </div>
-            <div className="flex justify-between text-lg pt-2 border-t border-white">
-              <span className="font-serif font-bold text-slate-800">Total</span>
+            <div className="flex justify-between text-lg pt-2 border-t border-white/80">
+              <span className="font-headline font-bold text-ink">Total</span>
               <span className="text-primary font-bold text-xl">${total.toLocaleString("es-AR")}</span>
             </div>
           </div>
 
           {/* Payment Method */}
           <div className="space-y-3">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Método de Pago</p>
+            <p className="text-xs font-bold text-muted uppercase tracking-widest">Método de Pago</p>
             <div className="grid grid-cols-3 gap-2">
               {(["efectivo", "tarjeta", "transferencia"] as PaymentMethod[]).map(method => (
                 <button
                   key={method}
                   onClick={() => setPaymentMethod(method)}
-                  className={`flex min-h-[84px] flex-col items-center justify-center gap-2 rounded-xl border-2 bg-white p-2 text-center transition-all sm:p-3 ${paymentMethod === method ? "border-primary text-primary shadow-md" : "border-transparent text-slate-500 hover:border-primary/30 hover:text-primary"}`}
+                  className={`flex min-h-[84px] flex-col items-center justify-center gap-2 rounded-xl border-2 bg-white p-2 text-center transition-all sm:p-3 ${paymentMethod === method ? "border-primary text-primary shadow-md" : "border-line/50 text-muted hover:border-primary/30 hover:text-primary"}`}
                 >
                   <span className="material-symbols-outlined">
                     {method === "efectivo" ? "payments" : method === "tarjeta" ? "credit_card" : "account_balance"}
@@ -653,7 +689,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           <button
             onClick={handleFinalizeSale}
             disabled={cart.length === 0 || isSubmitting}
-            className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 shadow-xl shadow-primary/20 transition-all active:scale-95"
+            className="w-full bg-gradient-to-r from-primary to-accent hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 shadow-lg shadow-primary/20 transition-all active:scale-95"
           >
             <span>{isSubmitting ? "Procesando..." : "Finalizar Venta"}</span>
             <span className="material-symbols-outlined">{isSubmitting ? "autorenew" : "arrow_forward"}</span>
