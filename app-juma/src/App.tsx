@@ -1550,6 +1550,7 @@ function App() {
                   products={products}
                   categories={categories}
                   clients={clients}
+                  onRequestProductImages={requestProductImages}
                   onOrderPlaced={(order) => setOrders(prev => [order, ...prev])}
                   onUpdateStock={(productId, newStock) => setProducts(prev => prev.map(p => p.id === productId ? { ...p, stock: newStock } : p))}
                 />

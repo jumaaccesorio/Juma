@@ -16,9 +16,10 @@ type QuickSalePanelProps = {
   clients: Client[];
   onOrderPlaced: (order: Order) => void;
   onUpdateStock: (productId: number, newStock: number) => void;
+  onRequestProductImages: (productIds: number[]) => void;
 };
 
-function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdateStock }: QuickSalePanelProps) {
+function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdateStock, onRequestProductImages }: QuickSalePanelProps) {
   const MOBILE_PRODUCTS_PER_PAGE = 12;
   const DESKTOP_PRODUCTS_PER_PAGE = 24;
   const [searchQuery, setSearchQuery] = useState("");
@@ -91,6 +92,16 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
     () => filteredProducts.slice((desktopPage - 1) * DESKTOP_PRODUCTS_PER_PAGE, desktopPage * DESKTOP_PRODUCTS_PER_PAGE),
     [filteredProducts, desktopPage],
   );
+
+  useEffect(() => {
+    const idsToRequest = Array.from(new Set([
+      ...mobileProductsPage.filter(p => !p.image).map(p => p.id),
+      ...desktopProductsPage.filter(p => !p.image).map(p => p.id)
+    ]));
+    if (idsToRequest.length > 0) {
+      onRequestProductImages(idsToRequest);
+    }
+  }, [mobileProductsPage, desktopProductsPage, onRequestProductImages]);
 
   const renderPager = (page: number, totalPages: number, onPageChange: (page: number) => void) => {
     if (totalPages <= 1) return null;
