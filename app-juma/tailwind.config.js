@@ -33,6 +33,15 @@ module.exports = {
         boxShadow: {
           subtle: "0 8px 24px rgba(45, 45, 45, 0.04)",
         },
+        keyframes: {
+          "slide-up": {
+            from: { transform: "translateY(100%)", opacity: "0" },
+            to: { transform: "translateY(0)", opacity: "1" }
+          }
+        },
+        animation: {
+          "slide-up": "slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards"
+        }
     },
   },
   plugins: [

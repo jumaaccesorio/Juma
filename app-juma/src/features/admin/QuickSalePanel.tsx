@@ -30,6 +30,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   const [successMsg, setSuccessMsg] = useState("");
   const [mobilePage, setMobilePage] = useState(1);
   const [desktopPage, setDesktopPage] = useState(1);
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const mobileCatalogRef = useRef<HTMLElement | null>(null);
   const desktopCatalogRef = useRef<HTMLElement | null>(null);
 
@@ -182,6 +183,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
       setCart([]);
       setSelectedClientId("");
       setSearchQuery("");
+      setIsMobileCartOpen(false);
       setSuccessMsg(`¡Venta #${String(newOrder.id).padStart(5, "0")} registrada con éxito!`);
       setTimeout(() => setSuccessMsg(""), 4000);
     } catch (err) {
@@ -313,7 +315,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
               <p className="text-sm text-muted">No encontramos productos para ese filtro.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-3">
               {mobileProductsPage.map((product) => {
                 const inCart = cart.find((item) => item.product.id === product.id)?.quantity ?? 0;
                 return (
@@ -321,52 +323,51 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                     key={product.id}
                     type="button"
                     onClick={() => addToCart(product)}
-                    className={`group min-w-0 overflow-hidden rounded-xl text-left transition-all border ${
+                    className={`group flex items-center justify-between w-full overflow-hidden rounded-xl text-left transition-all border p-3 ${
                       inCart > 0
-                        ? "border-primary/30 bg-primary/[0.04] shadow-sm"
-                        : "border-line/50 bg-white hover:border-primary/30"
+                        ? "border-primary/40 bg-primary/[0.05] shadow-sm"
+                        : "border-line/50 bg-white hover:border-primary/40"
                     }`}
                   >
-                    <div className="relative aspect-square bg-secondary/50">
-                      {product.image ? (
-                        <img
-                          src={product.image}
-                          alt={getProductDisplayName(product)}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center">
-                          <span className="material-symbols-outlined text-3xl text-muted/25">image</span>
-                        </div>
-                      )}
-
-                      {inCart > 0 ? (
-                        <>
-                          <div className="absolute left-1.5 top-1.5 rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
-                            {inCart} en bolsa
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className="relative size-14 shrink-0 rounded-lg bg-secondary/50 overflow-hidden border border-line/30">
+                        {product.image ? (
+                          <img
+                            src={product.image}
+                            alt={getProductDisplayName(product)}
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <span className="material-symbols-outlined text-2xl text-muted/25">image</span>
                           </div>
-                          <div className="absolute bottom-1.5 right-1.5 rounded-full bg-primary p-1.5 shadow-md">
-                            <span className="material-symbols-outlined text-[14px] text-white">check</span>
+                        )}
+                        {/* Stock badge */}
+                        {product.stock <= 3 && (
+                          <div className="absolute top-1 right-1 rounded bg-red-500 px-1 py-0.5 text-[8px] font-bold text-white leading-none shadow-sm">
+                            {product.stock}
                           </div>
-                        </>
-                      ) : (
-                        <div className="absolute bottom-1.5 right-1.5 rounded-full bg-white/90 p-1.5 shadow-sm backdrop-blur-sm">
-                          <span className="material-symbols-outlined text-[14px] text-primary">add</span>
-                        </div>
-                      )}
-
-                      {/* Stock badge */}
-                      {product.stock <= 3 && (
-                        <div className="absolute top-1.5 right-1.5 rounded-md bg-red-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
-                          ¡{product.stock} left!
-                        </div>
-                      )}
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1 pr-2">
+                        <h4 className="truncate text-sm font-semibold text-ink">{getProductDisplayName(product)}</h4>
+                        <p className="mt-0.5 text-[10px] uppercase font-bold text-muted/60 truncate">{product.categoryName || "Sin categoría"}</p>
+                        <p className="mt-1 text-[13px] font-bold text-primary">
+                          ${product.salePrice.toLocaleString("es-AR")}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0 p-2.5">
-                      <h4 className="truncate text-sm font-semibold text-ink leading-tight">{getProductDisplayName(product)}</h4>
-                      <p className="mt-0.5 text-xs font-bold text-primary">
-                        ${product.salePrice.toLocaleString("es-AR")}
-                      </p>
+                    
+                    <div className="shrink-0 flex items-center justify-center">
+                      {inCart > 0 ? (
+                        <div className="flex items-center justify-center size-8 rounded-full bg-primary text-white shadow-md transition-transform active:scale-95">
+                          <span className="font-bold text-sm leading-none">{inCart}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center size-8 rounded-full bg-secondary/80 text-primary group-hover:bg-primary/10 group-hover:text-primary transition-colors active:scale-95">
+                          <span className="material-symbols-outlined text-[18px]">add</span>
+                        </div>
+                      )}
                     </div>
                   </button>
                 );
@@ -376,110 +377,179 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           {renderPager(mobilePage, mobileTotalPages, setMobilePage)}
         </section>
 
-        {/* Order Summary (Mobile) */}
-        <section className="mb-12">
-          <div className="rounded-xl bg-white p-5 border border-line/50 shadow-sm">
-            <div className="mb-5 flex items-baseline justify-between">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-ink/60">Resumen de Orden</span>
-                {cartItemCount > 0 && (
-                  <span className="ml-2 inline-flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+        {/* Mobile Floating Sticky Footer */}
+        {cartItemCount > 0 && (
+          <div className="fixed bottom-4 left-4 right-4 z-40 md:hidden">
+            <button
+              type="button"
+              onClick={() => setIsMobileCartOpen(true)}
+              className="w-full flex items-center justify-between rounded-2xl bg-gradient-to-r from-primary to-accent p-4 shadow-xl shadow-primary/30 text-white transform transition-all active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <span className="material-symbols-outlined text-white/90">shopping_bag</span>
+                  <span className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full bg-white text-[10px] font-black text-primary border border-primary/20">
                     {cartItemCount}
                   </span>
-                )}
-              </div>
-              <span className="font-headline text-2xl text-primary">${total.toLocaleString("es-AR")}</span>
-            </div>
-
-            <div className="mb-6 space-y-3">
-              {cart.length === 0 ? (
-                <div className="rounded-lg border-2 border-dashed border-line/50 px-4 py-5 text-center text-sm text-muted">
-                  Seleccioná productos para comenzar la venta.
                 </div>
-              ) : (
-                cart.map((item) => (
-                  <div
-                    key={item.product.id}
-                    className="flex items-start justify-between gap-3 border-b border-line/30 pb-3"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-ink">
-                        {item.quantity}x {getProductDisplayName(item.product)}
-                      </span>
-                      <div className="mt-1.5 flex items-center gap-2">
+                <div className="flex flex-col items-start leading-tight">
+                  <span className="text-[10px] uppercase font-bold text-white/80 tracking-widest">Ver Pedido</span>
+                  <span className="font-semibold text-sm">Finalizar Venta</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 bg-black/10 px-3 py-1.5 rounded-lg border border-white/10">
+                <span className="font-headline font-bold text-[17px]">${total.toLocaleString("es-AR")}</span>
+                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+              </div>
+            </button>
+          </div>
+        )}
+
+        {/* Order Summary Modal (Mobile) */}
+        {isMobileCartOpen && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 backdrop-blur-sm md:hidden p-2 transition-opacity">
+            <div className="w-full max-h-[90vh] bg-background rounded-[24px] shadow-2xl flex flex-col overflow-hidden animate-slide-up border border-line">
+              
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-line/50 bg-white">
+                <div>
+                  <h3 className="font-headline text-lg text-ink font-bold flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-[20px]">shopping_cart_checkout</span>
+                    Resumen de Orden
+                  </h3>
+                  <p className="text-[11px] font-medium text-muted mt-0.5">{cartItemCount} productos seleccionados</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileCartOpen(false)}
+                  className="flex size-8 items-center justify-center rounded-full bg-secondary/60 text-ink/60 hover:bg-line transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[20px]">close</span>
+                </button>
+              </div>
+
+              {/* Cart Items Mapping */}
+              <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-white">
+                {cart.length === 0 ? (
+                  <div className="rounded-xl border-2 border-dashed border-line p-6 text-center text-sm text-muted">
+                    No hay productos en el carrito.
+                  </div>
+                ) : (
+                  cart.map((item) => (
+                    <div
+                      key={item.product.id}
+                      className="flex items-start justify-between gap-3 border-b border-line/40 pb-4 last:border-0 last:pb-0"
+                    >
+                      <div className="size-16 shrink-0 rounded-lg bg-secondary border border-line overflow-hidden">
+                        {item.product.image ? (
+                          <img src={item.product.image} className="h-full w-full object-cover" alt={getProductDisplayName(item.product)} />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-muted/30">
+                            <span className="material-symbols-outlined">image</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-ink leading-tight mb-2">
+                          {getProductDisplayName(item.product)}
+                        </span>
+                        <div className="flex items-center gap-3 bg-secondary/30 rounded-lg p-1 w-fit border border-line">
+                          <button
+                            type="button"
+                            onClick={() => updateQty(item.product.id, -1)}
+                            className="flex size-7 items-center justify-center rounded-md bg-white text-ink shadow-sm border border-line/50 hover:border-primary/40"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">remove</span>
+                          </button>
+                          <span className="text-sm font-bold text-ink w-4 text-center">{item.quantity}</span>
+                          <button
+                            type="button"
+                            onClick={() => updateQty(item.product.id, 1)}
+                            className="flex size-7 items-center justify-center rounded-md bg-white text-ink shadow-sm border border-line/50 hover:border-primary/40"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">add</span>
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2 shrink-0">
+                        <span className="font-semibold text-sm text-primary">${(item.product.salePrice * item.quantity).toLocaleString("es-AR")}</span>
                         <button
                           type="button"
-                          onClick={() => updateQty(item.product.id, -1)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-line bg-secondary/50 text-ink/60"
+                          onClick={() => {
+                            removeFromCart(item.product.id);
+                            if (cart.length === 1) setIsMobileCartOpen(false);
+                          }}
+                          className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-red-500 bg-red-50 px-2 py-1 rounded-md"
                         >
-                          <span className="material-symbols-outlined text-[14px]">remove</span>
-                        </button>
-                        <span className="text-sm font-bold text-ink w-4 text-center">{item.quantity}</span>
-                        <button
-                          type="button"
-                          onClick={() => updateQty(item.product.id, 1)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-line bg-secondary/50 text-ink/60"
-                        >
-                          <span className="material-symbols-outlined text-[14px]">add</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeFromCart(item.product.id)}
-                          className="ml-1 text-[10px] font-bold uppercase tracking-widest text-red-400 hover:text-red-600"
-                        >
-                          Quitar
+                          <span className="material-symbols-outlined text-[12px]">delete</span>
                         </button>
                       </div>
                     </div>
-                    <span className="shrink-0 font-semibold text-sm text-ink">${(item.product.salePrice * item.quantity).toLocaleString("es-AR")}</span>
+                  ))
+                )}
+              </div>
+
+              {/* Checkout Footer */}
+              <div className="bg-secondary/30 p-5 border-t border-line/60">
+                <div className="mb-4 space-y-1.5">
+                  <div className="flex justify-between text-xs text-muted font-medium">
+                    <span>Subtotal</span>
+                    <span>${subtotal.toLocaleString("es-AR")}</span>
                   </div>
-                ))
-              )}
-              <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted">
-                <span>Impuestos (Incl.)</span>
-                <span>$0.00</span>
+                  <div className="flex justify-between items-baseline pt-2 border-t border-line">
+                    <span className="font-bold text-sm text-ink uppercase tracking-widest">Total</span>
+                    <span className="font-headline text-2xl text-primary font-bold">${total.toLocaleString("es-AR")}</span>
+                  </div>
+                </div>
+
+                {/* Payment Method */}
+                <div className="mb-5">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-muted mb-2">
+                    Método de Pago
+                  </label>
+                  <div className="flex bg-white rounded-xl border border-line p-1 gap-1">
+                    {(["efectivo", "tarjeta", "transferencia"] as PaymentMethod[]).map((method) => (
+                      <button
+                        key={method}
+                        type="button"
+                        onClick={() => setPaymentMethod(method)}
+                        className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2.5 transition-all text-[11px] font-bold ${
+                          paymentMethod === method
+                            ? "bg-primary text-white shadow-md"
+                            : "bg-transparent text-ink/60 hover:bg-secondary"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">
+                          {method === "efectivo" ? "payments" : method === "tarjeta" ? "credit_card" : "account_balance"}
+                        </span>
+                        <span className="capitalize">{method === "transferencia" ? "Transf." : method}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleFinalizeSale}
+                  disabled={cart.length === 0 || isSubmitting}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent py-4 text-sm font-bold uppercase tracking-widest text-white shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-[18px]">autorenew</span>
+                      Procesando...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[18px]">point_of_sale</span>
+                      Confirmar Venta
+                    </>
+                  )}
+                </button>
               </div>
             </div>
-
-            {/* Payment method */}
-            <div className="space-y-2.5">
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-ink/60">
-                Método de Pago
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {(["efectivo", "tarjeta", "transferencia"] as PaymentMethod[]).map((method) => (
-                  <button
-                    key={method}
-                    type="button"
-                    onClick={() => setPaymentMethod(method)}
-                    className={`flex flex-col items-center justify-center rounded-xl border-2 bg-white p-3 transition-all ${
-                      paymentMethod === method
-                        ? "border-primary text-primary shadow-sm"
-                        : "border-line/50 text-muted hover:border-primary/30"
-                    }`}
-                  >
-                    <span className="material-symbols-outlined mb-1 text-[20px]">
-                      {method === "efectivo" ? "payments" : method === "tarjeta" ? "credit_card" : "account_balance"}
-                    </span>
-                    <span className="text-[9px] font-bold uppercase tracking-tight">
-                      {method === "efectivo" ? "Efectivo" : method === "tarjeta" ? "Tarjeta" : "Transfer"}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Submit button */}
-            <button
-              type="button"
-              onClick={handleFinalizeSale}
-              disabled={cart.length === 0 || isSubmitting}
-              className="mt-6 w-full rounded-xl bg-gradient-to-r from-primary to-accent py-4 text-sm font-bold uppercase tracking-widest text-white shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isSubmitting ? "Procesando..." : "Finalizar Venta"}
-            </button>
           </div>
-        </section>
+        )}
       </div>
 
       {/* ══════════════════════════════════════════════════
