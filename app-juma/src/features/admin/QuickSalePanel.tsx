@@ -209,67 +209,48 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           </div>
         )}
 
-        {/* Header */}
-        <section ref={mobileCatalogRef} className="mb-6">
-          <div className="mb-4 min-w-0">
-            <h2 className="font-headline text-2xl text-ink">Venta Rápida</h2>
-            <span className="mt-0.5 block text-xs font-medium text-muted">Seleccioná productos y completá la venta</span>
+        {/* Compact Header */}
+        <section ref={mobileCatalogRef} className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex flex-col">
+            <h2 className="font-headline text-xl text-ink leading-tight">Venta Rápida</h2>
           </div>
-
-          {/* Client selector */}
-          <div className="rounded-xl bg-white p-4 border border-line/50 shadow-sm">
-            <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-muted">
-              Cliente
-            </label>
-            <div className="relative flex items-center">
-              <span className="material-symbols-outlined pointer-events-none absolute left-3 text-[18px] text-primary">
-                person_search
-              </span>
-              <select
-                className="w-full rounded-lg border border-line bg-secondary/40 py-3 pl-10 pr-4 text-sm text-ink font-medium outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
-                value={selectedClientId}
-                onChange={(e) => setSelectedClientId(e.target.value)}
+          <div className="relative shrink-0 w-[160px]">
+            <select
+              className="w-full appearance-none rounded-lg border border-line bg-white py-1.5 pl-3 pr-8 text-[11px] font-bold text-ink/80 outline-none focus:border-primary/50 shadow-sm truncate"
+              value={selectedClientId}
+              onChange={(e) => setSelectedClientId(e.target.value)}
+            >
+              <option value="">👤 Cliente Final</option>
+              {clients.map((client) => (
+                <option key={client.id} value={client.id}>
+                  👤 {client.name}
+                </option>
+              ))}
+            </select>
+            {selectedClient ? (
+              <button
+                type="button"
+                onClick={() => setSelectedClientId("")}
+                className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center rounded p-1 text-red-400 hover:text-red-500 hover:bg-red-50"
               >
-                <option value="">Consumidor Final</option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {selectedClient && (
-              <div className="mt-2 flex gap-2">
-                <div className="flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/20 px-3 py-1.5">
-                  <span className="text-xs font-semibold text-primary">{selectedClient.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedClientId("")}
-                    className="material-symbols-outlined text-xs text-primary/70 hover:text-primary"
-                  >
-                    close
-                  </button>
-                </div>
-              </div>
+                <span className="material-symbols-outlined text-[14px]">close</span>
+              </button>
+            ) : (
+              <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-muted pointer-events-none">expand_more</span>
             )}
           </div>
         </section>
 
         {/* Product Catalog */}
         <section className="mb-8">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-ink/60">Catálogo</h3>
-            <span className="text-xs text-muted font-medium">{filteredProducts.length} productos</span>
-          </div>
-
           {/* Search */}
           <div className="relative mb-3">
             <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-muted/60">
               search
             </span>
             <input
-              className="w-full rounded-xl border border-line bg-white py-3 pl-10 pr-4 text-sm text-ink placeholder:text-muted/50 outline-none transition focus:border-primary/40 focus:shadow-sm"
-              placeholder="Buscar por nombre o categoría..."
+              className="w-full rounded-xl border border-line bg-white py-2.5 pl-10 pr-4 text-[13px] text-ink placeholder:text-muted/50 outline-none transition focus:border-primary/40 focus:shadow-sm"
+              placeholder="Buscar producto o categoría..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
