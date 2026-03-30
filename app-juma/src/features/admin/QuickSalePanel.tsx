@@ -22,7 +22,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   const MOBILE_PRODUCTS_PER_PAGE = 12;
   const DESKTOP_PRODUCTS_PER_PAGE = 24;
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [selectedMainCategoryId, setSelectedMainCategoryId] = useState<number | null>(null);
+  const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<number | null>(null);
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [cart, setCart] = useState<QuickSaleItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
@@ -41,23 +42,33 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   };
 
   const enabledProducts = useMemo(() => products.filter(p => p.enabled && p.stock > 0), [products]);
-  const categoryChips = useMemo(
-    () =>
-      categories
-        .map((category) => {
-          const parent = category.parentId ? categories.find((row) => row.id === category.parentId) ?? null : null;
-          return {
-            id: category.id,
-            label: parent ? `${parent.name} / ${category.name}` : category.name,
-          };
-        })
-        .sort((a, b) => a.label.localeCompare(b.label)),
-    [categories],
+  
+  const mainCategories = useMemo(
+    () => categories.filter((c) => !c.parentId && c.name.trim() !== "").sort((a, b) => a.name.localeCompare(b.name)),
+    [categories]
+  );
+
+  const subCategories = useMemo(
+    () => {
+      if (!selectedMainCategoryId) return [];
+      return categories.filter((c) => c.parentId === selectedMainCategoryId && c.name.trim() !== "").sort((a, b) => a.name.localeCompare(b.name));
+    },
+    [categories, selectedMainCategoryId]
   );
 
   const filteredProducts = useMemo(() => {
     let list = enabledProducts;
-    if (selectedCategoryId) list = list.filter(p => p.categoryId === selectedCategoryId);
+    
+    if (selectedSubCategoryId) {
+      list = list.filter(p => p.categoryId === selectedSubCategoryId);
+    } else if (selectedMainCategoryId) {
+      list = list.filter(p => {
+        if (p.categoryId === selectedMainCategoryId) return true;
+        const cat = categories.find(c => c.id === p.categoryId);
+        return cat?.parentId === selectedMainCategoryId;
+      });
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(
@@ -68,7 +79,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
       );
     }
     return list;
-  }, [enabledProducts, selectedCategoryId, searchQuery]);
+  }, [enabledProducts, selectedMainCategoryId, selectedSubCategoryId, searchQuery, categories]);
 
   const mobileTotalPages = Math.max(1, Math.ceil(filteredProducts.length / MOBILE_PRODUCTS_PER_PAGE));
   const desktopTotalPages = Math.max(1, Math.ceil(filteredProducts.length / DESKTOP_PRODUCTS_PER_PAGE));
@@ -257,36 +268,83 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           </div>
 
           {/* Category chips */}
-          <div className="mb-4 flex gap-2 overflow-x-auto pb-1 pr-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <button
-              type="button"
-              onClick={() => setSelectedCategoryId(null)}
-              className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
-                !selectedCategoryId
-                  ? "bg-primary text-white shadow-sm"
-                  : "bg-white border border-line text-ink/60 hover:border-primary/40"
-              }`}
-            >
-              Todos
-            </button>
-            {categoryChips.map((category) => (
+          <div className="mb-4 flex flex-col gap-2">
+            <div className="flex gap-2 overflow-x-auto pb-1 pr-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <button
-                key={category.id}
                 type="button"
                 onClick={() => {
-                  setSelectedCategoryId(selectedCategoryId === category.id ? null : category.id);
+                  setSelectedMainCategoryId(null);
+                  setSelectedSubCategoryId(null);
                   setMobilePage(1);
                   setDesktopPage(1);
                 }}
                 className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
-                  selectedCategoryId === category.id
+                  !selectedMainCategoryId
                     ? "bg-primary text-white shadow-sm"
                     : "bg-white border border-line text-ink/60 hover:border-primary/40"
                 }`}
               >
-                {category.label}
+                Todos
               </button>
-            ))}
+              {mainCategories.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  onClick={() => {
+                    const isSelected = selectedMainCategoryId === category.id;
+                    setSelectedMainCategoryId(isSelected ? null : category.id);
+                    setSelectedSubCategoryId(null);
+                    setMobilePage(1);
+                    setDesktopPage(1);
+                  }}
+                  className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
+                    selectedMainCategoryId === category.id
+                      ? "bg-primary text-white shadow-sm"
+                      : "bg-white border border-line text-ink/60 hover:border-primary/40"
+                  }`}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+
+            {selectedMainCategoryId && subCategories.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-1 pr-2 pl-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSubCategoryId(null);
+                    setMobilePage(1);
+                    setDesktopPage(1);
+                  }}
+                  className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors ${
+                    !selectedSubCategoryId
+                      ? "bg-secondary text-primary"
+                      : "bg-background border border-line text-muted hover:border-primary/30"
+                  }`}
+                >
+                  Todo en {mainCategories.find(c => c.id === selectedMainCategoryId)?.name || 'Categoría'}
+                </button>
+                {subCategories.map((category) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSubCategoryId(selectedSubCategoryId === category.id ? null : category.id);
+                      setMobilePage(1);
+                      setDesktopPage(1);
+                    }}
+                    className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors ${
+                      selectedSubCategoryId === category.id
+                        ? "bg-secondary text-primary"
+                        : "bg-white border border-line/60 text-muted hover:border-primary/30"
+                    }`}
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product grid */}
@@ -321,8 +379,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                       )}
 
                       {/* Top Left Price Pill */}
-                      <div className="absolute top-0 left-0 bg-ink rounded-br-lg px-2 py-1 shadow-sm">
-                        <span className="text-[11px] font-bold text-white tracking-wide">
+                      <div className="absolute top-0 left-0 bg-secondary/95 backdrop-blur-sm rounded-br-lg px-2 py-1 shadow-sm border-b border-r border-line/50">
+                        <span className="text-[11px] font-black text-primary tracking-wide">
                           ${product.salePrice.toLocaleString("es-AR")}
                         </span>
                       </div>
@@ -343,8 +401,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                     </div>
 
                     {/* Bottom Title Bar */}
-                    <div className={`w-full p-2.5 transition-colors ${inCart > 0 ? "bg-primary text-white" : "bg-ink text-white"}`}>
-                      <h4 className="truncate text-xs font-bold text-center uppercase tracking-wider">{getProductDisplayName(product)}</h4>
+                    <div className={`w-full p-2.5 transition-colors border-t border-line/50 ${inCart > 0 ? "bg-primary text-white" : "bg-white text-ink hover:text-primary"}`}>
+                      <h4 className="truncate text-[11px] font-bold text-center uppercase tracking-wider">{getProductDisplayName(product)}</h4>
                     </div>
                   </button>
                 );
@@ -569,28 +627,67 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         </div>
 
         {/* Category chips */}
-        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <button
-            onClick={() => setSelectedCategoryId(null)}
-            type="button"
-            className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${!selectedCategoryId ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-line text-ink/60 hover:border-primary"}`}
-          >
-            Todos
-          </button>
-          {categoryChips.map(cat => (
+        <div className="flex flex-col gap-3">
+          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
-              key={cat.id}
-              type="button"
               onClick={() => {
-                setSelectedCategoryId(selectedCategoryId === cat.id ? null : cat.id);
+                setSelectedMainCategoryId(null);
+                setSelectedSubCategoryId(null);
                 setMobilePage(1);
                 setDesktopPage(1);
               }}
-              className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${selectedCategoryId === cat.id ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-line text-ink/60 hover:border-primary"}`}
+              type="button"
+              className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${!selectedMainCategoryId ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-line text-ink/60 hover:border-primary"}`}
             >
-              {cat.label}
+              Todos
             </button>
-          ))}
+            {mainCategories.map(cat => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => {
+                  const isSelected = selectedMainCategoryId === cat.id;
+                  setSelectedMainCategoryId(isSelected ? null : cat.id);
+                  setSelectedSubCategoryId(null);
+                  setMobilePage(1);
+                  setDesktopPage(1);
+                }}
+                className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${selectedMainCategoryId === cat.id ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-line text-ink/60 hover:border-primary"}`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+          
+          {selectedMainCategoryId && subCategories.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-2 pl-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedSubCategoryId(null);
+                  setMobilePage(1);
+                  setDesktopPage(1);
+                }}
+                className={`px-4 py-1.5 rounded-full text-[12px] font-bold whitespace-nowrap transition-all ${!selectedSubCategoryId ? "bg-secondary text-primary" : "bg-white/50 border border-line/60 text-muted hover:border-primary/50"}`}
+              >
+                Todo en {mainCategories.find(c => c.id === selectedMainCategoryId)?.name}
+              </button>
+              {subCategories.map(cat => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedSubCategoryId(selectedSubCategoryId === cat.id ? null : cat.id);
+                    setMobilePage(1);
+                    setDesktopPage(1);
+                  }}
+                  className={`px-4 py-1.5 rounded-full text-[12px] font-bold whitespace-nowrap transition-all ${selectedSubCategoryId === cat.id ? "bg-secondary text-primary" : "bg-white/50 border border-line/60 text-muted hover:border-primary/50"}`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Product grid */}

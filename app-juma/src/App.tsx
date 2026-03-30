@@ -1676,44 +1676,46 @@ function App() {
             )}
           </div>
 
-          <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-line/80 bg-background/98 px-2 pb-6 pt-2 text-primary shadow-[0_-10px_30px_rgba(45,45,45,0.08)] backdrop-blur-sm md:hidden">
-            {[
-              { id: "dashboard", label: "Inicio", icon: "dashboard" },
-              { id: "venta_rapida", label: "Ventas", icon: "payments" },
-              { id: "inventario", label: "Stock", icon: "inventory_2" },
-              { id: "pedidos", label: "Pedidos", icon: "shopping_bag" },
-            ].map((item) => {
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setActiveTab(item.id as Tab)}
-                  className={`flex flex-col items-center justify-center px-3 py-1 transition-opacity ${
-                    isActive
-                      ? "scale-90 rounded-xl bg-primary/14 text-primary"
-                      : "text-muted hover:text-primary"
-                  }`}
-                >
-                  <span
-                    className="material-symbols-outlined"
-                    style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+          {activeTab !== "venta_rapida" && (
+            <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-line/80 bg-background/98 px-2 pb-6 pt-2 text-primary shadow-[0_-10px_30px_rgba(45,45,45,0.08)] backdrop-blur-sm md:hidden">
+              {[
+                { id: "dashboard", label: "Inicio", icon: "dashboard" },
+                { id: "venta_rapida", label: "Ventas", icon: "payments" },
+                { id: "inventario", label: "Stock", icon: "inventory_2" },
+                { id: "pedidos", label: "Pedidos", icon: "shopping_bag" },
+              ].map((item) => {
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setActiveTab(item.id as Tab)}
+                    className={`flex flex-col items-center justify-center px-3 py-1 transition-opacity ${
+                      isActive
+                        ? "scale-90 rounded-xl bg-primary/14 text-primary"
+                        : "text-muted hover:text-primary"
+                    }`}
                   >
-                    {item.icon}
-                  </span>
-                  <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.1em]">{item.label}</span>
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              onClick={() => setIsAdminSidebarOpen(true)}
-              className="flex flex-col items-center justify-center px-3 py-1 text-muted transition-opacity hover:text-primary"
-            >
-              <span className="material-symbols-outlined">more_horiz</span>
-              <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.1em]">Más</span>
-            </button>
-          </nav>
+                    <span
+                      className="material-symbols-outlined"
+                      style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+                    >
+                      {item.icon}
+                    </span>
+                    <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.1em]">{item.label}</span>
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => setIsAdminSidebarOpen(true)}
+                className="flex flex-col items-center justify-center px-3 py-1 text-muted transition-opacity hover:text-primary"
+              >
+                <span className="material-symbols-outlined">more_horiz</span>
+                <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.1em]">Más</span>
+              </button>
+            </nav>
+          )}
         </main>
       </div>
     );
