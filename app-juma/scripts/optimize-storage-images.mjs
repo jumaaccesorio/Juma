@@ -16,7 +16,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const PRESETS = {
   product: { width: 960, quality: 84, folder: "optimized/products" },
   panel: { width: 1280, quality: 85, folder: "optimized/home-panels" },
-  hero: { width: 1600, quality: 86, folder: "optimized/hero" },
+  hero: { width: 1400, quality: 82, folder: "optimized/hero" },
 };
 
 function slugify(input, fallback) {
@@ -159,14 +159,25 @@ async function optimizeProducts() {
 }
 
 async function main() {
-  console.log("Optimizando hero...");
-  const hero = await optimizeHeroBanner();
+  const scope = process.argv[2] || "all";
+  let hero = { updated: 0 };
+  let panels = { updated: 0 };
+  let products = { updated: 0, skipped: 0 };
 
-  console.log("Optimizando paneles destacados...");
-  const panels = await optimizeFeaturedPanels();
+  if (scope === "all" || scope === "hero") {
+    console.log("Optimizando hero...");
+    hero = await optimizeHeroBanner();
+  }
 
-  console.log("Optimizando productos...");
-  const products = await optimizeProducts();
+  if (scope === "all" || scope === "panels") {
+    console.log("Optimizando paneles destacados...");
+    panels = await optimizeFeaturedPanels();
+  }
+
+  if (scope === "all" || scope === "products") {
+    console.log("Optimizando productos...");
+    products = await optimizeProducts();
+  }
 
   console.log("");
   console.log(`Hero actualizado: ${hero.updated}`);
