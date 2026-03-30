@@ -5,6 +5,9 @@ import { dataUrlToOptimizedFile, optimizeImageFile, type UploadImageVariant } fr
 const PRODUCT_IMAGES_BUCKET = "products";
 const PRODUCT_PUBLIC_PREFIX = `/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/`;
 const PRODUCT_SIGNED_PREFIX = `/storage/v1/object/sign/${PRODUCT_IMAGES_BUCKET}/`;
+const SIGNED_IMAGE_TTL_SECONDS = 60 * 60 * 24 * 7;
+const SIGNED_IMAGE_CACHE_TTL_MS = 1000 * 60 * 60 * 6;
+const resolvedStorageImageCache = new Map<string, { url: string; expiresAt: number }>();
 
 function toErrorMessage(error: unknown, fallback = "Ocurrio un error inesperado.") {
   if (error && typeof error === "object" && "message" in error && typeof (error as { message?: unknown }).message === "string") {
@@ -188,7 +191,7 @@ export const api = {
   async getProducts(): Promise<Product[]> {
     const query = await supabase
       .from("products")
-      .select("id, name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, source_url, created_at, categories(name)")
+      .select("id, name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, source_url, created_at, categories(name)")
       .order("created_at", { ascending: false });
     if (query.error) throw query.error;
     return (query.data ?? []).map((row: any) => mapProduct({ ...row, category_name: row.categories?.name ?? null }));
@@ -206,27 +209,40 @@ export const api = {
 
     const signable = rows
       .map((row) => ({ id: row.id, path: extractProductStoragePath(row.image) }))
-      .filter((row): row is { id: number; path: string } => Boolean(row.path));
+      .filter((row): row is { id: number; path: string } => Boolean(row.path))
+      .filter((row) => !getCachedResolvedStorageImage(row.path));
 
-    if (signable.length === 0) return rows;
+    if (signable.length === 0) {
+      return rows.map((row) => {
+        const path = extractProductStoragePath(row.image);
+        if (!path) return row;
+        return {
+          id: row.id,
+          image: getCachedResolvedStorageImage(path) ?? row.image,
+        };
+      });
+    }
 
     const signed = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).createSignedUrls(
       signable.map((row) => row.path),
-      60 * 60 * 24 * 7,
+      SIGNED_IMAGE_TTL_SECONDS,
     );
 
     if (signed.error) throw signed.error;
 
-    const signedMap = new Map<number, string>();
     signable.forEach((row, index) => {
       const signedUrl = signed.data?.[index]?.signedUrl;
-      if (signedUrl) signedMap.set(row.id, signedUrl);
+      if (signedUrl) cacheResolvedStorageImage(row.path, signedUrl);
     });
 
-    return rows.map((row) => ({
-      id: row.id,
-      image: signedMap.get(row.id) ?? row.image,
-    }));
+    return rows.map((row) => {
+      const path = extractProductStoragePath(row.image);
+      if (!path) return row;
+      return {
+        id: row.id,
+        image: getCachedResolvedStorageImage(path) ?? row.image,
+      };
+    });
   },
 
   async addProduct(product: Partial<Product>): Promise<Product> {
@@ -456,22 +472,13 @@ export const api = {
 
     if (signable.length === 0) return panels;
 
-    const signed = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).createSignedUrls(
-      signable.map((panel) => panel.path),
-      60 * 60 * 24 * 7,
-    );
-
-    if (signed.error) throw signed.error;
-
-    const signedMap = new Map<string, string>();
-    signable.forEach((panel, index) => {
-      const signedUrl = signed.data?.[index]?.signedUrl;
-      if (signedUrl) signedMap.set(panel.id, signedUrl);
-    });
+    const resolvedImages = await resolveStorageImages(signable.map((panel) => panel.path));
 
     return panels.map((panel) => ({
       ...panel,
-      image: signedMap.get(panel.id) ?? panel.image,
+      image: extractProductStoragePath(panel.image)
+        ? resolvedImages.get(extractProductStoragePath(panel.image) as string) ?? panel.image
+        : panel.image,
     }));
   },
 
@@ -586,6 +593,7 @@ function mapCategory(row: any): Category {
 function mapProduct(row: any): Product {
   const rawName = typeof row.name === "string" ? row.name.trim() : "";
   const rawSubName = typeof row.sub_name === "string" ? row.sub_name.trim() : "";
+  const normalizedImage = normalizeRenderableProductImage(row.image);
   return {
     id: row.id,
     name: rawName || rawSubName,
@@ -598,7 +606,7 @@ function mapProduct(row: any): Product {
     stock: Number(row.stock ?? 0),
     initialStock: Number(row.initial_stock ?? 0),
     enabled: Boolean(row.enabled),
-    image: row.image ?? "",
+    image: normalizedImage,
     sourceUrl: row.source_url ?? "",
     createdAt: row.created_at ?? "",
   };
@@ -612,7 +620,7 @@ function extractProductStoragePath(image: string): string | null {
     try {
       const url = new URL(image);
       if (url.pathname.includes(PRODUCT_PUBLIC_PREFIX)) {
-        return decodeURIComponent(url.pathname.split(PRODUCT_PUBLIC_PREFIX)[1] ?? "").trim() || null;
+        return null;
       }
       if (url.pathname.includes(PRODUCT_SIGNED_PREFIX)) {
         return decodeURIComponent(url.pathname.split(PRODUCT_SIGNED_PREFIX)[1] ?? "").trim() || null;
@@ -626,13 +634,72 @@ function extractProductStoragePath(image: string): string | null {
   return image.trim() || null;
 }
 
+function normalizeRenderableProductImage(image: unknown): string {
+  if (typeof image !== "string") return "";
+  const value = image.trim();
+  if (!value) return "";
+  if (value.startsWith("data:image/")) return value;
+  if (/^https?:\/\//i.test(value)) return value;
+  return "";
+}
+
+function getCachedResolvedStorageImage(path: string): string | null {
+  const cached = resolvedStorageImageCache.get(path);
+  if (!cached) return null;
+  if (cached.expiresAt <= Date.now()) {
+    resolvedStorageImageCache.delete(path);
+    return null;
+  }
+  return cached.url;
+}
+
+function cacheResolvedStorageImage(path: string, url: string) {
+  resolvedStorageImageCache.set(path, {
+    url,
+    expiresAt: Date.now() + SIGNED_IMAGE_CACHE_TTL_MS,
+  });
+}
+
+async function resolveStorageImages(paths: string[]): Promise<Map<string, string>> {
+  const resolved = new Map<string, string>();
+  const uniquePaths = Array.from(new Set(paths.filter(Boolean)));
+
+  const pendingPaths = uniquePaths.filter((path) => {
+    const cached = getCachedResolvedStorageImage(path);
+    if (cached) {
+      resolved.set(path, cached);
+      return false;
+    }
+    return true;
+  });
+
+  if (pendingPaths.length === 0) return resolved;
+
+  const signed = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).createSignedUrls(
+    pendingPaths,
+    SIGNED_IMAGE_TTL_SECONDS,
+  );
+
+  if (signed.error) throw signed.error;
+
+  pendingPaths.forEach((path, index) => {
+    const signedUrl = signed.data?.[index]?.signedUrl;
+    if (!signedUrl) return;
+    cacheResolvedStorageImage(path, signedUrl);
+    resolved.set(path, signedUrl);
+  });
+
+  return resolved;
+}
+
 async function resolveSignedStorageImage(image: string): Promise<string | null> {
   const path = extractProductStoragePath(image);
   if (!path) return null;
+  const cached = getCachedResolvedStorageImage(path);
+  if (cached) return cached;
 
-  const signed = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).createSignedUrl(path, 60 * 60 * 24 * 7);
-  if (signed.error) throw signed.error;
-  return signed.data.signedUrl ?? null;
+  const resolved = await resolveStorageImages([path]);
+  return resolved.get(path) ?? null;
 }
 
 function mapOrder(row: any): Order {
