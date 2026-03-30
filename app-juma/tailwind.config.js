@@ -9,6 +9,7 @@ module.exports = {
     extend: {
         colors: {
             "primary": "#C5A37F",
+            "accent": "#D4A574",
             "background": "#FCFAFA",
             "secondary": "#F3EDE2",
             "tertiary": "#97ABC1",
@@ -19,6 +20,8 @@ module.exports = {
             "success": "#A8B69F",
             "warning": "#D9B99B",
             "line": "#E9E1D8",
+            "sidebar": "#1A1A1A",
+            "sidebar-hover": "#2A2A2A",
         },
         fontFamily: {
             "sans": ["Inter", "sans-serif"],
