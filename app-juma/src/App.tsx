@@ -238,7 +238,16 @@ function App() {
     status: "PENDIENTE" as "PENDIENTE" | "REALIZADO",
     items: [] as NewOrderItem[],
   });
-  const [hasLoadedAdminData, setHasLoadedAdminData] = useState(false);
+  const [loadedAdminSlices, setLoadedAdminSlices] = useState({
+    clients: false,
+    orders: false,
+    finance: false,
+  });
+  const [loadingAdminSlices, setLoadingAdminSlices] = useState({
+    clients: false,
+    orders: false,
+    finance: false,
+  });
 
   const normalizeProducts = (rows: Product[]) =>
     rows.map((row) => ({ ...row, enabled: row.enabled ?? true, image: row.image ?? "" }));
@@ -252,6 +261,7 @@ function App() {
     try {
       const nextClients = await api.getClients();
       setClients(nextClients);
+      setLoadedAdminSlices((prev) => ({ ...prev, clients: true }));
     } catch (error) {
       console.warn("No se pudieron refrescar los clientes.", error);
     }
@@ -367,48 +377,71 @@ function App() {
   }, [cartItems, requestProductImages]);
 
   useEffect(() => {
-    if (!isAdminLogged || hasLoadedAdminData) return;
+    if (!isAdminLogged) return;
+
+    const needsClients = ["dashboard", "venta_rapida", "clientes", "pedidos"].includes(activeTab);
+    const needsOrders = ["dashboard", "pedidos", "clientes", "finanzas"].includes(activeTab);
+    const needsFinance = activeTab === "finanzas";
 
     let cancelled = false;
 
-    async function loadAdminData() {
-      const results = await Promise.allSettled([
-        api.getClients(),
-        api.getOrders(),
-        api.getFinanceExpenses(),
-      ]);
-
-      if (cancelled) return;
-
-      const [clientsResult, ordersResult, expensesResult] = results;
-
-      if (clientsResult.status === "fulfilled") {
-        setClients(clientsResult.value);
-      } else {
-        console.warn("No se pudieron cargar los clientes.", clientsResult.reason);
+    const loadClients = async () => {
+      if (!needsClients || loadedAdminSlices.clients || loadingAdminSlices.clients) return;
+      setLoadingAdminSlices((prev) => ({ ...prev, clients: true }));
+      try {
+        const nextClients = await api.getClients();
+        if (cancelled) return;
+        setClients(nextClients);
+        setLoadedAdminSlices((prev) => ({ ...prev, clients: true }));
+      } catch (error) {
+        if (!cancelled) console.warn("No se pudieron cargar los clientes.", error);
+      } finally {
+        if (!cancelled) {
+          setLoadingAdminSlices((prev) => ({ ...prev, clients: false }));
+        }
       }
+    };
 
-      if (ordersResult.status === "fulfilled") {
-        setOrders(ordersResult.value);
-      } else {
-        console.warn("No se pudieron cargar los pedidos.", ordersResult.reason);
+    const loadOrders = async () => {
+      if (!needsOrders || loadedAdminSlices.orders || loadingAdminSlices.orders) return;
+      setLoadingAdminSlices((prev) => ({ ...prev, orders: true }));
+      try {
+        const nextOrders = await api.getOrders();
+        if (cancelled) return;
+        setOrders(nextOrders);
+        setLoadedAdminSlices((prev) => ({ ...prev, orders: true }));
+      } catch (error) {
+        if (!cancelled) console.warn("No se pudieron cargar los pedidos.", error);
+      } finally {
+        if (!cancelled) {
+          setLoadingAdminSlices((prev) => ({ ...prev, orders: false }));
+        }
       }
+    };
 
-      if (expensesResult.status === "fulfilled") {
-        setFinanceExpenses(expensesResult.value);
-      } else {
-        console.warn("No se pudieron cargar las finanzas.", expensesResult.reason);
+    const loadFinance = async () => {
+      if (!needsFinance || loadedAdminSlices.finance || loadingAdminSlices.finance) return;
+      setLoadingAdminSlices((prev) => ({ ...prev, finance: true }));
+      try {
+        const nextExpenses = await api.getFinanceExpenses();
+        if (cancelled) return;
+        setFinanceExpenses(nextExpenses);
+        setLoadedAdminSlices((prev) => ({ ...prev, finance: true }));
+      } catch (error) {
+        if (!cancelled) console.warn("No se pudieron cargar las finanzas.", error);
+      } finally {
+        if (!cancelled) {
+          setLoadingAdminSlices((prev) => ({ ...prev, finance: false }));
+        }
       }
+    };
 
-      setHasLoadedAdminData(true);
-    }
-
-    loadAdminData();
+    void Promise.all([loadClients(), loadOrders(), loadFinance()]);
 
     return () => {
       cancelled = true;
     };
-  }, [isAdminLogged, hasLoadedAdminData]);
+  }, [activeTab, isAdminLogged, loadedAdminSlices, loadingAdminSlices]);
 
   useEffect(() => {
     if (!isAdminLogged || activeTab !== "clientes") return;
@@ -1001,23 +1034,54 @@ function App() {
     }
   };
 
-  const clientStats = useMemo(() => clients.map((client) => {
-    const clientOrders = orders.filter((order) => order.clientId === client.id);
-    const totalSpent = clientOrders.filter((order) => order.status === "REALIZADO").reduce((acc, order) => acc + order.items.reduce((sum, item) => sum + item.quantity * item.unitSalePrice, 0), 0);
-    const lastOrderDate = clientOrders.length ? [...clientOrders].sort((a, b) => (a.date < b.date ? 1 : -1))[0].date : "-";
-    return { client, orders: clientOrders, totalSpent, lastOrderDate };
-  }), [clients, orders]);
+  const clientStats = useMemo(() => {
+    if (activeTab !== "clientes") return [];
+    return clients.map((client) => {
+      const clientOrders = orders.filter((order) => order.clientId === client.id);
+      const totalSpent = clientOrders
+        .filter((order) => order.status === "REALIZADO")
+        .reduce((acc, order) => acc + order.items.reduce((sum, item) => sum + item.quantity * item.unitSalePrice, 0), 0);
+      const lastOrderDate = clientOrders.length ? [...clientOrders].sort((a, b) => (a.date < b.date ? 1 : -1))[0].date : "-";
+      return { client, orders: clientOrders, totalSpent, lastOrderDate };
+    });
+  }, [activeTab, clients, orders]);
 
   const pendingOrders = useMemo(() => orders.filter((order) => order.status === "PENDIENTE"), [orders]);
   const completedOrders = useMemo(() => orders.filter((order) => order.status === "REALIZADO"), [orders]);
 
   const finance = useMemo(() => {
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const currentMonthLabel = now.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+
+    if (activeTab !== "finanzas") {
+      return {
+        months: [{ key: currentMonthKey, label: currentMonthLabel }],
+        selectedMonthKey: currentMonthKey,
+        monthlySummaries: [{
+          key: currentMonthKey,
+          label: currentMonthLabel,
+          incomeMonth: 0,
+          expenseMonth: 0,
+          salesCountMonth: 0,
+          balanceMonth: 0,
+          averageTicket: 0,
+          bestDayLabel: "1/1",
+          bestDayIncome: 0,
+          dailyBreakdown: [],
+          chartMax: 1,
+          manualExpenseMonth: 0,
+        }],
+        totalInvestment: 0,
+        totalAccessoriesPrice: 0,
+        dailyHistory: [],
+      };
+    }
+
     const totalInvestment = products.reduce((acc, product) => acc + product.purchasePrice * product.stock, 0);
     const totalAccessoriesPrice = products.reduce((acc, product) => acc + product.salePrice * product.stock, 0);
 
     const monthKeySet = new Set<string>();
-    const now = new Date();
-    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     monthKeySet.add(currentMonthKey);
 
     for (const order of completedOrders) {
@@ -1163,7 +1227,7 @@ function App() {
       totalAccessoriesPrice,
       dailyHistory,
     };
-  }, [products, completedOrders, financeExpenses, clientMap]);
+  }, [activeTab, products, completedOrders, financeExpenses, clientMap]);
 
   const addFinanceExpense = async (payload: { type: "INGRESO" | "EGRESO"; description: string; detail: string; category: string; amount: number; date: string }) => {
     try {
@@ -1450,6 +1514,7 @@ function App() {
   const logoutAdmin = () => {
     setIsAdminLogged(false);
     setIsAdminSidebarOpen(false);
+    setLoadingAdminSlices({ clients: false, orders: false, finance: false });
     setActiveTab("catalogo");
   };
 

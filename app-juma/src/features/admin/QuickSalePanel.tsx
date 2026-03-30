@@ -22,6 +22,9 @@ type QuickSalePanelProps = {
 function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdateStock, onRequestProductImages }: QuickSalePanelProps) {
   const MOBILE_PRODUCTS_PER_PAGE = 12;
   const DESKTOP_PRODUCTS_PER_PAGE = 24;
+  const [isDesktopLayout, setIsDesktopLayout] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches,
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMainCategoryId, setSelectedMainCategoryId] = useState<number | null>(null);
   const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<number | null>(null);
@@ -42,7 +45,23 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
     window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
   };
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+    const syncLayout = () => setIsDesktopLayout(mediaQuery.matches);
+    syncLayout();
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", syncLayout);
+      return () => mediaQuery.removeEventListener("change", syncLayout);
+    }
+
+    mediaQuery.addListener(syncLayout);
+    return () => mediaQuery.removeListener(syncLayout);
+  }, []);
+
   const enabledProducts = useMemo(() => products.filter(p => p.enabled && p.stock > 0), [products]);
+  const categoryById = useMemo(() => new Map(categories.map((category) => [category.id, category])), [categories]);
   
   const mainCategories = useMemo(
     () => categories.filter((c) => !c.parentId && c.name.trim() !== "").sort((a, b) => a.name.localeCompare(b.name)),
@@ -65,7 +84,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
     } else if (selectedMainCategoryId) {
       list = list.filter(p => {
         if (p.categoryId === selectedMainCategoryId) return true;
-        const cat = categories.find(c => c.id === p.categoryId);
+        const cat = p.categoryId ? categoryById.get(p.categoryId) : null;
         return cat?.parentId === selectedMainCategoryId;
       });
     }
@@ -80,7 +99,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
       );
     }
     return list;
-  }, [enabledProducts, selectedMainCategoryId, selectedSubCategoryId, searchQuery, categories]);
+  }, [categoryById, enabledProducts, selectedMainCategoryId, selectedSubCategoryId, searchQuery]);
 
   const mobileTotalPages = Math.max(1, Math.ceil(filteredProducts.length / MOBILE_PRODUCTS_PER_PAGE));
   const desktopTotalPages = Math.max(1, Math.ceil(filteredProducts.length / DESKTOP_PRODUCTS_PER_PAGE));
@@ -93,15 +112,18 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
     [filteredProducts, desktopPage],
   );
 
+  const visibleProductsPage = isDesktopLayout ? desktopProductsPage : mobileProductsPage;
+
   useEffect(() => {
-    const idsToRequest = Array.from(new Set([
-      ...mobileProductsPage.filter(p => !p.image).map(p => p.id),
-      ...desktopProductsPage.filter(p => !p.image).map(p => p.id)
-    ]));
+    const idsToRequest = Array.from(new Set(
+      visibleProductsPage
+        .filter((product) => !product.image)
+        .map((product) => product.id),
+    ));
     if (idsToRequest.length > 0) {
       onRequestProductImages(idsToRequest);
     }
-  }, [mobileProductsPage, desktopProductsPage, onRequestProductImages]);
+  }, [onRequestProductImages, visibleProductsPage]);
 
   const renderPager = (page: number, totalPages: number, onPageChange: (page: number) => void) => {
     if (totalPages <= 1) return null;
@@ -136,12 +158,14 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   }, [desktopPage, desktopTotalPages, mobilePage, mobileTotalPages]);
 
   useEffect(() => {
+    if (isDesktopLayout) return;
     scrollToSectionStart(mobileCatalogRef.current);
-  }, [mobilePage]);
+  }, [isDesktopLayout, mobilePage]);
 
   useEffect(() => {
+    if (!isDesktopLayout) return;
     scrollToSectionStart(desktopCatalogRef.current);
-  }, [desktopPage]);
+  }, [desktopPage, isDesktopLayout]);
 
   useEffect(() => {
     setMobilePage(1);
