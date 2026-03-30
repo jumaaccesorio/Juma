@@ -10,7 +10,7 @@ type ProductDetailPanelProps = {
 
 function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanelProps) {
   const [quantity, setQuantity] = useState(1);
-  const detailImage = product.imageFull || product.imageCard || product.image;
+  const detailImage = product.image || product.imageFull || product.imageCard;
 
   const description = useMemo(() => {
     if (product.subName?.trim()) return product.subName.trim();
@@ -31,12 +31,12 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="overflow-hidden rounded bg-white p-4 shadow-subtle">
-          <div className="aspect-square overflow-hidden rounded bg-secondary/60">
+          <div className="aspect-square overflow-hidden rounded bg-gradient-to-br from-secondary/85 via-white to-secondary/65">
             {detailImage ? (
               <img
                 src={detailImage}
                 alt={getProductDisplayName(product)}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain"
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
