@@ -710,7 +710,7 @@ function mapProduct(row: any): Product {
   const normalizedCard = normalizeRenderableProductImage(row.image_card, false);
   const normalizedFull = normalizeRenderableProductImage(row.image_full, false);
   const normalizedLegacy = normalizeRenderableProductImage(row.image, false);
-  const normalizedImage = normalizedThumb || normalizedCard || normalizedFull || normalizedLegacy;
+  const normalizedImage = normalizedLegacy || normalizedFull || normalizedCard || normalizedThumb;
   return {
     id: row.id,
     name: rawName || rawSubName,
@@ -760,7 +760,7 @@ function extractProductStoragePath(image: string): string | null {
 }
 
 function pickRawProductImage(row: any): string {
-  const candidate = row.image_thumb ?? row.image_card ?? row.image_full ?? row.image;
+  const candidate = row.image ?? row.image_full ?? row.image_card ?? row.image_thumb;
   return typeof candidate === "string" ? candidate.trim() : "";
 }
 
