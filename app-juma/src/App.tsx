@@ -31,6 +31,10 @@ import { getProductDisplayName } from "./lib/productLabel";
 import { optimizeFileForPreview } from "./lib/imageUpload";
 
 const CLIENT_SESSION_KEY = "juma_client";
+const ADMIN_LOGIN_ATTEMPTS_KEY = "juma_admin_login_attempts_v1";
+const ADMIN_LOGIN_LOCK_UNTIL_KEY = "juma_admin_login_lock_until_v1";
+const ADMIN_MAX_LOGIN_ATTEMPTS = 5;
+const ADMIN_LOGIN_LOCK_MS = 15 * 60 * 1000;
 
 const DEFAULT_FEATURED_PANELS: FeaturedPanel[] = [
   {
@@ -197,6 +201,8 @@ function App() {
   const [isAdminLogged, setIsAdminLogged] = useState(false);
   const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState(false);
   const [adminForm, setAdminForm] = useState({ user: "", password: "" });
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminLockedUntil, setAdminLockedUntil] = useState<number | null>(null);
   const [currentClient, setCurrentClient] = useState<Client | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<"login" | "checkout">("login");
@@ -570,7 +576,26 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const raw = localStorage.getItem(ADMIN_LOGIN_LOCK_UNTIL_KEY);
+    const lockUntil = raw ? Number(raw) : NaN;
+    if (Number.isFinite(lockUntil) && lockUntil > Date.now()) {
+      setAdminLockedUntil(lockUntil);
+      return;
+    }
+
+    localStorage.removeItem(ADMIN_LOGIN_LOCK_UNTIL_KEY);
+    localStorage.removeItem(ADMIN_LOGIN_ATTEMPTS_KEY);
+    setAdminLockedUntil(null);
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem(ADMIN_SESSION_KEY, isAdminLogged ? "1" : "0");
+  }, [isAdminLogged]);
+
+  useEffect(() => {
+    if (isAdminLogged) {
+      setShowAdminLogin(false);
+    }
   }, [isAdminLogged]);
 
   useEffect(() => {
@@ -1555,17 +1580,64 @@ function App() {
     }
   };
 
+  const clearAdminLoginProtection = () => {
+    localStorage.removeItem(ADMIN_LOGIN_ATTEMPTS_KEY);
+    localStorage.removeItem(ADMIN_LOGIN_LOCK_UNTIL_KEY);
+    setAdminLockedUntil(null);
+  };
+
+  const openAdminAccess = () => {
+    if (isAdminLogged) {
+      setActiveTab("dashboard");
+      return;
+    }
+
+    const rawLock = localStorage.getItem(ADMIN_LOGIN_LOCK_UNTIL_KEY);
+    const lockUntil = rawLock ? Number(rawLock) : NaN;
+    if (Number.isFinite(lockUntil) && lockUntil > Date.now()) {
+      setAdminLockedUntil(lockUntil);
+    } else if (adminLockedUntil) {
+      clearAdminLoginProtection();
+    }
+
+    setAdminError("");
+    setShowAdminLogin(true);
+  };
+
   const loginAdmin = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAdminError("");
-    if (adminForm.user.trim() !== ADMIN_USER || adminForm.password !== ADMIN_PASS) {
-      setAdminError("Credenciales admin invalidas.");
+    const activeLock = adminLockedUntil && adminLockedUntil > Date.now() ? adminLockedUntil : null;
+    if (adminLockedUntil && !activeLock) {
+      clearAdminLoginProtection();
+    }
+    if (activeLock) {
+      setAdminError("Acceso admin bloqueado temporalmente por demasiados intentos fallidos.");
       return;
     }
+
+    if (adminForm.user.trim() !== ADMIN_USER || adminForm.password !== ADMIN_PASS) {
+      const nextAttempts = Number(localStorage.getItem(ADMIN_LOGIN_ATTEMPTS_KEY) || "0") + 1;
+      if (nextAttempts >= ADMIN_MAX_LOGIN_ATTEMPTS) {
+        const lockUntil = Date.now() + ADMIN_LOGIN_LOCK_MS;
+        localStorage.setItem(ADMIN_LOGIN_LOCK_UNTIL_KEY, String(lockUntil));
+        localStorage.removeItem(ADMIN_LOGIN_ATTEMPTS_KEY);
+        setAdminLockedUntil(lockUntil);
+        setAdminError("Acceso admin bloqueado durante 15 minutos por demasiados intentos.");
+        return;
+      }
+
+      localStorage.setItem(ADMIN_LOGIN_ATTEMPTS_KEY, String(nextAttempts));
+      setAdminError(`Credenciales admin invalidas. Quedan ${ADMIN_MAX_LOGIN_ATTEMPTS - nextAttempts} intentos antes del bloqueo temporal.`);
+      return;
+    }
+
+    clearAdminLoginProtection();
     setLoadedAdminSlices({ clients: false, orders: false, finance: false });
     setLoadingAdminSlices({ clients: false, orders: false, finance: false });
     setIsAdminLogged(true);
     setAdminForm({ user: "", password: "" });
+    setShowAdminLogin(false);
     setActiveTab("dashboard");
   };
 
@@ -1860,14 +1932,16 @@ function App() {
 
   return (
     <div className="layout-container flex min-h-screen flex-col">
-      <StoreHeader
-        activeTab={activeTab}
-        isAdminLogged={isAdminLogged}
-        adminForm={adminForm}
-        adminError={adminError}
-        cartItemsCount={cartItemsCount}
-        cartTotal={cartTotal}
-        categories={categories}
+        <StoreHeader
+          activeTab={activeTab}
+          isAdminLogged={isAdminLogged}
+          adminForm={adminForm}
+          adminError={adminError}
+          adminLockedUntil={adminLockedUntil}
+          showAdminLogin={showAdminLogin}
+          cartItemsCount={cartItemsCount}
+          cartTotal={cartTotal}
+          categories={categories}
         selectedCatalogCategoryId={catalogCategoryFilter}
         catalogSearchQuery={catalogSearchQuery}
         catalogViewMode={catalogViewMode}
@@ -1876,14 +1950,15 @@ function App() {
         onOpenCatalogHome={openCatalogHome}
         onOpenFullCatalog={openFullCatalog}
         onSelectCatalogCategory={navigateToCategoryInCatalog}
-        onCatalogSearchChange={setCatalogSearchQuery}
-        onCatalogSearchSubmit={submitCatalogSearch}
-        onAdminFormChange={setAdminForm}
-        onLoginAdmin={loginAdmin}
-        onLogoutAdmin={logoutAdmin}
-        onLoginClientClick={() => { setAuthModalMode("login"); setShowAuthModal(true); }}
-        onLogoutClient={() => {
-          localStorage.removeItem(CLIENT_SESSION_KEY);
+          onCatalogSearchChange={setCatalogSearchQuery}
+          onCatalogSearchSubmit={submitCatalogSearch}
+          onAdminFormChange={setAdminForm}
+          onLoginAdmin={loginAdmin}
+          onOpenAdminLogin={openAdminAccess}
+          onCloseAdminLogin={() => setShowAdminLogin(false)}
+          onLoginClientClick={() => { setAuthModalMode("login"); setShowAuthModal(true); }}
+          onLogoutClient={() => {
+            localStorage.removeItem(CLIENT_SESSION_KEY);
           setCurrentClient(null);
           setFavorites([]);
           setActiveTab("catalogo");
@@ -2081,10 +2156,15 @@ function App() {
             <h3 className="text-white text-xl font-black uppercase mb-4">Juma Accessory</h3>
             <p className="text-sm leading-relaxed mb-6">Tu destino premium para accesorios de plata 925 y joyería de diseño. Elegancia y calidad en cada pieza.</p>
             <div className="flex gap-4">
-              <a href="https://www.instagram.com/juma.accessory/" target="_blank" rel="noreferrer" className="size-8 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all">
+              <button
+                type="button"
+                onClick={openAdminAccess}
+                className="size-8 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all"
+                title={isAdminLogged ? "Ir al panel admin" : "Acceso admin"}
+              >
                 <span className="material-symbols-outlined text-lg">public</span>
-              </a>
-              <a href="#" className="size-8 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all">
+              </button>
+              <a href="mailto:hola@jumaaccessory.com" className="size-8 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all">
                 <span className="material-symbols-outlined text-lg">alternate_email</span>
               </a>
             </div>

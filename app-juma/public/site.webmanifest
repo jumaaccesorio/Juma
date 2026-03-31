@@ -1,0 +1,15 @@
+{
+  "name": "Juma Accessory",
+  "short_name": "Juma",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6efe7",
+  "theme_color": "#c89d6d",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
