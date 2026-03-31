@@ -67,6 +67,7 @@ function ProductsPanel({
 }: ProductsPanelProps) {
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [visibilityFilter, setVisibilityFilter] = useState<"ALL" | "VISIBLE" | "HIDDEN">("ALL");
   const [stockFilter, setStockFilter] = useState<"ALL" | "OUT" | "LOW" | "AVAILABLE">("ALL");
   const [showForm, setShowForm] = useState(false);
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
@@ -91,14 +92,18 @@ function ProductsPanel({
           (value || "").toLowerCase().includes(normalized),
         );
       const matchesCategory = !categoryFilter || String(product.categoryId ?? "") === categoryFilter;
+      const matchesVisibility =
+        visibilityFilter === "ALL" ||
+        (visibilityFilter === "VISIBLE" && product.enabled) ||
+        (visibilityFilter === "HIDDEN" && !product.enabled);
       const matchesStock =
         stockFilter === "ALL" ||
         (stockFilter === "OUT" && product.stock <= 0) ||
         (stockFilter === "LOW" && product.stock > 0 && product.stock <= 2) ||
         (stockFilter === "AVAILABLE" && product.stock > 0);
-      return matchesQuery && matchesCategory && matchesStock;
+      return matchesQuery && matchesCategory && matchesVisibility && matchesStock;
     });
-  }, [products, query, categoryFilter, stockFilter]);
+  }, [products, query, categoryFilter, visibilityFilter, stockFilter]);
 
   const stats = useMemo(() => {
     const totalProducts = products.length;
@@ -374,7 +379,42 @@ function ProductsPanel({
 
       <div className="bg-background rounded-xl border border-line overflow-hidden shadow-sm">
         <div className="p-4 border-b border-line flex flex-col lg:flex-row items-center justify-between gap-4">
-          <div className="flex w-full lg:w-auto gap-3">
+          <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
+            <button
+              type="button"
+              onClick={() => setVisibilityFilter("ALL")}
+              className={`rounded-full border px-4 py-2 text-sm font-bold transition-colors ${
+                visibilityFilter === "ALL"
+                  ? "border-primary bg-primary text-white"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-primary hover:text-primary"
+              }`}
+            >
+              Todos
+            </button>
+            <button
+              type="button"
+              onClick={() => setVisibilityFilter("VISIBLE")}
+              className={`rounded-full border px-4 py-2 text-sm font-bold transition-colors ${
+                visibilityFilter === "VISIBLE"
+                  ? "border-primary bg-primary text-white"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-primary hover:text-primary"
+              }`}
+            >
+              Visibles ({stats.enabledCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setVisibilityFilter("HIDDEN")}
+              className={`rounded-full border px-4 py-2 text-sm font-bold transition-colors ${
+                visibilityFilter === "HIDDEN"
+                  ? "border-primary bg-primary text-white"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-primary hover:text-primary"
+              }`}
+            >
+              Ocultos ({stats.disabledCount})
+            </button>
+          </div>
+          <div className="flex w-full flex-col gap-3 lg:w-auto lg:flex-row">
             <div className="relative w-full sm:w-64">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
               <input
