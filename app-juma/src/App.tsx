@@ -456,6 +456,36 @@ function App() {
   }, [activeTab, isAdminLogged]);
 
   useEffect(() => {
+    if (!isAdminLogged) return;
+
+    const shouldRefreshOrders = ["dashboard", "pedidos", "clientes", "finanzas"].includes(activeTab);
+    if (!shouldRefreshOrders) return;
+
+    let cancelled = false;
+
+    const syncOrders = async () => {
+      try {
+        const nextOrders = await api.getOrders();
+        if (cancelled) return;
+        setOrders(nextOrders);
+        setLoadedAdminSlices((prev) => ({ ...prev, orders: true }));
+      } catch (error) {
+        if (!cancelled) console.warn("No se pudieron sincronizar los pedidos.", error);
+      }
+    };
+
+    void syncOrders();
+    const intervalId = window.setInterval(() => {
+      void syncOrders();
+    }, 30000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [activeTab, isAdminLogged]);
+
+  useEffect(() => {
     if (!cartSuccessToast) return;
     const timeoutId = window.setTimeout(() => setCartSuccessToast(null), 3200);
     return () => window.clearTimeout(timeoutId);
@@ -964,7 +994,11 @@ function App() {
   const deleteOrder = async (orderId: number) => {
     const order = orders.find((row) => row.id === orderId);
     if (!order) return;
-    const confirmDelete = window.confirm(`¿Eliminar el pedido #${String(order.id).padStart(5, "0")}?`);
+    const confirmMessage =
+      order.status === "REALIZADO"
+        ? `Eliminar el pedido #${String(order.id).padStart(5, "0")}? El stock de sus productos se devolvera al inventario.`
+        : `Eliminar el pedido #${String(order.id).padStart(5, "0")}?`;
+    const confirmDelete = window.confirm(confirmMessage);
     if (!confirmDelete) return;
 
     try {
@@ -1528,6 +1562,8 @@ function App() {
       setAdminError("Credenciales admin invalidas.");
       return;
     }
+    setLoadedAdminSlices({ clients: false, orders: false, finance: false });
+    setLoadingAdminSlices({ clients: false, orders: false, finance: false });
     setIsAdminLogged(true);
     setAdminForm({ user: "", password: "" });
     setActiveTab("dashboard");
@@ -1536,6 +1572,7 @@ function App() {
   const logoutAdmin = () => {
     setIsAdminLogged(false);
     setIsAdminSidebarOpen(false);
+    setLoadedAdminSlices({ clients: false, orders: false, finance: false });
     setLoadingAdminSlices({ clients: false, orders: false, finance: false });
     setActiveTab("catalogo");
   };

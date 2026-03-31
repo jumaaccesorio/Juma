@@ -68,6 +68,7 @@ function ProductsPanel({
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [visibilityFilter, setVisibilityFilter] = useState<"ALL" | "VISIBLE" | "HIDDEN">("ALL");
+  const [stockFilter, setStockFilter] = useState<"ALL" | "OUT" | "LOW" | "AVAILABLE">("ALL");
   const [showForm, setShowForm] = useState(false);
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [drafts, setDrafts] = useState<Record<number, ProductDraft>>({});
@@ -95,9 +96,14 @@ function ProductsPanel({
         visibilityFilter === "ALL" ||
         (visibilityFilter === "VISIBLE" && product.enabled) ||
         (visibilityFilter === "HIDDEN" && !product.enabled);
-      return matchesQuery && matchesCategory && matchesVisibility;
+      const matchesStock =
+        stockFilter === "ALL" ||
+        (stockFilter === "OUT" && product.stock <= 0) ||
+        (stockFilter === "LOW" && product.stock > 0 && product.stock <= 2) ||
+        (stockFilter === "AVAILABLE" && product.stock > 0);
+      return matchesQuery && matchesCategory && matchesVisibility && matchesStock;
     });
-  }, [products, query, categoryFilter, visibilityFilter]);
+  }, [products, query, categoryFilter, visibilityFilter, stockFilter]);
 
   const stats = useMemo(() => {
     const totalProducts = products.length;
@@ -428,7 +434,17 @@ function ProductsPanel({
                 <option key={category.id} value={category.id}>
                   {category.name}
                 </option>
-              ))}
+                ))}
+              </select>
+            <select
+              className="w-full lg:w-56 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+              value={stockFilter}
+              onChange={(e) => setStockFilter(e.target.value as "ALL" | "OUT" | "LOW" | "AVAILABLE")}
+            >
+              <option value="ALL">Todo el stock</option>
+              <option value="OUT">Sin stock</option>
+              <option value="LOW">Stock bajo</option>
+              <option value="AVAILABLE">Con stock</option>
             </select>
           </div>
         </div>
