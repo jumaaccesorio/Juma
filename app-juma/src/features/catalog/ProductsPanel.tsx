@@ -379,11 +379,11 @@ function ProductsPanel({
 
       <div className="bg-background rounded-xl border border-line overflow-hidden shadow-sm">
         <div className="p-4 border-b border-line flex flex-col lg:flex-row items-center justify-between gap-4">
-          <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
+          <div className="flex w-full flex-nowrap items-center gap-3 overflow-x-auto md:w-auto md:overflow-visible">
             <button
               type="button"
               onClick={() => setVisibilityFilter("ALL")}
-              className={`rounded-full border px-4 py-2 text-sm font-bold transition-colors ${
+              className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition-colors ${
                 visibilityFilter === "ALL"
                   ? "border-primary bg-primary text-white"
                   : "border-slate-200 bg-white text-slate-600 hover:border-primary hover:text-primary"
@@ -394,7 +394,7 @@ function ProductsPanel({
             <button
               type="button"
               onClick={() => setVisibilityFilter("VISIBLE")}
-              className={`rounded-full border px-4 py-2 text-sm font-bold transition-colors ${
+              className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition-colors ${
                 visibilityFilter === "VISIBLE"
                   ? "border-primary bg-primary text-white"
                   : "border-slate-200 bg-white text-slate-600 hover:border-primary hover:text-primary"
@@ -405,7 +405,7 @@ function ProductsPanel({
             <button
               type="button"
               onClick={() => setVisibilityFilter("HIDDEN")}
-              className={`rounded-full border px-4 py-2 text-sm font-bold transition-colors ${
+              className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition-colors ${
                 visibilityFilter === "HIDDEN"
                   ? "border-primary bg-primary text-white"
                   : "border-slate-200 bg-white text-slate-600 hover:border-primary hover:text-primary"
