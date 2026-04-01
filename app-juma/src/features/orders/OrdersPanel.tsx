@@ -683,13 +683,13 @@ function OrdersPanel({
         </div>
 
         <div className="space-y-3 p-4 lg:hidden">
-          {orders.map((order) => {
+          {filteredOrders.map((order) => {
             const clientName = order.clientId ? getClientName(order.clientId) : order.guestName || "Invitado";
             const needsRestock = order.status === "PENDIENTE" && hasInsufficientStock(order.items);
             const isExpanded = expandedOrderIds.includes(order.id);
             const itemsDetail = getOrderItemsDetail(order);
             return (
-              <div key={`mobile-${order.id}`} className="rounded-xl border border-line bg-background p-4 shadow-sm">
+              <div key={`mobile-${order.id}`} className="rounded-xl border border-line bg-white p-4 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Pedido</p>
@@ -723,9 +723,13 @@ function OrdersPanel({
                   </div>
                 ) : null}
                 {isExpanded ? (
-                  <div className="mt-4 space-y-3 border-t border-line pt-4">
+                  <div className="mt-4 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-2">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Detalle del pedido</p>
+                      <span className="text-xs font-bold text-slate-700">${getOrderTotal(order).toLocaleString("es-AR")}</span>
+                    </div>
                     {itemsDetail.map((item, itemIndex) => (
-                      <div key={`${order.id}-mobile-item-${itemIndex}`} className="flex items-center gap-3 rounded-lg bg-white p-3">
+                      <div key={`${order.id}-mobile-item-${itemIndex}`} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
                           {item.productImage ? (
                             <img src={item.productImage} alt={item.productName} className="h-full w-full object-cover" />
@@ -745,11 +749,11 @@ function OrdersPanel({
                     {itemsDetail.length === 0 ? <p className="text-sm text-slate-500">Este pedido no tiene productos cargados.</p> : null}
                   </div>
                 ) : null}
-                <div className="mt-4 flex gap-2">
+                <div className="mt-4 flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => toggleOrderExpanded(order.id)}
-                    className="inline-flex items-center justify-center rounded-lg border border-line px-3 py-2 text-xs font-bold text-slate-600"
+                    className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line px-3 py-2 text-xs font-bold text-slate-600"
                   >
                     {isExpanded ? "Ocultar" : "Ver detalle"}
                   </button>
@@ -757,13 +761,13 @@ function OrdersPanel({
                     <button 
                       type="button" 
                       onClick={() => onMarkOrderAsRealized(order.id)}
-                      className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-primary/10 px-3 py-2 text-xs font-bold text-primary"
+                      className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-lg bg-primary/10 px-3 py-2 text-xs font-bold text-primary"
                     >
                       <span className="material-symbols-outlined text-[16px]">check_circle</span>
                       Marcar envio
                     </button>
                   ) : (
-                    <span className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-400">
+                    <span className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-400">
                       <span className="material-symbols-outlined text-[16px]">done_all</span>
                       Completado
                     </span>
@@ -771,16 +775,17 @@ function OrdersPanel({
                   <button
                     type="button"
                     onClick={() => onDeleteOrder(order.id)}
-                    className="inline-flex items-center justify-center rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-600"
+                    className="inline-flex min-h-10 items-center justify-center gap-1 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600"
                     title="Eliminar pedido"
                   >
                     <span className="material-symbols-outlined text-[16px]">delete</span>
+                    Eliminar
                   </button>
                 </div>
               </div>
             );
           })}
-          {orders.length === 0 ? <div className="p-8 text-center text-sm text-slate-500">No se encontraron pedidos registrados.</div> : null}
+          {filteredOrders.length === 0 ? <div className="p-8 text-center text-sm text-slate-500">No se encontraron pedidos registrados.</div> : null}
         </div>
 
         <div className="hidden overflow-x-auto lg:block">
