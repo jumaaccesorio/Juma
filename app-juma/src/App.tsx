@@ -390,6 +390,12 @@ function App() {
   }, [cartItems, requestProductImages]);
 
   useEffect(() => {
+    if (!isAdminLogged || activeTab !== "pedidos" || orders.length === 0) return;
+    const orderProductIds = Array.from(new Set(orders.flatMap((order) => order.items.map((item) => item.productId))));
+    requestProductImages(orderProductIds);
+  }, [activeTab, isAdminLogged, orders, requestProductImages]);
+
+  useEffect(() => {
     if (!isAdminLogged) return;
 
     const needsClients = ["dashboard", "venta_rapida", "clientes", "pedidos"].includes(activeTab);
@@ -1868,6 +1874,7 @@ function App() {
                   onUpdateOrderItemRow={updateOrderItemRow}
                   onMarkOrderAsRealized={markOrderAsRealized}
                   onDeleteOrder={deleteOrder}
+                  onOpenProduct={openProductDetail}
                   getClientName={(clientId) => clientMap.get(clientId)?.name ?? "-"}
                   getOrderTotal={orderTotal}
                 />

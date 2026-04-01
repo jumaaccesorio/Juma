@@ -25,6 +25,7 @@ type OrdersPanelProps = {
   onUpdateOrderItemRow: (index: number, key: keyof NewOrderItem, value: string) => void;
   onMarkOrderAsRealized: (orderId: number) => void;
   onDeleteOrder: (orderId: number) => void;
+  onOpenProduct: (productId: number) => void;
   getClientName: (clientId: number) => string;
   getOrderTotal: (order: Order) => number;
 };
@@ -44,6 +45,7 @@ function OrdersPanel({
   onUpdateOrderItemRow,
   onMarkOrderAsRealized,
   onDeleteOrder,
+  onOpenProduct,
   getClientName,
   getOrderTotal,
 }: OrdersPanelProps) {
@@ -412,7 +414,12 @@ function OrdersPanel({
                       <span className="text-xs font-bold text-slate-700">${getOrderTotal(order).toLocaleString("es-AR")}</span>
                     </div>
                     {itemsDetail.map((item, itemIndex) => (
-                      <div key={`${order.id}-mobile-editorial-item-${itemIndex}`} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3">
+                      <button
+                        key={`${order.id}-mobile-editorial-item-${itemIndex}`}
+                        type="button"
+                        onClick={() => onOpenProduct(item.productId)}
+                        className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/5"
+                      >
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
                           {item.productImage ? (
                             <img src={item.productImage} alt={item.productName} className="h-full w-full object-cover" />
@@ -426,8 +433,11 @@ function OrdersPanel({
                             {item.quantity} x ${item.unitSalePrice.toLocaleString("es-AR")}
                           </p>
                         </div>
-                        <p className="text-sm font-bold text-primary">${item.subtotal.toLocaleString("es-AR")}</p>
-                      </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-sm font-bold text-primary">${item.subtotal.toLocaleString("es-AR")}</p>
+                          <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Ver producto</p>
+                        </div>
+                      </button>
                     ))}
                     {itemsDetail.length === 0 ? <p className="text-sm text-slate-500">Este pedido no tiene productos cargados.</p> : null}
                   </div>
@@ -714,7 +724,12 @@ function OrdersPanel({
                       <span className="text-xs font-bold text-slate-700">${getOrderTotal(order).toLocaleString("es-AR")}</span>
                     </div>
                     {itemsDetail.map((item, itemIndex) => (
-                      <div key={`${order.id}-mobile-item-${itemIndex}`} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3">
+                      <button
+                        key={`${order.id}-mobile-item-${itemIndex}`}
+                        type="button"
+                        onClick={() => onOpenProduct(item.productId)}
+                        className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/5"
+                      >
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
                           {item.productImage ? (
                             <img src={item.productImage} alt={item.productName} className="h-full w-full object-cover" />
@@ -728,8 +743,11 @@ function OrdersPanel({
                             {item.quantity} x ${item.unitSalePrice.toLocaleString("es-AR")}
                           </p>
                         </div>
-                        <p className="text-sm font-bold text-primary">${item.subtotal.toLocaleString("es-AR")}</p>
-                      </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-sm font-bold text-primary">${item.subtotal.toLocaleString("es-AR")}</p>
+                          <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Ver producto</p>
+                        </div>
+                      </button>
                     ))}
                     {itemsDetail.length === 0 ? <p className="text-sm text-slate-500">Este pedido no tiene productos cargados.</p> : null}
                   </div>
@@ -900,7 +918,12 @@ function OrdersPanel({
                       </div>
                       <div className="grid gap-3">
                         {itemsDetail.map((item, itemIndex) => (
-                          <div key={`${order.id}-detail-item-${itemIndex}`} className="flex items-center gap-3 rounded-lg bg-white p-3 shadow-sm">
+                          <button
+                            key={`${order.id}-detail-item-${itemIndex}`}
+                            type="button"
+                            onClick={() => onOpenProduct(item.productId)}
+                            className="flex w-full items-center gap-3 rounded-lg bg-white p-3 text-left shadow-sm transition-colors hover:bg-primary/5"
+                          >
                             <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
                               {item.productImage ? (
                                 <img src={item.productImage} alt={item.productName} className="h-full w-full object-cover" />
@@ -915,7 +938,7 @@ function OrdersPanel({
                               </p>
                             </div>
                             <p className="text-sm font-bold text-primary">${item.subtotal.toLocaleString("es-AR")}</p>
-                          </div>
+                          </button>
                         ))}
                         {itemsDetail.length === 0 ? (
                           <p className="text-sm text-slate-500">Este pedido no tiene productos cargados.</p>
