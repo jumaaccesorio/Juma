@@ -361,107 +361,59 @@ function OrdersPanel({
           </form>
         )}
 
-        <div className="space-y-4">
-          {filteredOrders.map((order, index) => {
+        <div className="space-y-3">
+          {filteredOrders.map((order) => {
             const clientName = order.clientId ? getClientName(order.clientId) : order.guestName || "Invitado";
-            const total = getOrderTotal(order);
-            const isCompleted = order.status === "REALIZADO";
+            const needsRestock = order.status === "PENDIENTE" && hasInsufficientStock(order.items);
             const isExpanded = expandedOrderIds.includes(order.id);
             const itemsDetail = getOrderItemsDetail(order);
-            const accent = isCompleted
-              ? "bg-primary-container/20 text-on-primary-container"
-              : "bg-tertiary-container/20 text-on-tertiary-container";
-
-            if (index === 2 && filteredOrders.length > 3) {
-              const nextOrder = filteredOrders[index + 1];
-              if (!nextOrder) return null;
-              const nextClientName = nextOrder.clientId ? getClientName(nextOrder.clientId) : nextOrder.guestName || "Invitado";
-              const nextTotal = getOrderTotal(nextOrder);
-              return (
-                <div key={`pair-${order.id}-${nextOrder.id}`} className="grid grid-cols-2 gap-4">
-                  {[{ order, clientName, total }, { order: nextOrder, clientName: nextClientName, total: nextTotal }].map(
-                    ({ order: currentOrder, clientName: currentClientName, total: currentTotal }, pairIndex) => (
-                      <div
-                        key={currentOrder.id}
-                        className={`flex h-32 flex-col justify-between rounded-sm p-4 ${
-                          pairIndex === 0 ? "bg-surface-container-lowest shadow-sm" : "bg-surface-container-low"
-                        }`}
-                      >
-                        <span className="text-[10px] font-bold uppercase text-outline">
-                          #{String(currentOrder.id).padStart(5, "0")}
-                        </span>
-                        <div>
-                          <h3 className="truncate font-headline text-lg italic">{currentClientName}</h3>
-                          <p className="text-sm font-bold text-primary">${currentTotal.toLocaleString("es-AR")}</p>
-                        </div>
-                      </div>
-                    ),
-                  )}
-                </div>
-              );
-            }
-
-            if (index === 3 && filteredOrders.length > 3) return null;
-
             return (
-              <div
-                key={order.id}
-                className={`rounded-sm p-5 ${
-                  index % 2 === 1
-                    ? "bg-surface-container-low shadow-none"
-                    : "border-l-4 border-primary/20 bg-surface-container-lowest shadow-[0_4px_20px_rgba(45,45,45,0.02)]"
-                }`}
-              >
-                <div className="mb-4 flex items-start justify-between gap-4">
+              <div key={`mobile-editorial-${order.id}`} className="rounded-xl border border-line bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
                   <div>
-                    <span className="mb-1 block text-[10px] font-bold uppercase tracking-tighter text-outline">
-                      #{String(order.id).padStart(5, "0")}
-                    </span>
-                    <h3 className="font-headline text-xl italic text-on-surface">{clientName}</h3>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Pedido</p>
+                    <p className="mt-1 text-sm font-bold text-slate-900">#{String(order.id).padStart(5, "0")}</p>
                   </div>
-                  <div className={`rounded-full px-3 py-1 ${accent}`}>
-                    <span className="text-[10px] font-bold uppercase">
-                      {isCompleted ? "Delivered" : "Processing"}
-                    </span>
-                  </div>
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
+                      order.status === "REALIZADO" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                    }`}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${order.status === "REALIZADO" ? "bg-green-500" : "bg-yellow-500"}`}></span>
+                    {order.status}
+                  </span>
                 </div>
-
-                <div className="flex items-end justify-between gap-4">
-                  <div>
-                    <p className="font-headline text-lg text-primary">${total.toLocaleString("es-AR")}</p>
-                    <p className="text-[10px] uppercase tracking-widest text-outline">
+                <div className="mt-4 space-y-2 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-slate-500">Cliente</span>
+                    <span className="font-medium text-slate-700">{clientName}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-slate-500">Fecha</span>
+                    <span className="font-medium text-slate-700">
                       {new Date(order.date).toLocaleDateString("es-AR", { year: "numeric", month: "short", day: "numeric" })}
-                    </p>
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => toggleOrderExpanded(order.id)}
-                      className="rounded-full border border-outline-variant/30 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary"
-                    >
-                      {isExpanded ? "Ocultar detalle" : "Ver detalle"}
-                    </button>
-                    {order.status === "PENDIENTE" ? (
-                      <button
-                        type="button"
-                        onClick={() => onMarkOrderAsRealized(order.id)}
-                        className="rounded-full bg-primary px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-white"
-                      >
-                        Enviado
-                      </button>
-                    ) : (
-                      <span className="rounded-full bg-secondary-container px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-on-secondary-container">
-                        Cerrado
-                      </span>
-                    )}
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-slate-500">Total</span>
+                    <span className="font-bold text-slate-900">${getOrderTotal(order).toLocaleString("es-AR")}</span>
                   </div>
                 </div>
-
+                {needsRestock ? (
+                  <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-warning/25 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#9a6d48]">
+                    <span className="material-symbols-outlined text-[14px]">inventory</span>
+                    Requiere reposicion
+                  </div>
+                ) : null}
                 {isExpanded ? (
-                  <div className="mt-4 space-y-3 border-t border-outline-variant/15 pt-4">
+                  <div className="mt-4 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-2">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Detalle del pedido</p>
+                      <span className="text-xs font-bold text-slate-700">${getOrderTotal(order).toLocaleString("es-AR")}</span>
+                    </div>
                     {itemsDetail.map((item, itemIndex) => (
-                      <div key={`${order.id}-editorial-item-${itemIndex}`} className="flex items-center gap-3 rounded-sm bg-white/80 p-3">
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-surface-container-low">
+                      <div key={`${order.id}-mobile-editorial-item-${itemIndex}`} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
                           {item.productImage ? (
                             <img src={item.productImage} alt={item.productName} className="h-full w-full object-cover" />
                           ) : (
@@ -469,27 +421,60 @@ function OrdersPanel({
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium text-on-surface">{item.productName}</p>
-                          <p className="text-xs text-secondary">
+                          <p className="truncate text-sm font-bold text-slate-900">{item.productName}</p>
+                          <p className="text-xs text-slate-500">
                             {item.quantity} x ${item.unitSalePrice.toLocaleString("es-AR")}
                           </p>
                         </div>
                         <p className="text-sm font-bold text-primary">${item.subtotal.toLocaleString("es-AR")}</p>
                       </div>
                     ))}
-                    {itemsDetail.length === 0 ? <p className="text-sm text-secondary">Este pedido no tiene productos cargados.</p> : null}
+                    {itemsDetail.length === 0 ? <p className="text-sm text-slate-500">Este pedido no tiene productos cargados.</p> : null}
                   </div>
                 ) : null}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => toggleOrderExpanded(order.id)}
+                    className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line px-3 py-2 text-xs font-bold text-slate-600"
+                  >
+                    {isExpanded ? "Ocultar" : "Ver detalle"}
+                  </button>
+                  {order.status === "PENDIENTE" ? (
+                    <button
+                      type="button"
+                      onClick={() => onMarkOrderAsRealized(order.id)}
+                      className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-lg bg-primary/10 px-3 py-2 text-xs font-bold text-primary"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                      Marcar envio
+                    </button>
+                  ) : (
+                    <span className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-400">
+                      <span className="material-symbols-outlined text-[16px]">done_all</span>
+                      Completado
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => onDeleteOrder(order.id)}
+                    className="inline-flex min-h-10 items-center justify-center gap-1 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600"
+                    title="Eliminar pedido"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                    Eliminar
+                  </button>
+                </div>
               </div>
             );
           })}
 
-          {filteredOrders.length === 0 && (
-            <div className="rounded-sm bg-surface-container-lowest px-5 py-10 text-center shadow-[0_4px_20px_rgba(45,45,45,0.02)]">
-              <p className="font-headline text-xl italic text-on-surface">No hay pedidos</p>
-              <p className="mt-2 text-sm text-secondary">Probá con otro filtro o creá uno nuevo.</p>
+          {filteredOrders.length === 0 ? (
+            <div className="rounded-xl border border-line bg-white px-5 py-10 text-center shadow-sm">
+              <p className="text-lg font-bold text-slate-900">No hay pedidos</p>
+              <p className="mt-2 text-sm text-slate-500">Prueba con otro filtro o crea uno nuevo.</p>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
