@@ -8,9 +8,10 @@ type InventoryPanelProps = {
   lowStockProducts: Product[];
   onUpdateStock: (productId: number, newStock: number) => void;
   onSaveProductEdits: (productId: number, updates: Partial<Product>) => void;
+  onOpenProductDetail: (productId: number) => void;
 };
 
-function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock, onSaveProductEdits }: InventoryPanelProps) {
+function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock, onSaveProductEdits, onOpenProductDetail }: InventoryPanelProps) {
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
@@ -111,7 +112,13 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
               </div>
               <div className="flex h-24 flex-grow flex-col justify-between">
                 <div>
-                  <h3 className="font-headline text-lg italic text-on-surface">{getProductDisplayName(product)}</h3>
+                  <button
+                    type="button"
+                    onClick={() => onOpenProductDetail(product.id)}
+                    className="font-headline text-left text-lg italic text-on-surface transition-colors hover:text-primary"
+                  >
+                    {getProductDisplayName(product)}
+                  </button>
                   <p className="mt-0.5 text-[10px] uppercase tracking-widest text-secondary">{product.categoryName || "Sin categoria"}</p>
                 </div>
                 <div className="flex items-center justify-between gap-3">
@@ -215,7 +222,13 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-ink">{getProductDisplayName(product)}</p>
+                  <button
+                    type="button"
+                    onClick={() => onOpenProductDetail(product.id)}
+                    className="text-left text-sm font-bold text-ink transition-colors hover:text-primary"
+                  >
+                    {getProductDisplayName(product)}
+                  </button>
                   <p className="mt-1 text-xs text-slate-500">{product.categoryName || "Sin categoria"}</p>
                   <span className={`mt-3 inline-flex items-center justify-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] ${product.stock <= 2 ? "bg-warning/30 text-[#9a6d48]" : product.stock <= 10 ? "bg-quaternary text-primary" : "bg-tertiary/20 text-[#4f6780]"}`}>
                     {product.stock} units
@@ -301,7 +314,13 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
                         )}
                       </div>
                       <div className="min-w-0">
-                        <span className="font-bold text-sm text-ink block">{getProductDisplayName(product)}</span>
+                        <button
+                          type="button"
+                          onClick={() => onOpenProductDetail(product.id)}
+                          className="block text-left text-sm font-bold text-ink transition-colors hover:text-primary"
+                        >
+                          {getProductDisplayName(product)}
+                        </button>
                         {editingProductId === product.id ? (
                           <div className="mt-2 flex flex-col gap-2">
                             <input

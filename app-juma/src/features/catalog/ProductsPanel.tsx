@@ -37,6 +37,8 @@ type ProductsPanelProps = {
   onSaveProductEdits: (productId: number, updates: Partial<Product>) => void;
   onDeleteProduct: (productId: number) => void;
   onImportProducts: (file: File | null) => void;
+  focusedProductId: number | null;
+  onFocusedProductChange: (productId: number | null) => void;
 };
 
 function buildDraft(product: Product): ProductDraft {
@@ -64,6 +66,8 @@ function ProductsPanel({
   onSaveProductEdits,
   onDeleteProduct,
   onImportProducts,
+  focusedProductId,
+  onFocusedProductChange,
 }: ProductsPanelProps) {
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -168,7 +172,19 @@ function ProductsPanel({
       [product.id]: prev[product.id] ?? buildDraft(product),
     }));
     setEditingProductId(product.id);
+    onFocusedProductChange(product.id);
   };
+
+  useEffect(() => {
+    if (focusedProductId == null) return;
+    const product = products.find((row) => row.id === focusedProductId);
+    if (!product) return;
+    setDrafts((prev) => ({
+      ...prev,
+      [product.id]: prev[product.id] ?? buildDraft(product),
+    }));
+    setEditingProductId(product.id);
+  }, [focusedProductId, products]);
 
   const editingProduct = editingProductId ? products.find((product) => product.id === editingProductId) ?? null : null;
   const editingDraft = editingProduct ? drafts[editingProduct.id] ?? buildDraft(editingProduct) : null;
@@ -655,7 +671,10 @@ function ProductsPanel({
               </div>
               <button
                 type="button"
-                onClick={() => setEditingProductId(null)}
+                onClick={() => {
+                  setEditingProductId(null);
+                  onFocusedProductChange(null);
+                }}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-muted transition-colors hover:bg-secondary hover:text-ink"
               >
                 <span className="material-symbols-outlined">close</span>
@@ -791,7 +810,10 @@ function ProductsPanel({
               <div className="flex justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setEditingProductId(null)}
+                  onClick={() => {
+                    setEditingProductId(null);
+                    onFocusedProductChange(null);
+                  }}
                   className="rounded-lg border border-line bg-white px-5 py-3 text-sm font-bold text-muted transition-colors hover:bg-secondary hover:text-ink"
                 >
                   Cancelar
@@ -801,6 +823,7 @@ function ProductsPanel({
                   onClick={() => {
                     handleSaveDraft(editingProduct);
                     setEditingProductId(null);
+                    onFocusedProductChange(null);
                   }}
                   className="rounded-lg bg-primary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90"
                 >

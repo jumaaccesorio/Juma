@@ -25,7 +25,7 @@ type OrdersPanelProps = {
   onUpdateOrderItemRow: (index: number, key: keyof NewOrderItem, value: string) => void;
   onMarkOrderAsRealized: (orderId: number) => void;
   onDeleteOrder: (orderId: number) => void;
-  onOpenProduct: (productId: number) => void;
+  onOpenProductDetail: (productId: number) => void;
   getClientName: (clientId: number) => string;
   getOrderTotal: (order: Order) => number;
 };
@@ -45,7 +45,7 @@ function OrdersPanel({
   onUpdateOrderItemRow,
   onMarkOrderAsRealized,
   onDeleteOrder,
-  onOpenProduct,
+  onOpenProductDetail,
   getClientName,
   getOrderTotal,
 }: OrdersPanelProps) {
@@ -286,13 +286,10 @@ function OrdersPanel({
               </div>
               <div ref={mobileProductsRef} className="grid max-h-56 grid-cols-2 gap-3 overflow-y-auto rounded-sm bg-surface-container-low p-3">
                 {mobileVisibleProducts.map((product) => (
-                  <button
+                  <div
                     key={product.id}
-                    type="button"
-                    onClick={() => onAddProductToOrder(product.id)}
-                    disabled={product.stock <= 0}
                     className={`rounded-sm bg-white p-3 text-left shadow-sm transition ${
-                      product.stock <= 0 ? "cursor-not-allowed opacity-50 grayscale" : "active:scale-[0.98]"
+                      product.stock <= 0 ? "opacity-50 grayscale" : ""
                     }`}
                   >
                     <p className="line-clamp-1 font-headline text-base italic text-on-surface">
@@ -304,7 +301,24 @@ function OrdersPanel({
                     <p className="mt-1 text-[10px] uppercase tracking-widest text-secondary">
                       {product.stock > 0 ? `Stock ${product.stock}` : "Agotado"}
                     </p>
-                  </button>
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onAddProductToOrder(product.id)}
+                        disabled={product.stock <= 0}
+                        className="flex-1 rounded-sm bg-primary px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-white disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Agregar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onOpenProductDetail(product.id)}
+                        className="rounded-sm border border-line px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-primary"
+                      >
+                        Ver
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
               {renderPager(mobileProductsPage, mobileProductsTotalPages, setMobileProductsPage)}
@@ -319,7 +333,13 @@ function OrdersPanel({
                 selectedRows.map((row) => (
                   <div key={`mobile-row-${row.index}`} className="flex items-center justify-between rounded-sm bg-surface-container-low p-3">
                     <div>
-                      <p className="font-headline text-base italic text-on-surface">{getProductDisplayName(row.product)}</p>
+                      <button
+                        type="button"
+                        onClick={() => onOpenProductDetail(row.product.id)}
+                        className="font-headline text-left text-base italic text-on-surface transition-colors hover:text-primary"
+                      >
+                        {getProductDisplayName(row.product)}
+                      </button>
                       <p className="text-[11px] text-secondary">${row.product.salePrice.toLocaleString("es-AR")} c/u</p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -417,7 +437,7 @@ function OrdersPanel({
                       <button
                         key={`${order.id}-mobile-editorial-item-${itemIndex}`}
                         type="button"
-                        onClick={() => onOpenProduct(item.productId)}
+                        onClick={() => onOpenProductDetail(item.productId)}
                         className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/5"
                       >
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
@@ -580,11 +600,9 @@ function OrdersPanel({
             
             <div ref={desktopProductsRef} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 max-h-64 overflow-y-auto p-2 border border-slate-100 rounded-lg bg-slate-50/50">
               {desktopVisibleProducts.map((product) => (
-                <button
+                <div
                   key={product.id}
-                  type="button"
-                  onClick={() => onAddProductToOrder(product.id)}
-                  className="flex flex-col items-center rounded-lg border border-slate-200 bg-white p-3 text-center shadow-sm transition-all hover:border-primary/50 hover:shadow-md active:scale-95"
+                  className="flex flex-col items-center rounded-lg border border-slate-200 bg-white p-3 text-center shadow-sm transition-all hover:border-primary/50 hover:shadow-md"
                 >
                   <div className="h-16 w-16 mb-2 rounded bg-slate-100 flex items-center justify-center overflow-hidden">
                     {product.image ? (
@@ -600,7 +618,23 @@ function OrdersPanel({
                       {product.stock > 0 ? `Stock: ${product.stock}` : "Por encargo"}
                     </span>
                   </div>
-                </button>
+                  <div className="mt-3 flex w-full gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onAddProductToOrder(product.id)}
+                      className="flex-1 rounded-lg bg-primary px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-white"
+                    >
+                      Agregar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onOpenProductDetail(product.id)}
+                      className="rounded-lg border border-line px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-primary"
+                    >
+                      Ver
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
             {renderPager(desktopProductsPage, desktopProductsTotalPages, setDesktopProductsPage)}
@@ -629,7 +663,13 @@ function OrdersPanel({
                       )}
                     </div>
                     <div className="flex-1">
-                      <p className="font-bold text-sm text-slate-900">{getProductDisplayName(row.product)}</p>
+                      <button
+                        type="button"
+                        onClick={() => onOpenProductDetail(row.product.id)}
+                        className="text-left text-sm font-bold text-slate-900 transition-colors hover:text-primary"
+                      >
+                        {getProductDisplayName(row.product)}
+                      </button>
                       <p className="text-xs text-slate-500">${row.product.salePrice.toLocaleString("es-AR")} c/u</p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -727,7 +767,7 @@ function OrdersPanel({
                       <button
                         key={`${order.id}-mobile-item-${itemIndex}`}
                         type="button"
-                        onClick={() => onOpenProduct(item.productId)}
+                        onClick={() => onOpenProductDetail(item.productId)}
                         className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/5"
                       >
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
@@ -921,7 +961,7 @@ function OrdersPanel({
                           <button
                             key={`${order.id}-detail-item-${itemIndex}`}
                             type="button"
-                            onClick={() => onOpenProduct(item.productId)}
+                            onClick={() => onOpenProductDetail(item.productId)}
                             className="flex w-full items-center gap-3 rounded-lg bg-white p-3 text-left shadow-sm transition-colors hover:bg-primary/5"
                           >
                             <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">

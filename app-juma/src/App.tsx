@@ -238,6 +238,7 @@ function App() {
   const [productImageFile, setProductImageFile] = useState<File | null>(null);
   const [hydratedProductImageIds, setHydratedProductImageIds] = useState<number[]>([]);
   const [requestedProductImageIds, setRequestedProductImageIds] = useState<number[]>([]);
+  const [focusedAdminProductId, setFocusedAdminProductId] = useState<number | null>(null);
   const [orderForm, setOrderForm] = useState({
     clientId: "",
     date: new Date().toISOString().slice(0, 10),
@@ -300,7 +301,9 @@ function App() {
       }
 
       if (productsResult.status === "fulfilled") {
-        setProducts(normalizeProducts(productsResult.value));
+        const normalizedProducts = normalizeProducts(productsResult.value);
+        setProducts(normalizedProducts);
+        setHydratedProductImageIds(normalizedProducts.map((product) => product.id));
       } else {
         console.warn("No se pudieron cargar los productos.", productsResult.reason);
       }
@@ -388,6 +391,12 @@ function App() {
     if (cartItems.length === 0) return;
     requestProductImages(cartItems.map((item) => item.productId));
   }, [cartItems, requestProductImages]);
+
+  useEffect(() => {
+    if (!isAdminLogged) return;
+    if (!["productos", "inventario", "venta_rapida"].includes(activeTab)) return;
+    requestProductImages(products.map((product) => product.id));
+  }, [activeTab, isAdminLogged, products, requestProductImages]);
 
   useEffect(() => {
     if (!isAdminLogged || activeTab !== "pedidos" || orders.length === 0) return;
@@ -1652,7 +1661,13 @@ function App() {
     setIsAdminSidebarOpen(false);
     setLoadedAdminSlices({ clients: false, orders: false, finance: false });
     setLoadingAdminSlices({ clients: false, orders: false, finance: false });
+    setFocusedAdminProductId(null);
     setActiveTab("catalogo");
+  };
+
+  const openAdminProductDetail = (productId: number) => {
+    setFocusedAdminProductId(productId);
+    setActiveTab("productos");
   };
 
   const handleCustomerCheckout = async (guestData?: { name: string, email: string, phone: string }) => {
@@ -1822,6 +1837,8 @@ function App() {
                   onSaveProductEdits={saveProductEdits}
                   onDeleteProduct={deleteProduct}
                   onImportProducts={importProducts}
+                  focusedProductId={focusedAdminProductId}
+                  onFocusedProductChange={setFocusedAdminProductId}
                 />
               </div>
             )}
@@ -1853,6 +1870,7 @@ function App() {
                   lowStockProducts={lowStockProducts}
                   onUpdateStock={updateStock}
                   onSaveProductEdits={saveProductEdits}
+                  onOpenProductDetail={openAdminProductDetail}
                 />
               </div>
             )}
@@ -1874,7 +1892,7 @@ function App() {
                   onUpdateOrderItemRow={updateOrderItemRow}
                   onMarkOrderAsRealized={markOrderAsRealized}
                   onDeleteOrder={deleteOrder}
-                  onOpenProduct={openProductDetail}
+                  onOpenProductDetail={openAdminProductDetail}
                   getClientName={(clientId) => clientMap.get(clientId)?.name ?? "-"}
                   getOrderTotal={orderTotal}
                 />
