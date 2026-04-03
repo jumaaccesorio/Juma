@@ -204,12 +204,14 @@ export const api = {
       supportsProductImageVariants = false;
       const legacyQuery = await supabase.from("products").select(selectLegacy).order("created_at", { ascending: false });
       if (legacyQuery.error) throw legacyQuery.error;
-      return (legacyQuery.data ?? []).map((row: any) => mapProduct({ ...row, category_name: row.categories?.name ?? null }));
+      const legacyRows = await resolveProductRows((legacyQuery.data ?? []) as any[]);
+      return legacyRows.map((row: any) => mapProduct({ ...row, category_name: row.categories?.name ?? null }));
     }
 
     if (query.error) throw query.error;
     if (supportsProductImageVariants !== false) supportsProductImageVariants = true;
-    return (query.data ?? []).map((row: any) => mapProduct({ ...row, category_name: row.categories?.name ?? null }));
+    const resolvedRows = await resolveProductRows((query.data ?? []) as any[]);
+    return resolvedRows.map((row: any) => mapProduct({ ...row, category_name: row.categories?.name ?? null }));
   },
 
   async getProductImages(productIds: number[]): Promise<Array<{ id: number; image: string }>> {
@@ -701,6 +703,34 @@ function mapProductImageRows(rows: any[]): Array<{ id: number; image: string }> 
     id: Number(row.id),
     image: pickRawProductImage(row),
   }));
+}
+
+async function resolveProductRows(rows: any[]) {
+  const allPaths = rows.flatMap((row) => [
+    extractProductStoragePath(typeof row.image === "string" ? row.image : ""),
+    extractProductStoragePath(typeof row.image_thumb === "string" ? row.image_thumb : ""),
+    extractProductStoragePath(typeof row.image_card === "string" ? row.image_card : ""),
+    extractProductStoragePath(typeof row.image_full === "string" ? row.image_full : ""),
+  ]);
+
+  const resolved = await resolveStorageImages(
+    allPaths.filter((path): path is string => Boolean(path)),
+  );
+
+  return rows.map((row) => {
+    const imagePath = extractProductStoragePath(typeof row.image === "string" ? row.image : "");
+    const thumbPath = extractProductStoragePath(typeof row.image_thumb === "string" ? row.image_thumb : "");
+    const cardPath = extractProductStoragePath(typeof row.image_card === "string" ? row.image_card : "");
+    const fullPath = extractProductStoragePath(typeof row.image_full === "string" ? row.image_full : "");
+
+    return {
+      ...row,
+      image: imagePath ? resolved.get(imagePath) ?? row.image : row.image,
+      image_thumb: thumbPath ? resolved.get(thumbPath) ?? row.image_thumb : row.image_thumb,
+      image_card: cardPath ? resolved.get(cardPath) ?? row.image_card : row.image_card,
+      image_full: fullPath ? resolved.get(fullPath) ?? row.image_full : row.image_full,
+    };
+  });
 }
 
 function mapProduct(row: any): Product {
