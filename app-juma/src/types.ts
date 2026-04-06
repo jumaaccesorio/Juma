@@ -32,6 +32,7 @@ export type Product = {
   subName: string;
   categoryId?: number | null;
   categoryName?: string; // Denormalized or joined for UI
+  homeGroup?: string;
   isFeatured: boolean;
   purchasePrice: number;
   salePrice: number;
