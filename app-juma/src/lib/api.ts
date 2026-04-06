@@ -1,6 +1,6 @@
 import type { Category, Client, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, Order, OrderItem, Product } from "../types";
 import { supabase } from "./supabase";
-import { dataUrlToOptimizedFile, optimizeImageFile, optimizeProductImageVariants, type UploadImageVariant } from "./imageUpload";
+import { dataUrlToOptimizedFile, optimizeImageFile, type UploadImageVariant } from "./imageUpload";
 
 const PRODUCT_IMAGES_BUCKET = "products";
 const PRODUCT_PUBLIC_PREFIX = `/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/`;
@@ -191,7 +191,7 @@ export const api = {
 
   async getProducts(): Promise<Product[]> {
     const selectWithVariants =
-      "id, name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, image_thumb, image_card, image_full, source_url, created_at, categories(name)";
+      "id, name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, image_full, source_url, created_at, categories(name)";
     const selectLegacy =
       "id, name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, source_url, created_at, categories(name)";
 
@@ -216,7 +216,7 @@ export const api = {
 
   async getProductImages(productIds: number[]): Promise<Array<{ id: number; image: string }>> {
     if (productIds.length === 0) return [];
-    const selectWithVariants = "id, image, image_thumb, image_card, image_full";
+    const selectWithVariants = "id, image";
     const selectLegacy = "id, image";
     const query = await supabase
       .from("products")
@@ -281,7 +281,7 @@ export const api = {
       stock: product.stock ?? 0,
       initial_stock: product.initialStock ?? product.stock ?? 0,
       enabled: product.enabled ?? true,
-      image: product.imageFull ?? product.imageCard ?? product.imageThumb ?? product.image ?? "",
+      image: product.image ?? "",
       source_url: product.sourceUrl ?? "",
     };
 
@@ -290,9 +290,9 @@ export const api = {
         ? basePayload
         : {
             ...basePayload,
-            image_thumb: product.imageThumb ?? product.image ?? "",
-            image_card: product.imageCard ?? product.image ?? "",
-            image_full: product.imageFull ?? product.imageCard ?? product.imageThumb ?? product.image ?? "",
+            image_thumb: product.image ?? "",
+            image_card: product.image ?? "",
+            image_full: product.originalImage ?? product.imageFull ?? product.image ?? "",
           };
 
     const insert = await supabase
@@ -329,12 +329,8 @@ export const api = {
         ? basePayload
         : {
             ...basePayload,
-            ...(updates.imageThumb !== undefined ? { image_thumb: updates.imageThumb } : {}),
-            ...(updates.imageCard !== undefined ? { image_card: updates.imageCard } : {}),
-            ...(updates.imageFull !== undefined ? { image_full: updates.imageFull } : {}),
-            ...(updates.imageFull !== undefined || updates.imageCard !== undefined || updates.imageThumb !== undefined
-              ? { image: updates.imageFull ?? updates.imageCard ?? updates.imageThumb ?? updates.image ?? "" }
-              : {}),
+            ...(updates.image !== undefined ? { image_thumb: updates.image, image_card: updates.image } : {}),
+            ...(updates.originalImage !== undefined ? { image_full: updates.originalImage } : {}),
           };
 
     const query = await supabase.from("products").update(payload).eq("id", id);
@@ -343,11 +339,9 @@ export const api = {
       const fallbackPayload = { ...basePayload };
       if (
         updates.image !== undefined ||
-        updates.imageThumb !== undefined ||
-        updates.imageCard !== undefined ||
-        updates.imageFull !== undefined
+        updates.originalImage !== undefined
       ) {
-        fallbackPayload.image = updates.imageFull ?? updates.imageCard ?? updates.imageThumb ?? updates.image ?? "";
+        fallbackPayload.image = updates.image ?? "";
       }
       const fallbackQuery = await supabase.from("products").update(fallbackPayload).eq("id", id);
       if (fallbackQuery.error) throw fallbackQuery.error;
@@ -618,7 +612,7 @@ export const api = {
 
   async uploadImage(file: File, options?: { variant?: UploadImageVariant; folder?: string }): Promise<string> {
     try {
-      const variant = options?.variant ?? "product_full";
+      const variant = options?.variant ?? "product_preview";
       const optimizedFile = await optimizeImageFile(file, variant);
       const extension = optimizedFile.name.split(".").pop()?.toLowerCase() || "webp";
       const fileName = `${crypto.randomUUID()}.${extension}`;
@@ -639,28 +633,42 @@ export const api = {
     }
   },
 
-  async uploadProductImages(file: File): Promise<{ imageThumb: string; imageCard: string; imageFull: string; image: string }> {
+  async uploadProductImages(file: File): Promise<{ image: string; originalImage: string }> {
     try {
-      const variants = await optimizeProductImageVariants(file);
-      const [imageThumb, imageCard, imageFull] = await Promise.all([
-        this.uploadRawOptimizedImage(variants.thumb, "products/thumbs"),
-        this.uploadRawOptimizedImage(variants.card, "products/cards"),
-        this.uploadRawOptimizedImage(variants.full, "products/full"),
+      const previewFile = await optimizeImageFile(file, "product_preview");
+      const [image, originalImage] = await Promise.all([
+        this.uploadRawOptimizedImage(previewFile, "products/previews"),
+        this.uploadRawFile(file, "products/originals"),
       ]);
 
       return {
-        imageThumb,
-        imageCard,
-        imageFull,
-        image: imageFull,
+        image,
+        originalImage,
       };
     } catch (error) {
-      throw new Error(toErrorMessage(error, "Error generando variantes de imagen"));
+      throw new Error(toErrorMessage(error, "Error preparando imagen del producto"));
     }
   },
 
   async uploadRawOptimizedImage(file: File, folder: string): Promise<string> {
     const extension = file.name.split(".").pop()?.toLowerCase() || "webp";
+    const fileName = `${crypto.randomUUID()}.${extension}`;
+    const filePath = `${folder}/${fileName}`;
+
+    const upload = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).upload(filePath, file, {
+      cacheControl: "31536000",
+      upsert: false,
+      contentType: file.type || undefined,
+    });
+
+    if (upload.error) throw upload.error;
+
+    const { data } = supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(filePath);
+    return data.publicUrl;
+  },
+
+  async uploadRawFile(file: File, folder: string): Promise<string> {
+    const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const fileName = `${crypto.randomUUID()}.${extension}`;
     const filePath = `${folder}/${fileName}`;
 
@@ -708,8 +716,6 @@ function mapProductImageRows(rows: any[]): Array<{ id: number; image: string }> 
 async function resolveProductRows(rows: any[]) {
   const allPaths = rows.flatMap((row) => [
     extractProductStoragePath(typeof row.image === "string" ? row.image : ""),
-    extractProductStoragePath(typeof row.image_thumb === "string" ? row.image_thumb : ""),
-    extractProductStoragePath(typeof row.image_card === "string" ? row.image_card : ""),
     extractProductStoragePath(typeof row.image_full === "string" ? row.image_full : ""),
   ]);
 
@@ -719,15 +725,11 @@ async function resolveProductRows(rows: any[]) {
 
   return rows.map((row) => {
     const imagePath = extractProductStoragePath(typeof row.image === "string" ? row.image : "");
-    const thumbPath = extractProductStoragePath(typeof row.image_thumb === "string" ? row.image_thumb : "");
-    const cardPath = extractProductStoragePath(typeof row.image_card === "string" ? row.image_card : "");
     const fullPath = extractProductStoragePath(typeof row.image_full === "string" ? row.image_full : "");
 
     return {
       ...row,
       image: imagePath ? resolved.get(imagePath) ?? row.image : row.image,
-      image_thumb: thumbPath ? resolved.get(thumbPath) ?? row.image_thumb : row.image_thumb,
-      image_card: cardPath ? resolved.get(cardPath) ?? row.image_card : row.image_card,
       image_full: fullPath ? resolved.get(fullPath) ?? row.image_full : row.image_full,
     };
   });
@@ -736,11 +738,9 @@ async function resolveProductRows(rows: any[]) {
 function mapProduct(row: any): Product {
   const rawName = typeof row.name === "string" ? row.name.trim() : "";
   const rawSubName = typeof row.sub_name === "string" ? row.sub_name.trim() : "";
-  const normalizedThumb = normalizeRenderableProductImage(row.image_thumb, false);
-  const normalizedCard = normalizeRenderableProductImage(row.image_card, false);
-  const normalizedFull = normalizeRenderableProductImage(row.image_full, false);
-  const normalizedLegacy = normalizeRenderableProductImage(row.image, false);
-  const normalizedImage = normalizedLegacy || normalizedFull || normalizedCard || normalizedThumb;
+  const normalizedFull = normalizeRenderableProductImage(row.image_full, true);
+  const normalizedLegacy = normalizeRenderableProductImage(row.image, true);
+  const normalizedImage = normalizedLegacy || normalizedFull;
   return {
     id: row.id,
     name: rawName || rawSubName,
@@ -754,9 +754,10 @@ function mapProduct(row: any): Product {
     initialStock: Number(row.initial_stock ?? 0),
     enabled: Boolean(row.enabled),
     image: normalizedImage,
-    imageThumb: normalizedThumb || normalizedImage,
-    imageCard: normalizedCard || normalizedFull || normalizedImage,
-    imageFull: normalizedFull || normalizedCard || normalizedImage,
+    originalImage: normalizedFull || normalizedImage,
+    imageThumb: normalizedImage,
+    imageCard: normalizedImage,
+    imageFull: normalizedFull || normalizedImage,
     sourceUrl: row.source_url ?? "",
     createdAt: row.created_at ?? "",
   };
@@ -790,7 +791,7 @@ function extractProductStoragePath(image: string): string | null {
 }
 
 function pickRawProductImage(row: any): string {
-  const candidate = row.image ?? row.image_full ?? row.image_card ?? row.image_thumb;
+  const candidate = row.image ?? row.image_full;
   return typeof candidate === "string" ? candidate.trim() : "";
 }
 

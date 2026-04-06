@@ -1,5 +1,6 @@
 import type { Order, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
+import ProductImage from "../../components/ProductImage";
 
 type ClientProfilePanelProps = {
   clientName: string;
@@ -141,7 +142,11 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
               <div key={product.id} className="flex flex-col group">
                 <div className="aspect-square overflow-hidden rounded-xl bg-slate-100 mb-3">
                   {product.image ? (
-                    <img className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src={product.image} alt={getProductDisplayName(product)} />
+                    <ProductImage
+                      product={product}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      alt={getProductDisplayName(product)}
+                    />
                   ) : (
                     <span className="material-symbols-outlined text-5xl text-slate-300 flex items-center justify-center h-full">image</span>
                   )}

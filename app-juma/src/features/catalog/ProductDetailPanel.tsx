@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
+import ProductImage from "../../components/ProductImage";
 
 type ProductDetailPanelProps = {
   product: Product;
@@ -10,8 +11,6 @@ type ProductDetailPanelProps = {
 
 function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanelProps) {
   const [quantity, setQuantity] = useState(1);
-  const detailImage = product.image || product.imageFull || product.imageCard;
-
   const description = useMemo(() => {
     if (product.subName?.trim()) return product.subName.trim();
     if (product.categoryName?.trim()) return `Pieza perteneciente a la categoria ${product.categoryName}.`;
@@ -33,9 +32,9 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
         <div className="overflow-hidden rounded bg-white p-4 shadow-subtle">
           <div className="mx-auto w-full max-w-[560px] overflow-hidden rounded bg-white">
             <div className="aspect-[4/5] overflow-hidden rounded bg-white">
-            {detailImage ? (
-              <img
-                src={detailImage}
+            {product.image ? (
+              <ProductImage
+                product={product}
                 alt={getProductDisplayName(product)}
                 className="h-full w-full object-cover object-center"
                 loading="eager"

@@ -236,8 +236,6 @@ function App() {
   });
   const [productImageData, setProductImageData] = useState("");
   const [productImageFile, setProductImageFile] = useState<File | null>(null);
-  const [hydratedProductImageIds, setHydratedProductImageIds] = useState<number[]>([]);
-  const [requestedProductImageIds, setRequestedProductImageIds] = useState<number[]>([]);
   const [focusedAdminProductId, setFocusedAdminProductId] = useState<number | null>(null);
   const [orderForm, setOrderForm] = useState({
     clientId: "",
@@ -260,16 +258,14 @@ function App() {
     rows.map((row) => ({
       ...row,
       enabled: row.enabled ?? true,
-      image: row.image ?? row.imageThumb ?? row.imageCard ?? row.imageFull ?? "",
-      imageThumb: row.imageThumb ?? row.image ?? "",
-      imageCard: row.imageCard ?? row.imageFull ?? row.image ?? "",
-      imageFull: row.imageFull ?? row.imageCard ?? row.image ?? "",
+      image: row.image ?? row.imageFull ?? "",
+      originalImage: row.originalImage ?? row.imageFull ?? row.image ?? "",
+      imageThumb: row.image ?? "",
+      imageCard: row.image ?? "",
+      imageFull: row.originalImage ?? row.imageFull ?? row.image ?? "",
     }));
 
-  const requestProductImages = useCallback((productIds: number[]) => {
-    if (productIds.length === 0) return;
-    setRequestedProductImageIds((prev) => [...new Set([...prev, ...productIds])]);
-  }, []);
+  const requestProductImages = useCallback((_productIds: number[]) => {}, []);
 
   const refreshClients = async () => {
     try {
@@ -303,7 +299,6 @@ function App() {
       if (productsResult.status === "fulfilled") {
         const normalizedProducts = normalizeProducts(productsResult.value);
         setProducts(normalizedProducts);
-        setHydratedProductImageIds(normalizedProducts.map((product) => product.id));
       } else {
         console.warn("No se pudieron cargar los productos.", productsResult.reason);
       }
@@ -333,76 +328,6 @@ function App() {
     }
     loadPublicData();
   }, []);
-
-  useEffect(() => {
-    const knownIds = new Set(products.map((product) => product.id));
-    setHydratedProductImageIds((prev) => prev.filter((id) => knownIds.has(id)));
-    setRequestedProductImageIds((prev) => prev.filter((id) => knownIds.has(id)));
-  }, [products]);
-
-  useEffect(() => {
-    const hydratedSet = new Set(hydratedProductImageIds);
-    const pendingIds = requestedProductImageIds.filter((id) => !hydratedSet.has(id));
-    if (pendingIds.length === 0) return;
-
-    let cancelled = false;
-
-    async function hydrateImages() {
-      const chunkSize = 12;
-      for (let index = 0; index < pendingIds.length; index += chunkSize) {
-        if (cancelled) return;
-        const chunk = pendingIds.slice(index, index + chunkSize);
-        try {
-          const imageRows = await api.getProductImages(chunk);
-          if (cancelled) return;
-
-          const imageMap = new Map(
-            imageRows
-              .filter((row) => row.image && !row.image.startsWith("data:image/"))
-              .map((row) => [row.id, row.image]),
-          );
-
-          if (imageMap.size > 0) {
-            setProducts((prev) =>
-              prev.map((product) => {
-                const nextImage = imageMap.get(product.id);
-                return nextImage ? { ...product, image: nextImage } : product;
-              }),
-            );
-          }
-        } catch (error) {
-          console.warn("No se pudieron hidratar imagenes de productos.", error);
-        } finally {
-          if (!cancelled) {
-            setHydratedProductImageIds((prev) => [...new Set([...prev, ...chunk])]);
-          }
-        }
-      }
-    }
-
-    void hydrateImages();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [hydratedProductImageIds, requestedProductImageIds]);
-
-  useEffect(() => {
-    if (cartItems.length === 0) return;
-    requestProductImages(cartItems.map((item) => item.productId));
-  }, [cartItems, requestProductImages]);
-
-  useEffect(() => {
-    if (!isAdminLogged) return;
-    if (!["productos", "inventario", "venta_rapida"].includes(activeTab)) return;
-    requestProductImages(products.map((product) => product.id));
-  }, [activeTab, isAdminLogged, products, requestProductImages]);
-
-  useEffect(() => {
-    if (!isAdminLogged || activeTab !== "pedidos" || orders.length === 0) return;
-    const orderProductIds = Array.from(new Set(orders.flatMap((order) => order.items.map((item) => item.productId))));
-    requestProductImages(orderProductIds);
-  }, [activeTab, isAdminLogged, orders, requestProductImages]);
 
   useEffect(() => {
     if (!isAdminLogged) return;
@@ -883,13 +808,10 @@ function App() {
         initialStock: stock,
         enabled: true,
         image: uploadedImages?.image ?? productImageData,
-        imageThumb: uploadedImages?.imageThumb ?? productImageData,
-        imageCard: uploadedImages?.imageCard ?? productImageData,
-        imageFull: uploadedImages?.imageFull ?? productImageData,
+        originalImage: uploadedImages?.originalImage ?? uploadedImages?.image ?? productImageData,
         sourceUrl: productForm.sourceUrl.trim(),
       });
       setProducts((prev) => [newProduct, ...prev]);
-      setHydratedProductImageIds((prev) => [...new Set([...prev, newProduct.id])]);
       
       setProductForm({ name: "", subName: "", categoryId: "", purchasePrice: "", salePrice: "", stock: "", sourceUrl: "", isFeatured: false });
       setProductImageData("");
@@ -1496,7 +1418,7 @@ function App() {
     }
     void (async () => {
       try {
-        const { previewUrl } = await optimizeFileForPreview(file, "product_card");
+        const { previewUrl } = await optimizeFileForPreview(file, "product_preview");
         setProductImageFile(file);
         setProductImageData(previewUrl);
       } catch (err) {
@@ -1517,14 +1439,14 @@ function App() {
               ? {
                   ...product,
                   image: nextImages.image,
-                  imageThumb: nextImages.imageThumb,
-                  imageCard: nextImages.imageCard,
-                  imageFull: nextImages.imageFull,
+                  originalImage: nextImages.originalImage,
+                  imageThumb: nextImages.image,
+                  imageCard: nextImages.image,
+                  imageFull: nextImages.originalImage,
                 }
               : product,
           ),
         );
-        setHydratedProductImageIds((prev) => [...new Set([...prev, productId])]);
       } catch (err) {
         console.error("Error updating image", err);
       }

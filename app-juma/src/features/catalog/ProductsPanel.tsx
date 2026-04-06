@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import type { Category, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
+import ProductImage from "../../components/ProductImage";
 
 type ProductForm = {
   name: string;
@@ -473,7 +474,7 @@ function ProductsPanel({
                 <div className="flex items-start gap-3">
                   <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
                     {product.image ? (
-                      <img className="h-full w-full object-cover" src={product.image} alt={displayName} />
+                      <ProductImage product={product} className="h-full w-full object-cover" alt={displayName} />
                     ) : (
                       <span className="material-symbols-outlined text-slate-400">image</span>
                     )}
@@ -571,7 +572,7 @@ function ProductsPanel({
                       <div className="flex items-center gap-3">
                         <div className="h-12 w-12 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden flex-shrink-0 flex items-center justify-center">
                           {product.image ? (
-                            <img className="h-full w-full object-cover" src={product.image} alt={displayName} />
+                            <ProductImage product={product} className="h-full w-full object-cover" alt={displayName} />
                           ) : (
                             <span className="material-symbols-outlined text-slate-400 text-xl">image</span>
                           )}
@@ -686,7 +687,11 @@ function ProductsPanel({
                 <div className="overflow-hidden rounded-xl border border-line bg-secondary">
                   <div className="flex aspect-square items-center justify-center">
                     {editingProduct.image ? (
-                      <img className="h-full w-full object-cover" src={editingProduct.image} alt={getProductDisplayName(editingProduct)} />
+                      <ProductImage
+                        product={editingProduct}
+                        className="h-full w-full object-cover"
+                        alt={getProductDisplayName(editingProduct)}
+                      />
                     ) : (
                       <span className="material-symbols-outlined text-5xl text-muted">image</span>
                     )}

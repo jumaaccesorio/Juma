@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { Client, NewOrderItem, Order, OrderStatus, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
+import ProductImage from "../../components/ProductImage";
 
 type OrderForm = {
   clientId: string;
@@ -606,7 +607,7 @@ function OrdersPanel({
                 >
                   <div className="h-16 w-16 mb-2 rounded bg-slate-100 flex items-center justify-center overflow-hidden">
                     {product.image ? (
-                      <img src={product.image} alt={getProductDisplayName(product)} className="h-full w-full object-cover" />
+                      <ProductImage product={product} alt={getProductDisplayName(product)} className="h-full w-full object-cover" />
                     ) : (
                       <span className="material-symbols-outlined text-slate-300">image</span>
                     )}
@@ -657,7 +658,7 @@ function OrdersPanel({
                   <div key={`row-${row.index}`} className="flex items-center gap-4 p-3 bg-white border border-slate-200 rounded-lg shadow-sm">
                     <div className="h-12 w-12 rounded bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
                       {row.product.image ? (
-                        <img src={row.product.image} alt={getProductDisplayName(row.product)} className="h-full w-full object-cover" />
+                        <ProductImage product={row.product} alt={getProductDisplayName(row.product)} className="h-full w-full object-cover" />
                       ) : (
                         <span className="material-symbols-outlined text-slate-300">image</span>
                       )}

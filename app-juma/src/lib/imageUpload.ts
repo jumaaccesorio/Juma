@@ -1,4 +1,4 @@
-export type UploadImageVariant = "product_thumb" | "product_card" | "product_full" | "panel" | "hero";
+export type UploadImageVariant = "product_preview" | "panel" | "hero";
 
 type VariantPreset = {
   maxWidth: number;
@@ -6,9 +6,7 @@ type VariantPreset = {
 };
 
 const VARIANT_PRESETS: Record<UploadImageVariant, VariantPreset> = {
-  product_thumb: { maxWidth: 240, quality: 0.72 },
-  product_card: { maxWidth: 720, quality: 0.8 },
-  product_full: { maxWidth: 1800, quality: 0.9 },
+  product_preview: { maxWidth: 720, quality: 0.78 },
   panel: { maxWidth: 1100, quality: 0.82 },
   hero: { maxWidth: 1400, quality: 0.82 },
 };
@@ -116,14 +114,4 @@ export async function optimizeFileForPreview(file: File, variant: UploadImageVar
   const optimized = await optimizeImageFile(file, variant);
   const previewUrl = await blobToDataUrl(optimized);
   return { optimized, previewUrl };
-}
-
-export async function optimizeProductImageVariants(file: File) {
-  const [thumb, card, full] = await Promise.all([
-    optimizeImageFile(file, "product_thumb"),
-    optimizeImageFile(file, "product_card"),
-    optimizeImageFile(file, "product_full"),
-  ]);
-
-  return { thumb, card, full };
 }

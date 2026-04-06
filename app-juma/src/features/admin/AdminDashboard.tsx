@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { Client, Order, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
+import ProductImage from "../../components/ProductImage";
 
 type AdminDashboardProps = {
   orders: Order[];
@@ -315,7 +316,7 @@ export default function AdminDashboard({ orders, clients, lowStockProducts, onSe
                   >
                     <div className="size-10 rounded-lg bg-secondary overflow-hidden flex-shrink-0">
                       {product.image ? (
-                        <img src={product.image} alt={getProductDisplayName(product)} className="w-full h-full object-cover" />
+                        <ProductImage product={product} alt={getProductDisplayName(product)} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-muted/40">
                           <span className="material-symbols-outlined text-[16px]">image</span>

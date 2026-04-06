@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Category, FeaturedPanel, HeroBanner, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
+import ProductImage from "../../components/ProductImage";
 
 type CatalogPanelProps = {
   products: Product[];
@@ -274,9 +275,9 @@ function CatalogPanel({
               >
                 <div className="relative mb-4 aspect-square overflow-hidden rounded bg-secondary/60">
                   {product.image ? (
-                    <img
+                    <ProductImage
+                      product={product}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      src={product.image}
                       alt={getProductDisplayName(product)}
                       loading="lazy"
                       decoding="async"
@@ -421,9 +422,9 @@ function CatalogPanel({
               >
                 <div className="relative aspect-square overflow-hidden rounded mb-4 bg-secondary/60 flex items-center justify-center">
                   {product.image ? (
-                    <img
+                    <ProductImage
+                      product={product}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      src={product.image}
                       alt={getProductDisplayName(product)}
                       loading="lazy"
                       decoding="async"

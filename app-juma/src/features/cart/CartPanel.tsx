@@ -1,5 +1,6 @@
 import type { Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
+import ProductImage from "../../components/ProductImage";
 
 type CartRow = { product: Product; quantity: number; subtotal: number };
 type OrderConfirmation = { orderId: number; customerName?: string };
@@ -95,10 +96,10 @@ function CartPanel({
                   <div key={row.product.id} className="flex flex-col items-center gap-6 rounded-xl border border-primary/5 bg-white p-6 shadow-sm dark:bg-slate-900/50 sm:flex-row">
                     <div className="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
                       {row.product.image ? (
-                        <img
+                        <ProductImage
+                          product={row.product}
                           className="h-full w-full object-cover"
                           alt={getProductDisplayName(row.product)}
-                          src={row.product.image}
                           loading="lazy"
                           decoding="async"
                         />
