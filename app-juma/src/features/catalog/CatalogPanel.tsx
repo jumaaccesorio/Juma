@@ -231,7 +231,12 @@ function CatalogPanel({
           </div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {featuredPanels.map((panel) => (
-              <div key={panel.id} className="group relative aspect-[4/5] overflow-hidden rounded bg-slate-200 shadow-subtle">
+              <button
+                key={panel.id}
+                type="button"
+                onClick={() => onPanelCategoryClick(panel.categoryId ?? null)}
+                className="group relative aspect-[4/5] overflow-hidden rounded bg-slate-200 text-left shadow-subtle"
+              >
                 <img
                   className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                   src={panel.image}
@@ -242,14 +247,11 @@ function CatalogPanel({
                 <div className="absolute inset-0 bg-gradient-to-t from-[rgba(45,45,45,0.45)] to-transparent" />
                 <div className="absolute inset-0 flex flex-col justify-end p-6">
                   <h3 className="font-headline text-xl font-medium tracking-tight text-white">{panel.title}</h3>
-                  <button
-                    onClick={() => onPanelCategoryClick(panel.categoryId ?? null)}
-                    className="mt-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-white/80 group-hover:text-white"
-                  >
+                  <span className="mt-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-white/80 group-hover:text-white">
                     {panel.cta} <span className="material-symbols-outlined text-sm">trending_flat</span>
-                  </button>
+                  </span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </section>
