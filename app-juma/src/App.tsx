@@ -169,22 +169,6 @@ function parseImportedProducts(csvText: string): ImportedProductRow[] {
   });
 }
 
-function inferHomeGroup(product: Product) {
-  const explicit = product.homeGroup?.trim();
-  if (explicit) return explicit;
-
-  const categoryName = product.categoryName?.trim() ?? "";
-  if (!categoryName) return "";
-
-  const [baseLabel] = categoryName.split("/");
-  return (baseLabel ?? "")
-    .replace(/\bAB\b/gi, "")
-    .replace(/\bAD\b/gi, "")
-    .replace(/\b925\b/gi, "925")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function App() {
   const scrollToCatalogSection = () => {
     window.setTimeout(() => {
@@ -206,7 +190,6 @@ function App() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<number | null>(null);
-  const [catalogHomeGroupFilter, setCatalogHomeGroupFilter] = useState<string | null>(null);
   const [catalogSearchQuery, setCatalogSearchQuery] = useState("");
   const [featuredPanels, setFeaturedPanels] = useState<FeaturedPanel[]>([]);
   const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
@@ -245,7 +228,6 @@ function App() {
     name: "",
     subName: "",
     categoryId: "",
-    homeGroup: "",
     purchasePrice: "",
     salePrice: "",
     stock: "",
@@ -602,13 +584,6 @@ function App() {
   const cartTotal = useMemo(() => cartRows.reduce((acc, row) => acc + row.subtotal, 0), [cartRows]);
   const cartItemsCount = useMemo(() => cartItems.reduce((acc, item) => acc + item.quantity, 0), [cartItems]);
   const catalogProducts = useMemo(() => products.filter((product) => product.enabled), [products]);
-  const availableHomeGroups = useMemo(
-    () =>
-      Array.from(
-        new Set(products.map((product) => inferHomeGroup(product)).filter(Boolean)),
-      ).sort((a, b) => a.localeCompare(b)),
-    [products],
-  );
 
   const addCategory = async (name: string, parentId?: number | null) => {
     try {
@@ -648,16 +623,7 @@ function App() {
   };
 
   const navigateToCategoryInCatalog = (categoryId: number | null) => {
-    setCatalogHomeGroupFilter(null);
     setCatalogCategoryFilter(categoryId);
-    setCatalogViewMode("catalog");
-    setActiveTab("catalogo");
-    scrollToCatalogSection();
-  };
-
-  const navigateToHomeGroupInCatalog = (homeGroup: string | null) => {
-    setCatalogCategoryFilter(null);
-    setCatalogHomeGroupFilter(homeGroup);
     setCatalogViewMode("catalog");
     setActiveTab("catalogo");
     scrollToCatalogSection();
@@ -666,7 +632,6 @@ function App() {
   const openCatalogHome = () => {
     setCatalogSearchQuery("");
     setCatalogCategoryFilter(null);
-    setCatalogHomeGroupFilter(null);
     setSelectedCatalogProductId(null);
     setCatalogViewMode("home");
     setActiveTab("catalogo");
@@ -678,7 +643,6 @@ function App() {
   const openFullCatalog = () => {
     setSelectedCatalogProductId(null);
     setCatalogCategoryFilter(null);
-    setCatalogHomeGroupFilter(null);
     setCatalogViewMode("catalog");
     setActiveTab("catalogo");
     scrollToCatalogSection();
@@ -846,12 +810,11 @@ function App() {
         enabled: true,
         image: uploadedImages?.image ?? productImageData,
         originalImage: uploadedImages?.originalImage ?? uploadedImages?.image ?? productImageData,
-        homeGroup: productForm.homeGroup.trim(),
         sourceUrl: productForm.sourceUrl.trim(),
       });
       setProducts((prev) => [newProduct, ...prev]);
       
-      setProductForm({ name: "", subName: "", categoryId: "", homeGroup: "", purchasePrice: "", salePrice: "", stock: "", sourceUrl: "", isFeatured: false });
+      setProductForm({ name: "", subName: "", categoryId: "", purchasePrice: "", salePrice: "", stock: "", sourceUrl: "", isFeatured: false });
       setProductImageData("");
       setProductImageFile(null);
       setActiveTab("carrito");
@@ -1721,13 +1684,10 @@ function App() {
                   favoriteProductIds={new Set(favorites.map(f => f.productId))}
                   onToggleFavorite={toggleFavorite}
                   initialCategory={catalogCategoryFilter}
-                  initialHomeGroup={catalogHomeGroupFilter}
                   searchQuery={catalogSearchQuery}
                   onSearchChange={setCatalogSearchQuery}
                   onCategoryChange={setCatalogCategoryFilter}
-                  onHomeGroupChange={setCatalogHomeGroupFilter}
                   onPanelCategoryClick={navigateToCategoryInCatalog}
-                  onHomeGroupClick={navigateToHomeGroupInCatalog}
                   onOpenFullCatalog={openFullCatalog}
                 />
               </div>
@@ -1788,7 +1748,6 @@ function App() {
                   products={products}
                   categories={categories}
                   productForm={productForm}
-                  availableHomeGroups={availableHomeGroups}
                   productImageData={productImageData}
                   onProductFormChange={setProductForm}
                   onProductImageChange={updateProductImage}
@@ -2085,13 +2044,10 @@ function App() {
             favoriteProductIds={new Set(favorites.map(f => f.productId))}
             onToggleFavorite={toggleFavorite}
             initialCategory={catalogCategoryFilter}
-            initialHomeGroup={catalogHomeGroupFilter}
             searchQuery={catalogSearchQuery}
             onSearchChange={setCatalogSearchQuery}
             onCategoryChange={setCatalogCategoryFilter}
-            onHomeGroupChange={setCatalogHomeGroupFilter}
             onPanelCategoryClick={navigateToCategoryInCatalog}
-            onHomeGroupClick={navigateToHomeGroupInCatalog}
             onOpenFullCatalog={openFullCatalog}
           />
         )

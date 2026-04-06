@@ -16,13 +16,10 @@ type CatalogPanelProps = {
   favoriteProductIds: Set<number>;
   onToggleFavorite: (productId: number) => void;
   initialCategory: number | null;
-  initialHomeGroup: string | null;
   searchQuery: string;
   onSearchChange: (value: string) => void;
   onCategoryChange: (cat: number | null) => void;
-  onHomeGroupChange: (group: string | null) => void;
   onPanelCategoryClick: (categoryId: number | null) => void;
-  onHomeGroupClick: (group: string | null) => void;
   onOpenFullCatalog: () => void;
 };
 
@@ -39,19 +36,15 @@ function CatalogPanel({
   favoriteProductIds,
   onToggleFavorite,
   initialCategory,
-  initialHomeGroup,
   searchQuery,
   onSearchChange,
   onCategoryChange,
-  onHomeGroupChange,
   onPanelCategoryClick,
-  onHomeGroupClick,
   onOpenFullCatalog,
 }: CatalogPanelProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [selectedRootCategory, setSelectedRootCategory] = useState<number | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<number | null>(null);
-  const [selectedHomeGroup, setSelectedHomeGroup] = useState<string | null>(null);
   const productsGridRef = useRef<HTMLElement | null>(null);
   const normalizeText = (value: string) =>
     value
@@ -59,50 +52,11 @@ function CatalogPanel({
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
       .trim();
-  const getProductHomeGroup = (product: Product) => {
-    const explicit = product.homeGroup?.trim();
-    if (explicit) return explicit;
-
-    const categoryName = product.categoryName?.trim() ?? "";
-    if (!categoryName) return "";
-
-    const [baseLabel] = categoryName.split("/");
-    return (baseLabel ?? "")
-      .replace(/\bAB\b/gi, "")
-      .replace(/\bAD\b/gi, "")
-      .replace(/\b925\b/gi, "925")
-      .replace(/\s+/g, " ")
-      .trim();
-  };
   const rootCategories = useMemo(
     () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
     [categories],
   );
   const featuredProducts = useMemo(() => products.filter((product) => product.isFeatured).slice(0, 8), [products]);
-  const homeGroupCards = useMemo(() => {
-    const groups = new Map<string, Product[]>();
-
-    products.forEach((product) => {
-      const group = getProductHomeGroup(product);
-      if (!group) return;
-      const key = normalizeText(group);
-      const current = groups.get(key) ?? [];
-      current.push(product);
-      groups.set(key, current);
-    });
-
-    return Array.from(groups.values())
-      .map((groupProducts) => {
-        const [firstProduct] = groupProducts;
-        return {
-          key: normalizeText(getProductHomeGroup(firstProduct)),
-          label: getProductHomeGroup(firstProduct),
-          count: groupProducts.length,
-          coverImage: firstProduct.image || firstProduct.originalImage || "",
-        };
-      })
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [products]);
   const subcategories = useMemo(
     () =>
       categories
@@ -110,10 +64,6 @@ function CatalogPanel({
         .sort((a, b) => a.name.localeCompare(b.name)),
     [categories, selectedRootCategory],
   );
-
-  useEffect(() => {
-    setSelectedHomeGroup(initialHomeGroup?.trim() || null);
-  }, [initialHomeGroup]);
 
   useEffect(() => {
     if (!initialCategory) {
@@ -142,22 +92,12 @@ function CatalogPanel({
   const handleCategoryChange = (category: number | null) => {
     setSelectedRootCategory(category);
     setSelectedSubcategory(null);
-    setSelectedHomeGroup(null);
-    onHomeGroupChange(null);
     onCategoryChange(category);
   };
 
   const handleSubcategoryChange = (category: number | null) => {
     setSelectedSubcategory(category);
     onCategoryChange(category ?? selectedRootCategory);
-  };
-
-  const handleHomeGroupSelection = (group: string | null) => {
-    setSelectedRootCategory(null);
-    setSelectedSubcategory(null);
-    setSelectedHomeGroup(group);
-    onCategoryChange(null);
-    onHomeGroupChange(group);
   };
 
   const heroTitleLines = heroBanner?.title.split("\n") ?? [];
@@ -169,8 +109,6 @@ function CatalogPanel({
   const sectionTitle =
     viewMode === "search" && searchQuery.trim()
       ? "Resultados de busqueda"
-      : selectedHomeGroup
-        ? `Coleccion: ${selectedHomeGroup}`
       : selectedCategoryName
         ? `Categoria: ${selectedCategoryName}`
         : "Catalogo completo";
@@ -178,11 +116,6 @@ function CatalogPanel({
     const activeCategoryId = selectedSubcategory ?? selectedRootCategory;
     const normalizedSearch = normalizeText(searchQuery);
     let filtered = products;
-
-    if (selectedHomeGroup) {
-      const normalizedHomeGroup = normalizeText(selectedHomeGroup);
-      filtered = filtered.filter((product) => normalizeText(getProductHomeGroup(product)) === normalizedHomeGroup);
-    }
 
     if (activeCategoryId) {
       const includedCategoryIds = new Set<number>();
@@ -208,7 +141,7 @@ function CatalogPanel({
       );
       return haystack.includes(normalizedSearch);
     });
-  }, [categories, products, searchQuery, selectedHomeGroup, selectedRootCategory, selectedSubcategory]);
+  }, [categories, products, searchQuery, selectedRootCategory, selectedSubcategory]);
 
   useEffect(() => {
     const root = panelRef.current;
@@ -315,45 +248,6 @@ function CatalogPanel({
                   <h3 className="font-headline text-xl font-medium tracking-tight text-white">{panel.title}</h3>
                   <span className="mt-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-white/80 group-hover:text-white">
                     {panel.cta} <span className="material-symbols-outlined text-sm">trending_flat</span>
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </section>
-      ) : null}
-      {homeGroupCards.length > 0 ? (
-        <section className="bg-primary/[0.03] px-6 py-20 md:px-40">
-          <div className="mb-12 flex flex-col items-center text-center">
-            <span className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-primary">Compra por tipo</span>
-            <h2 className="font-headline text-3xl font-light text-carbon">Explora por coleccion</h2>
-            <p className="mt-3 max-w-2xl text-sm text-muted">
-              Agrupa piezas de distintos materiales bajo una misma familia visual para que encontrar aros, anillos o pulseras sea mucho mas rapido.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {homeGroupCards.map((group) => (
-              <button
-                key={group.key}
-                type="button"
-                onClick={() => onHomeGroupClick(group.label)}
-                className="group relative aspect-[4/5] overflow-hidden rounded bg-slate-200 text-left shadow-subtle"
-              >
-                {group.coverImage ? (
-                  <img
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    src={group.coverImage}
-                    alt={group.label}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                ) : null}
-                <div className="absolute inset-0 bg-gradient-to-t from-[rgba(45,45,45,0.55)] to-transparent" />
-                <div className="absolute inset-0 flex flex-col justify-end p-6">
-                  <h3 className="font-headline text-xl font-medium tracking-tight text-white">{group.label}</h3>
-                  <span className="mt-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-white/80 group-hover:text-white">
-                    Ver {group.count} modelo{group.count === 1 ? "" : "s"}
-                    <span className="material-symbols-outlined text-sm">trending_flat</span>
                   </span>
                 </div>
               </button>
@@ -469,25 +363,11 @@ function CatalogPanel({
           </label>
         </div>
         <div className="mb-10 flex flex-wrap gap-3">
-          {homeGroupCards.map((group) => (
-            <button
-              key={group.key}
-              type="button"
-              onClick={() => handleHomeGroupSelection(group.label)}
-              className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
-                selectedHomeGroup === group.label ? "border-carbon bg-carbon text-white" : "border-carbon/20 bg-white text-carbon hover:border-carbon"
-              }`}
-            >
-              {group.label}
-            </button>
-          ))}
-        </div>
-        <div className="mb-10 flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => handleCategoryChange(null)}
             className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
-              selectedRootCategory == null && selectedHomeGroup == null ? "border-primary bg-primary text-white" : "border-primary/20 bg-white text-primary hover:border-primary"
+              selectedRootCategory == null ? "border-primary bg-primary text-white" : "border-primary/20 bg-white text-primary hover:border-primary"
             }`}
           >
             Todas

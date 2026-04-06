@@ -7,7 +7,6 @@ const PRODUCT_PUBLIC_PREFIX = `/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET
 const PRODUCT_SIGNED_PREFIX = `/storage/v1/object/sign/${PRODUCT_IMAGES_BUCKET}/`;
 const SIGNED_IMAGE_TTL_SECONDS = 60 * 60 * 24 * 7;
 const SIGNED_IMAGE_CACHE_TTL_MS = 1000 * 60 * 60 * 6;
-const PRODUCT_SOURCE_METADATA_PREFIX = "__JUMA_META__:";
 const resolvedStorageImageCache = new Map<string, { url: string; expiresAt: number }>();
 let supportsProductImageVariants: boolean | null = null;
 
@@ -272,10 +271,6 @@ export const api = {
   },
 
   async addProduct(product: Partial<Product>): Promise<Product> {
-    const serializedSource = serializeProductSourceField({
-      sourceUrl: product.sourceUrl,
-      homeGroup: product.homeGroup,
-    });
     const basePayload = {
       name: product.name ?? "",
       sub_name: product.subName ?? "",
@@ -287,7 +282,7 @@ export const api = {
       initial_stock: product.initialStock ?? product.stock ?? 0,
       enabled: product.enabled ?? true,
       image: product.image ?? "",
-      source_url: serializedSource,
+      source_url: product.sourceUrl ?? "",
     };
 
     const payload =
@@ -327,15 +322,7 @@ export const api = {
     if (updates.stock !== undefined) basePayload.stock = updates.stock;
     if (updates.enabled !== undefined) basePayload.enabled = updates.enabled;
     if (updates.image !== undefined) basePayload.image = updates.image;
-    if (updates.sourceUrl !== undefined || updates.homeGroup !== undefined) {
-      const currentSource = await supabase.from("products").select("source_url").eq("id", id).maybeSingle();
-      if (currentSource.error) throw currentSource.error;
-      const currentMetadata = parseProductSourceField(currentSource.data?.source_url);
-      basePayload.source_url = serializeProductSourceField({
-        sourceUrl: updates.sourceUrl ?? currentMetadata.sourceUrl,
-        homeGroup: updates.homeGroup ?? currentMetadata.homeGroup,
-      });
-    }
+    if (updates.sourceUrl !== undefined) basePayload.source_url = updates.sourceUrl;
 
     const payload =
       supportsProductImageVariants === false
@@ -751,7 +738,6 @@ async function resolveProductRows(rows: any[]) {
 function mapProduct(row: any): Product {
   const rawName = typeof row.name === "string" ? row.name.trim() : "";
   const rawSubName = typeof row.sub_name === "string" ? row.sub_name.trim() : "";
-  const sourceMetadata = parseProductSourceField(row.source_url);
   const normalizedFull = normalizeRenderableProductImage(row.image_full, true);
   const normalizedLegacy = normalizeRenderableProductImage(row.image, true);
   const normalizedImage = normalizedLegacy || normalizedFull;
@@ -772,35 +758,21 @@ function mapProduct(row: any): Product {
     imageThumb: normalizedImage,
     imageCard: normalizedImage,
     imageFull: normalizedFull || normalizedImage,
-    sourceUrl: sourceMetadata.sourceUrl,
-    homeGroup: sourceMetadata.homeGroup,
+    sourceUrl: parseProductSourceUrl(row.source_url),
     createdAt: row.created_at ?? "",
   };
 }
 
-function parseProductSourceField(rawValue: unknown): { sourceUrl: string; homeGroup: string } {
+function parseProductSourceUrl(rawValue: unknown): string {
   const raw = typeof rawValue === "string" ? rawValue.trim() : "";
-  if (!raw) return { sourceUrl: "", homeGroup: "" };
-  if (!raw.startsWith(PRODUCT_SOURCE_METADATA_PREFIX)) {
-    return { sourceUrl: raw, homeGroup: "" };
-  }
-
+  if (!raw) return "";
+  if (!raw.startsWith("__JUMA_META__:")) return raw;
   try {
-    const parsed = JSON.parse(raw.slice(PRODUCT_SOURCE_METADATA_PREFIX.length));
-    return {
-      sourceUrl: typeof parsed?.sourceUrl === "string" ? parsed.sourceUrl.trim() : "",
-      homeGroup: typeof parsed?.homeGroup === "string" ? parsed.homeGroup.trim() : "",
-    };
+    const parsed = JSON.parse(raw.slice("__JUMA_META__:".length));
+    return typeof parsed?.sourceUrl === "string" ? parsed.sourceUrl.trim() : "";
   } catch {
-    return { sourceUrl: raw, homeGroup: "" };
+    return raw;
   }
-}
-
-function serializeProductSourceField(input: { sourceUrl?: string; homeGroup?: string }): string {
-  const sourceUrl = typeof input.sourceUrl === "string" ? input.sourceUrl.trim() : "";
-  const homeGroup = typeof input.homeGroup === "string" ? input.homeGroup.trim() : "";
-  if (!homeGroup) return sourceUrl;
-  return `${PRODUCT_SOURCE_METADATA_PREFIX}${JSON.stringify({ sourceUrl, homeGroup })}`;
 }
 
 function isMissingColumnError(error: unknown, columnName: string) {

@@ -8,7 +8,6 @@ type ProductForm = {
   name: string;
   subName: string;
   categoryId: string;
-  homeGroup: string;
   purchasePrice: string;
   salePrice: string;
   stock: string;
@@ -20,7 +19,6 @@ type ProductDraft = {
   name: string;
   subName: string;
   categoryId: string;
-  homeGroup: string;
   purchasePrice: string;
   salePrice: string;
   stock: string;
@@ -31,7 +29,6 @@ type ProductsPanelProps = {
   products: Product[];
   categories: Category[];
   productForm: ProductForm;
-  availableHomeGroups: string[];
   productImageData: string;
   onProductFormChange: (next: ProductForm) => void;
   onProductImageChange: (file: File | null) => void;
@@ -50,7 +47,6 @@ function buildDraft(product: Product): ProductDraft {
     name: product.name ?? "",
     subName: product.subName ?? "",
     categoryId: product.categoryId ? String(product.categoryId) : "",
-    homeGroup: product.homeGroup ?? "",
     purchasePrice: String(product.purchasePrice ?? 0),
     salePrice: String(product.salePrice ?? 0),
     stock: String(product.stock ?? 0),
@@ -62,7 +58,6 @@ function ProductsPanel({
   products,
   categories,
   productForm,
-  availableHomeGroups,
   productImageData,
   onProductFormChange,
   onProductImageChange,
@@ -168,7 +163,6 @@ function ProductsPanel({
       purchasePrice,
       salePrice,
       stock,
-      homeGroup: draft.homeGroup.trim(),
       isFeatured: draft.isFeatured,
     });
   };
@@ -312,16 +306,6 @@ function ProductsPanel({
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Grupo visual de inicio (Opcional)</label>
-              <input
-                list="home-group-options"
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
-                placeholder="Ej. Aros, Anillos, Pulseras"
-                value={productForm.homeGroup}
-                onChange={(e) => onProductFormChange({ ...productForm, homeGroup: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">Precio Compra ($)</label>
               <input
                 required
@@ -379,12 +363,6 @@ function ProductsPanel({
               </label>
             </div>
           </div>
-
-          <datalist id="home-group-options">
-            {availableHomeGroups.map((group) => (
-              <option key={group} value={group} />
-            ))}
-          </datalist>
 
           <div className="mb-8 flex flex-col gap-4 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:gap-6">
             <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-200">
@@ -772,16 +750,6 @@ function ProductsPanel({
                       </option>
                     ))}
                   </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Grupo visual</label>
-                  <input
-                    list="home-group-options"
-                    className="w-full rounded-lg border border-line bg-white px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-primary/20"
-                    value={editingDraft.homeGroup}
-                    onChange={(e) => updateDraft(editingProduct.id, "homeGroup", e.target.value)}
-                    placeholder="Ej. Aros"
-                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Stock</label>
