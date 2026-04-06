@@ -9,7 +9,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "optimize:images": "node ./scripts/optimize-storage-images.mjs"
+    "optimize:images": "node ./scripts/optimize-storage-images.mjs",
+    "export:product-images": "node ./scripts/export-product-images.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.2",
