@@ -365,7 +365,7 @@ function CatalogPanel({
         <div className="mb-12 flex flex-col items-center text-center">
           <span className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-primary">Piezas elegidas</span>
           <h2 className="font-headline text-3xl font-light text-carbon">Destacados del inicio</h2>
-          <p className="mt-3 max-w-2xl text-sm text-muted">Acá aparecen solamente los productos que marques como destacados desde el editor.</p>
+          <p className="mt-3 max-w-2xl text-sm text-muted">Piezas que enamoran a primera vista, elegidas para resaltar lo mas lindo, delicado y deseado de Juma.</p>
         </div>
         {featuredProducts.length === 0 ? (
           <div className="rounded border border-dashed border-line bg-secondary/35 px-6 py-14 text-center text-sm text-muted">

@@ -1301,9 +1301,6 @@ function App() {
     requestProductImages([productId]);
     setSelectedCatalogProductId(productId);
     setActiveTab("catalogo");
-    window.requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
   };
 
   const addToCart = (productId: number, quantity = 1) => {

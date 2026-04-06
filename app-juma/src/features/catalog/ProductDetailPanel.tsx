@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
 import ProductImage from "../../components/ProductImage";
@@ -11,14 +11,28 @@ type ProductDetailPanelProps = {
 
 function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanelProps) {
   const [quantity, setQuantity] = useState(1);
+  const detailRef = useRef<HTMLDivElement | null>(null);
   const description = useMemo(() => {
     if (product.subName?.trim()) return product.subName.trim();
     if (product.categoryName?.trim()) return `Pieza perteneciente a la categoria ${product.categoryName}.`;
     return "Accesorio disponible en la tienda online de Juma Accessory.";
   }, [product.categoryName, product.subName]);
 
+  useEffect(() => {
+    const node = detailRef.current;
+    if (!node) return;
+
+    window.requestAnimationFrame(() => {
+      node.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
+      });
+    });
+  }, [product.id]);
+
   return (
-    <div className="mx-auto w-full max-w-7xl px-6 py-10 md:px-20">
+    <div ref={detailRef} className="mx-auto w-full max-w-7xl px-6 py-10 md:px-20">
       <button
         type="button"
         onClick={onBack}
