@@ -22,6 +22,7 @@ type ProductDraft = {
   purchasePrice: string;
   salePrice: string;
   stock: string;
+  sourceUrl: string;
   isFeatured: boolean;
 };
 
@@ -50,6 +51,7 @@ function buildDraft(product: Product): ProductDraft {
     purchasePrice: String(product.purchasePrice ?? 0),
     salePrice: String(product.salePrice ?? 0),
     stock: String(product.stock ?? 0),
+    sourceUrl: product.sourceUrl ?? "",
     isFeatured: Boolean(product.isFeatured),
   };
 }
@@ -163,6 +165,7 @@ function ProductsPanel({
       purchasePrice,
       salePrice,
       stock,
+      sourceUrl: draft.sourceUrl.trim(),
       isFeatured: draft.isFeatured,
     });
   };
@@ -779,6 +782,15 @@ function ProductsPanel({
                     className="w-full rounded-lg border border-line bg-white px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-primary/20"
                     value={editingDraft.salePrice}
                     onChange={(e) => updateDraft(editingProduct.id, "salePrice", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-xs font-bold uppercase tracking-[0.16em] text-muted">URL reposicion</label>
+                  <input
+                    className="w-full rounded-lg border border-line bg-white px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-primary/20"
+                    value={editingDraft.sourceUrl}
+                    onChange={(e) => updateDraft(editingProduct.id, "sourceUrl", e.target.value)}
+                    placeholder="Enlace al proveedor"
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">

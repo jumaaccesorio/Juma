@@ -11,6 +11,7 @@ import AdminDashboard from "./features/admin/AdminDashboard";
 import AdminSidebar from "./features/admin/AdminSidebar";
 import AdminTopNav from "./features/admin/AdminTopNav";
 import QuickSalePanel from "./features/admin/QuickSalePanel";
+import RestockCartPanel from "./features/admin/RestockCartPanel";
 import CartPanel from "./features/cart/CartPanel";
 import CatalogPanel from "./features/catalog/CatalogPanel";
 import ProductDetailPanel from "./features/catalog/ProductDetailPanel";
@@ -333,7 +334,7 @@ function App() {
     if (!isAdminLogged) return;
 
     const needsClients = ["dashboard", "venta_rapida", "clientes", "pedidos"].includes(activeTab);
-    const needsOrders = ["dashboard", "pedidos", "clientes", "finanzas"].includes(activeTab);
+    const needsOrders = ["dashboard", "pedidos", "reposicion", "clientes", "finanzas"].includes(activeTab);
     const needsFinance = activeTab === "finanzas";
 
     let cancelled = false;
@@ -404,7 +405,7 @@ function App() {
   useEffect(() => {
     if (!isAdminLogged) return;
 
-    const shouldRefreshOrders = ["dashboard", "pedidos", "clientes", "finanzas"].includes(activeTab);
+    const shouldRefreshOrders = ["dashboard", "pedidos", "reposicion", "clientes", "finanzas"].includes(activeTab);
     if (!shouldRefreshOrders) return;
 
     let cancelled = false;
@@ -1630,7 +1631,7 @@ function App() {
     }
   };
 
-  const isAdminTab = isAdminLogged && ["dashboard", "catalogo", "venta_rapida", "inicio_admin", "categorias", "productos", "clientes", "inventario", "pedidos", "finanzas"].includes(activeTab);
+  const isAdminTab = isAdminLogged && ["dashboard", "catalogo", "venta_rapida", "inicio_admin", "categorias", "productos", "clientes", "inventario", "pedidos", "reposicion", "finanzas"].includes(activeTab);
 
   if (isAdminTab) {
     return (
@@ -1819,6 +1820,16 @@ function App() {
               </div>
             )}
 
+            {activeTab === "reposicion" && (
+              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
+                <RestockCartPanel
+                  orders={orders}
+                  products={products}
+                  onOpenProductDetail={openAdminProductDetail}
+                />
+              </div>
+            )}
+
             {activeTab === "finanzas" && (
               <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
                 <FinancePanel
@@ -1836,7 +1847,7 @@ function App() {
                 { id: "dashboard", label: "Inicio", icon: "dashboard" },
                 { id: "venta_rapida", label: "Ventas", icon: "payments" },
                 { id: "inventario", label: "Stock", icon: "inventory_2" },
-                { id: "pedidos", label: "Pedidos", icon: "shopping_bag" },
+                { id: "reposicion", label: "Repos.", icon: "add_shopping_cart" },
               ].map((item) => {
                 const isActive = activeTab === item.id;
                 return (

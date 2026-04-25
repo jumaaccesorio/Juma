@@ -77,7 +77,23 @@ CREATE TABLE IF NOT EXISTS order_items (
 );
 
 -- ============================================================
--- 6. EGRESOS MANUALES
+-- 6. CARRITO DE REPOSICION
+-- ============================================================
+CREATE TABLE IF NOT EXISTS restock_cart_items (
+  id              SERIAL PRIMARY KEY,
+  product_id      INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  requested       BOOLEAN NOT NULL DEFAULT FALSE,
+  in_cart         BOOLEAN NOT NULL DEFAULT FALSE,
+  hidden          BOOLEAN NOT NULL DEFAULT FALSE,
+  is_manual       BOOLEAN NOT NULL DEFAULT FALSE,
+  manual_quantity INT NOT NULL DEFAULT 0,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(product_id)
+);
+
+-- ============================================================
+-- 7. EGRESOS MANUALES
 -- ============================================================
 CREATE TABLE IF NOT EXISTS finance_expenses (
   id          SERIAL PRIMARY KEY,
@@ -101,7 +117,7 @@ ALTER TABLE finance_expenses
   ADD CONSTRAINT finance_expenses_type_check CHECK (type IN ('INGRESO', 'EGRESO'));
 
 -- ============================================================
--- 7. FAVORITOS
+-- 8. FAVORITOS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS favorites (
   id         SERIAL PRIMARY KEY,
@@ -112,7 +128,7 @@ CREATE TABLE IF NOT EXISTS favorites (
 );
 
 -- ============================================================
--- 8. BANNER PRINCIPAL
+-- 9. BANNER PRINCIPAL
 -- ============================================================
 CREATE TABLE IF NOT EXISTS hero_banner (
   id       INT PRIMARY KEY DEFAULT 1,
@@ -133,7 +149,7 @@ VALUES (
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
--- 9. CARTELES DESTACADOS
+-- 10. CARTELES DESTACADOS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS featured_panels (
   id          TEXT PRIMARY KEY,
@@ -153,13 +169,14 @@ INSERT INTO featured_panels (id, title, cta, image, class_name) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
--- 10. ROW LEVEL SECURITY (RLS)
+-- 11. ROW LEVEL SECURITY (RLS)
 -- ============================================================
 ALTER TABLE categories       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE clients          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE restock_cart_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE favorites        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE hero_banner      ENABLE ROW LEVEL SECURITY;
@@ -180,6 +197,9 @@ CREATE POLICY "open_orders" ON orders FOR ALL TO anon, authenticated USING (true
 DROP POLICY IF EXISTS "open_order_items" ON order_items;
 CREATE POLICY "open_order_items" ON order_items FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "open_restock_cart_items" ON restock_cart_items;
+CREATE POLICY "open_restock_cart_items" ON restock_cart_items FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
 DROP POLICY IF EXISTS "open_finance_expenses" ON finance_expenses;
 CREATE POLICY "open_finance_expenses" ON finance_expenses FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
@@ -193,7 +213,7 @@ DROP POLICY IF EXISTS "open_featured_panels" ON featured_panels;
 CREATE POLICY "open_featured_panels" ON featured_panels FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 -- ============================================================
--- 11. PERMISOS
+-- 12. PERMISOS
 -- ============================================================
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;

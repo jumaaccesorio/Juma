@@ -1,4 +1,4 @@
-import type { Category, Client, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, Order, OrderItem, Product } from "../types";
+import type { Category, Client, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, Order, OrderItem, Product, RestockCartItem } from "../types";
 import { supabase } from "./supabase";
 import { dataUrlToOptimizedFile, optimizeImageFile, type UploadImageVariant } from "./imageUpload";
 
@@ -477,6 +477,36 @@ export const api = {
     if (query.error) throw query.error;
   },
 
+  async getRestockCartItems(): Promise<RestockCartItem[]> {
+    const query = await supabase
+      .from("restock_cart_items")
+      .select("product_id, requested, in_cart, hidden, is_manual, manual_quantity, updated_at")
+      .order("updated_at", { ascending: false });
+    if (query.error) throw query.error;
+    return (query.data ?? []).map(mapRestockCartItem);
+  },
+
+  async upsertRestockCartItem(productId: number, updates: Partial<RestockCartItem>): Promise<RestockCartItem> {
+    const query = await supabase
+      .from("restock_cart_items")
+      .upsert(
+        {
+          product_id: productId,
+          requested: updates.requested ?? false,
+          in_cart: updates.inCart ?? false,
+          hidden: updates.hidden ?? false,
+          is_manual: updates.manual ?? false,
+          manual_quantity: updates.quantity ?? 0,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "product_id" },
+      )
+      .select("product_id, requested, in_cart, hidden, is_manual, manual_quantity, updated_at")
+      .single();
+    if (query.error) throw query.error;
+    return mapRestockCartItem(query.data);
+  },
+
   async getFavorites(clientId: number): Promise<Favorite[]> {
     const query = await supabase
       .from("favorites")
@@ -901,6 +931,18 @@ function mapOrder(row: any): Order {
       unitSalePrice: Number(item.unit_sale_price ?? 0),
       unitPurchasePrice: Number(item.unit_purchase_price ?? 0),
     })),
+  };
+}
+
+function mapRestockCartItem(row: any): RestockCartItem {
+  return {
+    productId: Number(row.product_id),
+    requested: Boolean(row.requested),
+    inCart: Boolean(row.in_cart),
+    hidden: Boolean(row.hidden),
+    manual: Boolean(row.is_manual),
+    quantity: Number(row.manual_quantity ?? 0),
+    updatedAt: row.updated_at ?? "",
   };
 }
 

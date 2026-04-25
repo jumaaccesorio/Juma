@@ -1,4 +1,4 @@
-export type Tab = "dashboard" | "inicio_admin" | "categorias" | "clientes" | "productos" | "catalogo" | "inventario" | "pedidos" | "finanzas" | "carrito" | "perfil" | "venta_rapida";
+export type Tab = "dashboard" | "inicio_admin" | "categorias" | "clientes" | "productos" | "catalogo" | "inventario" | "pedidos" | "reposicion" | "finanzas" | "carrito" | "perfil" | "venta_rapida";
 export type OrderStatus = "PENDIENTE" | "REALIZADO";
 export type CartItem = { productId: number; quantity: number };
 
@@ -63,6 +63,16 @@ export type Order = {
   date: string;
   status: OrderStatus;
   items: OrderItem[];
+};
+
+export type RestockCartItem = {
+  productId: number;
+  requested: boolean;
+  inCart: boolean;
+  hidden: boolean;
+  manual: boolean;
+  quantity: number;
+  updatedAt: string;
 };
 
 export type FinanceExpense = {
