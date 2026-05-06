@@ -694,6 +694,7 @@ function ProductsPanel({
                         product={editingProduct}
                         className="h-full w-full object-cover"
                         alt={getProductDisplayName(editingProduct)}
+                        fullResolution
                       />
                     ) : (
                       <span className="material-symbols-outlined text-5xl text-muted">image</span>

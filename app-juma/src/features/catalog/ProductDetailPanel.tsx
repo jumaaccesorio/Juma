@@ -54,6 +54,7 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
+                fullResolution
               />
             ) : (
               <div className="flex h-full items-center justify-center">

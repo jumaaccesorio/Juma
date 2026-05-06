@@ -4,13 +4,14 @@ import type { Product } from "../types";
 
 type ProductImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
   product: Pick<Product, "image" | "originalImage">;
+  fullResolution?: boolean;
 };
 
-function ProductImage({ product, alt, className, loading = "lazy", decoding = "async", ...props }: ProductImageProps) {
+function ProductImage({ product, alt, className, loading = "lazy", decoding = "async", fullResolution = false, ...props }: ProductImageProps) {
   const previewSrc = product.image?.trim() || "";
   const originalSrc = product.originalImage?.trim() || "";
   const hasPreview = Boolean(previewSrc);
-  const hasOriginal = Boolean(originalSrc) && originalSrc !== previewSrc;
+  const hasOriginal = fullResolution && Boolean(originalSrc) && originalSrc !== previewSrc;
   const [isOriginalReady, setIsOriginalReady] = useState(!hasOriginal);
 
   useEffect(() => {
