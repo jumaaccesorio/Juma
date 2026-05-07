@@ -211,7 +211,11 @@ function CatalogPanel({
                 </h1>
                 <p className="mt-4 max-w-md text-lg font-light text-white/90 md:text-xl">{heroBanner.subtitle}</p>
               </div>
-              <button className="group flex items-center gap-2 rounded border border-primary bg-background/85 px-5 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-primary shadow-subtle backdrop-blur transition-all hover:bg-primary hover:text-white">
+              <button
+                type="button"
+                onClick={onOpenFullCatalog}
+                className="group flex items-center gap-2 rounded border border-primary bg-background/85 px-5 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-primary shadow-subtle backdrop-blur transition-all hover:bg-primary hover:text-white"
+              >
                 <span>{heroBanner.tag || "Ver Coleccion"}</span>
                 <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
               </button>
