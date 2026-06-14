@@ -5,7 +5,8 @@
 -- ============================================================
 
 -- Crear la vista optimizada para el catálogo público (sin datos de costos ni ocultos)
-CREATE OR REPLACE VIEW public.catalog_products AS
+CREATE OR REPLACE VIEW public.catalog_products 
+WITH (security_invoker = true) AS
 SELECT 
   p.id,
   p.name,
