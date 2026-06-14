@@ -282,9 +282,11 @@ function App() {
     async function loadPublicData() {
       setError("");
 
+      const isAdmin = localStorage.getItem(ADMIN_SESSION_KEY) === "1";
+
       const results = await Promise.allSettled([
         api.getCategories(),
-        api.getProducts(),
+        isAdmin ? api.getProducts() : api.getCatalogProducts(),
         api.getFeaturedPanels(),
         api.getHeroBanner(),
       ]);
@@ -329,6 +331,26 @@ function App() {
     }
     loadPublicData();
   }, []);
+
+  useEffect(() => {
+    if (!isHomeContentLoaded) return;
+
+    let cancelled = false;
+    async function reloadProducts() {
+      try {
+        const nextProducts = isAdminLogged ? await api.getProducts() : await api.getCatalogProducts();
+        if (cancelled) return;
+        setProducts(normalizeProducts(nextProducts));
+      } catch (err) {
+        console.warn("Error recargando productos al cambiar estado de sesión.", err);
+      }
+    }
+    void reloadProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdminLogged, isHomeContentLoaded]);
 
   useEffect(() => {
     if (!isAdminLogged) return;

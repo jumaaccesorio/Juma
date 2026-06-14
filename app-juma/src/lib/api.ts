@@ -186,6 +186,24 @@ export const api = {
     if (query.error) throw query.error;
   },
 
+  async getCatalogProducts(): Promise<Product[]> {
+    const selectFields =
+      "id, name, sub_name, category_id, category_name, is_featured, sale_price, stock, enabled, image, image_full, created_at";
+
+    const query = await supabase
+      .from("catalog_products")
+      .select(selectFields)
+      .order("created_at", { ascending: false });
+
+    if (query.error) throw query.error;
+    return ((query.data ?? []) as any[]).map((row: any) =>
+      mapProduct({
+        ...normalizeProductStorageUrls(row),
+        category_name: row.category_name ?? null,
+      })
+    );
+  },
+
   async getProducts(): Promise<Product[]> {
     const selectWithVariants =
       "id, name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, image_full, source_url, created_at, categories(name)";
