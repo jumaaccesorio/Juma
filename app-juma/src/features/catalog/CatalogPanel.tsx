@@ -541,7 +541,6 @@ function CommunitySubscribeSection({ onSubscribe }: { onSubscribe: (email: strin
         )}
       </div>
     </section>
-    </div>
   );
 }
 
