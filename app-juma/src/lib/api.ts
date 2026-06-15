@@ -188,7 +188,7 @@ export const api = {
 
   async getCatalogProducts(): Promise<Product[]> {
     const selectFields =
-      "id, name, sub_name, category_id, category_name, is_featured, sale_price, stock, enabled, image, image_full, created_at";
+      "id, name, sub_name, category_id, category_name, is_featured, sale_price, stock, enabled, image, image_thumb, image_card, image_full, created_at";
 
     const query = await supabase
       .from("catalog_products")
@@ -206,7 +206,7 @@ export const api = {
 
   async getProducts(): Promise<Product[]> {
     const selectWithVariants =
-      "id, name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, image_full, source_url, created_at, categories(name)";
+      "id, name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, image_thumb, image_card, image_full, source_url, created_at, categories(name)";
     const selectLegacy =
       "id, name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, source_url, created_at, categories(name)";
 
@@ -229,7 +229,7 @@ export const api = {
 
   async getProductImages(productIds: number[]): Promise<Array<{ id: number; image: string }>> {
     if (productIds.length === 0) return [];
-    const selectWithVariants = "id, image";
+    const selectWithVariants = "id, image, image_thumb, image_card, image_full";
     const selectLegacy = "id, image";
     const query = await supabase
       .from("products")
@@ -744,6 +744,8 @@ function normalizeProductStorageUrls(row: any) {
   return {
     ...row,
     image: normalizeStoragePublicUrl(row.image),
+    image_thumb: normalizeStoragePublicUrl(row.image_thumb),
+    image_card: normalizeStoragePublicUrl(row.image_card),
     image_full: normalizeStoragePublicUrl(row.image_full),
   };
 }
@@ -761,7 +763,9 @@ function mapProduct(row: any): Product {
   const rawSubName = typeof row.sub_name === "string" ? row.sub_name.trim() : "";
   const normalizedFull = normalizeRenderableProductImage(row.image_full, true);
   const normalizedLegacy = normalizeRenderableProductImage(row.image, true);
-  const normalizedImage = normalizedLegacy || normalizedFull;
+  const normalizedThumb = normalizeRenderableProductImage(row.image_thumb, true);
+  const normalizedCard = normalizeRenderableProductImage(row.image_card, true);
+  const normalizedImage = normalizedThumb || normalizedLegacy || normalizedFull;
   return {
     id: row.id,
     name: rawName || rawSubName,
@@ -775,10 +779,10 @@ function mapProduct(row: any): Product {
     initialStock: Number(row.initial_stock ?? 0),
     enabled: Boolean(row.enabled),
     image: normalizedImage,
-    originalImage: normalizedFull || normalizedImage,
-    imageThumb: normalizedImage,
-    imageCard: normalizedImage,
-    imageFull: normalizedFull || normalizedImage,
+    originalImage: normalizedFull || normalizedLegacy || normalizedImage,
+    imageThumb: normalizedThumb || normalizedLegacy || normalizedFull,
+    imageCard: normalizedCard || normalizedLegacy || normalizedFull,
+    imageFull: normalizedFull || normalizedLegacy || normalizedImage,
     sourceUrl: parseProductSourceUrl(row.source_url),
     createdAt: row.created_at ?? "",
   };

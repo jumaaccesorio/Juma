@@ -263,9 +263,9 @@ function App() {
       enabled: row.enabled ?? true,
       image: row.image ?? row.imageFull ?? "",
       originalImage: row.originalImage ?? row.imageFull ?? row.image ?? "",
-      imageThumb: row.image ?? "",
-      imageCard: row.image ?? "",
-      imageFull: row.originalImage ?? row.imageFull ?? row.image ?? "",
+      imageThumb: row.imageThumb ?? row.image ?? "",
+      imageCard: row.imageCard ?? row.image ?? "",
+      imageFull: row.imageFull ?? row.originalImage ?? row.image ?? "",
     }));
 
   const requestProductImages = useCallback((_productIds: number[]) => {}, []);

@@ -1,53 +1,80 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { ImgHTMLAttributes } from "react";
 import type { Product } from "../types";
 
 type ProductImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
-  product: Pick<Product, "image" | "originalImage">;
+  product: {
+    image?: string;
+    originalImage?: string;
+    imageThumb?: string;
+    imageCard?: string;
+    imageFull?: string;
+  };
   fullResolution?: boolean;
 };
 
-function ProductImage({ product, alt, className, loading = "lazy", decoding = "async", fullResolution = false, ...props }: ProductImageProps) {
-  const previewSrc = product.image?.trim() || "";
-  const originalSrc = product.originalImage?.trim() || "";
-  const hasPreview = Boolean(previewSrc);
-  const hasOriginal = fullResolution && Boolean(originalSrc) && originalSrc !== previewSrc;
-  const [isOriginalReady, setIsOriginalReady] = useState(!hasOriginal);
+function ProductImage({
+  product,
+  alt,
+  className,
+  loading = "lazy",
+  decoding = "async",
+  fullResolution = false,
+  ...props
+}: ProductImageProps) {
+  const thumbSrc = product.imageThumb?.trim() || product.image?.trim() || "";
+  const targetSrc = fullResolution
+    ? (product.imageFull?.trim() || product.originalImage?.trim() || product.image?.trim() || "")
+    : (product.imageCard?.trim() || product.image?.trim() || "");
 
+  const [isTargetLoaded, setIsTargetLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  // Reset loaded status if source changes
   useEffect(() => {
-    if (!hasOriginal) {
-      setIsOriginalReady(true);
-      return;
+    setIsTargetLoaded(false);
+  }, [targetSrc]);
+
+  // Check if image is already cached/complete
+  useEffect(() => {
+    if (imgRef.current?.complete) {
+      setIsTargetLoaded(true);
     }
+  }, [targetSrc]);
 
-    setIsOriginalReady(false);
-    const image = new Image();
-    image.decoding = "async";
-    image.onload = () => setIsOriginalReady(true);
-    image.onerror = () => setIsOriginalReady(true);
-    image.src = originalSrc;
-  }, [hasOriginal, originalSrc]);
+  if (!targetSrc && !thumbSrc) return null;
 
-  if (!hasPreview && !originalSrc) return null;
-
-  if (!hasOriginal) {
-    return <img src={previewSrc || originalSrc} alt={alt} className={className} loading={loading} decoding={decoding} {...props} />;
-  }
-
-  return (
-    <span className="relative block h-full w-full">
+  if (!thumbSrc || thumbSrc === targetSrc) {
+    return (
       <img
-        src={previewSrc}
+        src={targetSrc}
         alt={alt}
-        className={`${className ?? ""} transition-opacity duration-300 ${isOriginalReady ? "opacity-0" : "opacity-100"}`.trim()}
+        className={className}
         loading={loading}
         decoding={decoding}
         {...props}
       />
+    );
+  }
+
+  return (
+    <span className="relative block h-full w-full overflow-hidden">
+      {/* Thumbnail: blurred and loaded instantly */}
       <img
-        src={originalSrc}
+        src={thumbSrc}
         alt={alt}
-        className={`${className ?? ""} absolute inset-0 transition-opacity duration-300 ${isOriginalReady ? "opacity-100" : "opacity-0"}`.trim()}
+        className={`${className ?? ""} filter blur-[6px] scale-[1.04] transition-opacity duration-300 ${isTargetLoaded ? "opacity-0" : "opacity-100"}`}
+        loading={loading}
+        decoding={decoding}
+        {...props}
+      />
+      {/* Target Image: loaded in background/lazy, fades in all-at-once */}
+      <img
+        ref={imgRef}
+        src={targetSrc}
+        alt={alt}
+        onLoad={() => setIsTargetLoaded(true)}
+        className={`${className ?? ""} absolute inset-0 transition-opacity duration-300 ${isTargetLoaded ? "opacity-100" : "opacity-0"}`}
         loading={loading}
         decoding={decoding}
         {...props}
