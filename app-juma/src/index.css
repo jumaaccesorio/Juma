@@ -31,6 +31,20 @@
 
   .material-symbols-outlined {
     font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 24;
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    overflow: hidden;
+    white-space: nowrap;
+    text-align: center;
+    vertical-align: middle;
+    /* Evita que se vea el texto del icono antes de cargarse la fuente */
+    opacity: 0;
+    transition: opacity 0.25s ease-in-out;
+  }
+
+  html.material-symbols-loaded .material-symbols-outlined {
+    opacity: 1;
   }
 }
 

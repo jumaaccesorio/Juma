@@ -44,6 +44,22 @@
     <meta name="twitter:image" content="https://jumaaccessory.com.ar/favicon.svg" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500;6..72,600;6..72,700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script>
+      (function() {
+        var loaded = false;
+        function addClass() {
+          if (loaded) return;
+          loaded = true;
+          document.documentElement.classList.add('material-symbols-loaded');
+        }
+        if ('fonts' in document) {
+          document.fonts.load('1em "Material Symbols Outlined"').then(addClass).catch(addClass);
+          setTimeout(addClass, 1500);
+        } else {
+          addClass();
+        }
+      })();
+    </script>
     <title>Juma Accessory | Joyas, bijouterie fina y accesorios online</title>
     <script type="application/ld+json">
       {
