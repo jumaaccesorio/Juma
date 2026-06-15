@@ -40,6 +40,20 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   const mobileCatalogRef = useRef<HTMLElement | null>(null);
   const desktopCatalogRef = useRef<HTMLElement | null>(null);
 
+  const [discountType, setDiscountType] = useState<"percent" | "fixed">("percent");
+  const [discountInput, setDiscountInput] = useState<string>("");
+  const [customTotalInput, setCustomTotalInput] = useState<string>("");
+
+  const handleDiscountChange = (val: string) => {
+    setDiscountInput(val);
+    setCustomTotalInput("");
+  };
+
+  const handleCustomTotalChange = (val: string) => {
+    setCustomTotalInput(val);
+    setDiscountInput("");
+  };
+
   const scrollToSectionStart = (element: HTMLElement | null) => {
     if (!element) return;
     const top = element.getBoundingClientRect().top + window.scrollY - 110;
@@ -197,19 +211,50 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   const removeFromCart = (productId: number) => setCart(prev => prev.filter(i => i.product.id !== productId));
 
   const subtotal = useMemo(() => cart.reduce((acc, i) => acc + i.product.salePrice * i.quantity, 0), [cart]);
-  const total = subtotal;
+
+  const calculatedTotal = useMemo(() => {
+    if (subtotal === 0) return 0;
+    
+    if (customTotalInput !== "") {
+      const val = parseFloat(customTotalInput);
+      if (!isNaN(val) && val >= 0) {
+        return val;
+      }
+    }
+
+    const discountVal = parseFloat(discountInput);
+    if (!isNaN(discountVal) && discountVal > 0) {
+      if (discountType === "percent") {
+        const factor = Math.max(0, 1 - discountVal / 100);
+        return subtotal * factor;
+      } else {
+        return Math.max(0, subtotal - discountVal);
+      }
+    }
+
+    return subtotal;
+  }, [subtotal, discountType, discountInput, customTotalInput]);
+
+  const total = calculatedTotal;
+  const discountAmount = Math.max(0, subtotal - total);
   const selectedClient = selectedClientId ? clients.find((client) => String(client.id) === selectedClientId) : null;
 
   const handleFinalizeSale = async () => {
     if (cart.length === 0) return;
     setIsSubmitting(true);
     try {
-      const items: OrderItem[] = cart.map(i => ({
-        productId: i.product.id,
-        quantity: i.quantity,
-        unitSalePrice: i.product.salePrice,
-        unitPurchasePrice: i.product.purchasePrice,
-      }));
+      const items: OrderItem[] = cart.map(i => {
+        const itemSubtotal = i.product.salePrice * i.quantity;
+        const itemProportion = subtotal > 0 ? (itemSubtotal / subtotal) : 0;
+        const targetItemTotal = total * itemProportion; 
+        const unitSalePrice = i.quantity > 0 ? (targetItemTotal / i.quantity) : 0;
+        return {
+          productId: i.product.id,
+          quantity: i.quantity,
+          unitSalePrice: Math.round(unitSalePrice * 100) / 100, // round to 2 decimals
+          unitPurchasePrice: i.product.purchasePrice,
+        };
+      });
 
       const clientId = selectedClientId ? Number(selectedClientId) : undefined;
       const newOrder = await api.addOrder({
@@ -231,6 +276,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
       setSelectedClientId("");
       setSearchQuery("");
       setIsMobileCartOpen(false);
+      setDiscountInput("");
+      setCustomTotalInput("");
       setSuccessMsg(`¡Venta #${String(newOrder.id).padStart(5, "0")} registrada con éxito!`);
       setTimeout(() => setSuccessMsg(""), 4000);
     } catch (err) {
@@ -394,19 +441,18 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
               {mobileProductsPage.map((product) => {
                 const inCart = cart.find((item) => item.product.id === product.id)?.quantity ?? 0;
                 return (
-                  <button
+                  <div
                     key={product.id}
-                    type="button"
                     onClick={() => addToCart(product)}
-                    className="group relative flex flex-col w-full overflow-hidden rounded-xl text-left transition-all border border-line bg-secondary/30 hover:border-primary/50 shadow-sm"
+                    className="group bg-white rounded-2xl p-2 border border-line/60 active:scale-[0.98] transition-all flex flex-col h-full text-left shadow-sm cursor-pointer"
                   >
                     {/* Image Area */}
-                    <div className="relative aspect-square w-full bg-white overflow-hidden">
+                    <div className="relative aspect-square w-full bg-secondary rounded-xl overflow-hidden mb-2">
                       {product.image ? (
                         <ProductImage
                           product={product}
                           alt={getProductDisplayName(product)}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">
@@ -414,33 +460,37 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                         </div>
                       )}
 
-                      {/* Top Left Price Pill */}
-                      <div className="absolute top-0 left-0 bg-secondary/95 backdrop-blur-sm rounded-br-lg px-2 py-1 shadow-sm border-b border-r border-line/50">
-                        <span className="text-[11px] font-black text-primary tracking-wide">
-                          ${product.salePrice.toLocaleString("es-AR")}
-                        </span>
+                      {/* Top Right Stock Badge */}
+                      <div className={`absolute top-1.5 right-1.5 backdrop-blur-sm px-1.5 py-0.5 rounded text-[8px] font-bold ${product.stock <= 3 ? "bg-red-500 text-white shadow-sm" : "bg-white/90 text-ink/70"}`}>
+                        {product.stock} STK
                       </div>
 
-                      {/* Top Right Quantity Pill */}
+                      {/* Bottom Left Quantity Badge */}
                       {inCart > 0 && (
-                        <div className="absolute top-0 right-0 bg-primary rounded-bl-lg px-2 py-1 shadow-md z-10 transition-transform active:scale-95">
-                          <span className="text-[11px] font-black text-white">{inCart}x</span>
-                        </div>
-                      )}
-
-                      {/* Stock Badge (Low Stock) - Positioned below quantity if needed, or top right if empty */}
-                      {product.stock <= 3 && inCart === 0 && (
-                        <div className="absolute top-2 right-2 rounded-md bg-red-500 px-1.5 py-0.5 shadow-sm">
-                          <span className="text-[9px] font-bold text-white">¡{product.stock} left!</span>
+                        <div className="absolute bottom-1.5 left-1.5 bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md z-10 transition-transform active:scale-95">
+                          {inCart}x
                         </div>
                       )}
                     </div>
 
-                    {/* Bottom Title Bar */}
-                    <div className={`w-full p-2.5 transition-colors border-t border-line/50 ${inCart > 0 ? "bg-primary text-white" : "bg-white text-ink hover:text-primary"}`}>
-                      <h4 className="truncate text-[11px] font-bold text-center uppercase tracking-wider">{getProductDisplayName(product)}</h4>
+                    {/* Product Details below Image */}
+                    <div className="flex-1 flex flex-col min-w-0">
+                      <h4 className="truncate text-[11px] font-bold text-ink uppercase tracking-wider leading-tight">
+                        {getProductDisplayName(product)}
+                      </h4>
+                      <p className="truncate text-[9px] text-muted leading-normal mb-1.5">
+                        {product.categoryName || ""}
+                      </p>
+                      <div className="mt-auto flex items-center justify-between pt-0.5 border-t border-line/30">
+                        <span className="text-primary font-black text-xs">
+                          ${product.salePrice.toLocaleString("es-AR")}
+                        </span>
+                        <div className={`size-5 rounded flex items-center justify-center transition-colors ${inCart > 0 ? "bg-primary text-white" : "bg-primary/10 text-primary"}`}>
+                          <span className="material-symbols-outlined text-[10px] font-black">add</span>
+                        </div>
+                      </div>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -479,7 +529,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         {/* Order Summary Modal (Mobile) */}
         {isMobileCartOpen && (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 backdrop-blur-sm md:hidden p-2 transition-opacity">
-            <div className="w-full max-h-[90vh] bg-background rounded-[24px] shadow-2xl flex flex-col overflow-hidden animate-slide-up border border-line">
+            <div className="w-full max-h-[85vh] max-h-[85dvh] bg-background rounded-[24px] shadow-2xl flex flex-col overflow-hidden animate-slide-up border border-line">
               
               {/* Modal Header */}
               <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-line/50 bg-white">
@@ -562,11 +612,77 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
 
               {/* Checkout Footer */}
               <div className="bg-secondary/30 p-5 border-t border-line/60">
-                <div className="mb-4 space-y-1.5">
+                <div className="mb-4 space-y-3">
                   <div className="flex justify-between text-xs text-muted font-medium">
                     <span>Subtotal</span>
                     <span>${subtotal.toLocaleString("es-AR")}</span>
                   </div>
+
+                  {/* Discount + Custom Total row on Mobile */}
+                  <div className="grid grid-cols-2 gap-3 items-center">
+                    <div>
+                      <label className="block text-[9px] font-bold uppercase tracking-widest text-muted mb-1">
+                        Descuento
+                      </label>
+                      <div className="relative flex items-center rounded-lg border border-line bg-white shadow-sm overflow-hidden">
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={discountInput}
+                          onChange={(e) => handleDiscountChange(e.target.value)}
+                          className="w-full px-2 py-1.5 text-xs text-ink outline-none border-none focus:ring-0 placeholder:text-muted/40"
+                        />
+                        <div className="flex border-l border-line bg-secondary/50">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDiscountType("percent");
+                              setCustomTotalInput("");
+                            }}
+                            className={`px-1 py-1 text-[9px] font-bold ${discountType === "percent" ? "bg-primary text-white" : "text-ink/60 hover:bg-line/45"}`}
+                          >
+                            %
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDiscountType("fixed");
+                              setCustomTotalInput("");
+                            }}
+                            className={`px-1 py-1 text-[9px] font-bold ${discountType === "fixed" ? "bg-primary text-white" : "text-ink/60 hover:bg-line/45"}`}
+                          >
+                            $
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] font-bold uppercase tracking-widest text-muted mb-1">
+                        Ajustar Total
+                      </label>
+                      <div className="relative flex items-center rounded-lg border border-line bg-white shadow-sm overflow-hidden">
+                        <span className="pl-2 text-xs text-muted/60 font-semibold">$</span>
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="Total"
+                          value={customTotalInput !== "" ? customTotalInput : (subtotal > 0 ? Math.round(calculatedTotal) : "")}
+                          onChange={(e) => handleCustomTotalChange(e.target.value)}
+                          className="w-full pl-1 pr-2 py-1.5 text-xs font-semibold text-primary outline-none border-none focus:ring-0 placeholder:text-muted/40"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between items-center text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 animate-fade-in">
+                      <span>Descuento aplicado:</span>
+                      <span>-${discountAmount.toLocaleString("es-AR")}</span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between items-baseline pt-2 border-t border-line">
                     <span className="font-bold text-sm text-ink uppercase tracking-widest">Total</span>
                     <span className="font-headline text-2xl text-primary font-bold">${total.toLocaleString("es-AR")}</span>
@@ -836,15 +952,81 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
 
         {/* Totals + Payment */}
         <div className="space-y-6 bg-secondary/60 p-4 md:p-6 border-t border-line/50">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
+          <div className="space-y-3 border-b border-line/50 pb-4">
+            <div className="flex justify-between items-center text-sm">
               <span className="text-muted">Subtotal</span>
               <span className="text-ink font-semibold">${subtotal.toLocaleString("es-AR")}</span>
             </div>
-            <div className="flex justify-between text-lg pt-2 border-t border-white/80">
-              <span className="font-headline font-bold text-ink">Total</span>
-              <span className="text-primary font-bold text-xl">${total.toLocaleString("es-AR")}</span>
+
+            {/* Discount + Custom Total row on Desktop */}
+            <div className="grid grid-cols-2 gap-3 items-center">
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-muted mb-1">
+                  Descuento
+                </label>
+                <div className="relative flex items-center rounded-lg border border-line bg-white shadow-sm overflow-hidden">
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={discountInput}
+                    onChange={(e) => handleDiscountChange(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs text-ink outline-none border-none focus:ring-0 placeholder:text-muted/40"
+                  />
+                  <div className="flex border-l border-line bg-secondary/50">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDiscountType("percent");
+                        setCustomTotalInput("");
+                      }}
+                      className={`px-1.5 py-1 text-[10px] font-bold ${discountType === "percent" ? "bg-primary text-white" : "text-ink/60 hover:bg-line/45"}`}
+                    >
+                      %
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDiscountType("fixed");
+                        setCustomTotalInput("");
+                      }}
+                      className={`px-1.5 py-1 text-[10px] font-bold ${discountType === "fixed" ? "bg-primary text-white" : "text-ink/60 hover:bg-line/45"}`}
+                    >
+                      $
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-muted mb-1">
+                  Ajustar Total
+                </label>
+                <div className="relative flex items-center rounded-lg border border-line bg-white shadow-sm overflow-hidden">
+                  <span className="pl-2.5 text-xs text-muted/60 font-semibold">$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="Total"
+                    value={customTotalInput !== "" ? customTotalInput : (subtotal > 0 ? Math.round(calculatedTotal) : "")}
+                    onChange={(e) => handleCustomTotalChange(e.target.value)}
+                    className="w-full pl-1.5 pr-2.5 py-1.5 text-xs font-semibold text-primary outline-none border-none focus:ring-0 placeholder:text-muted/40"
+                  />
+                </div>
+              </div>
             </div>
+
+            {discountAmount > 0 && (
+              <div className="flex justify-between items-center text-xs text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100 animate-fade-in">
+                <span>Descuento aplicado:</span>
+                <span>-${discountAmount.toLocaleString("es-AR")}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-between items-baseline">
+            <span className="font-headline font-bold text-ink text-base">Total Final</span>
+            <span className="text-primary font-bold text-xl">${total.toLocaleString("es-AR")}</span>
           </div>
 
           {/* Payment Method */}
