@@ -12,6 +12,7 @@ import AdminSidebar from "./features/admin/AdminSidebar";
 import AdminTopNav from "./features/admin/AdminTopNav";
 import QuickSalePanel from "./features/admin/QuickSalePanel";
 import RestockCartPanel from "./features/admin/RestockCartPanel";
+import CommunityPanel from "./features/admin/CommunityPanel";
 import CartPanel from "./features/cart/CartPanel";
 import CatalogPanel from "./features/catalog/CatalogPanel";
 import ProductDetailPanel from "./features/catalog/ProductDetailPanel";
@@ -26,7 +27,7 @@ import ClientProfilePanel from "./features/users/ClientProfilePanel";
 import CustomerAuthModal from "./features/users/CustomerAuthModal";
 import AuthConfirmPanel from "./features/users/AuthConfirmPanel";
 import ResetPasswordPanel from "./features/users/ResetPasswordPanel";
-import type { CartItem, Client, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, Product, Tab, Category } from "./types";
+import type { CartItem, Client, CommunitySubscriber, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, Product, Tab, Category } from "./types";
 import { api } from "./lib/api";
 import { getProductDisplayName } from "./lib/productLabel";
 import { optimizeFileForPreview } from "./lib/imageUpload";
@@ -188,6 +189,7 @@ function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [financeExpenses, setFinanceExpenses] = useState<FinanceExpense[]>([]);
+  const [communitySubscribers, setCommunitySubscribers] = useState<CommunitySubscriber[]>([]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<number | null>(null);
@@ -452,6 +454,21 @@ function App() {
       cancelled = true;
       window.clearInterval(intervalId);
     };
+  }, [activeTab, isAdminLogged]);
+
+  useEffect(() => {
+    if (!isAdminLogged || activeTab !== "comunidad") return;
+    let cancelled = false;
+    const loadSubscribers = async () => {
+      try {
+        const data = await api.getCommunitySubscribers();
+        if (!cancelled) setCommunitySubscribers(data);
+      } catch (err) {
+        console.warn("No se pudieron cargar los suscriptores de la comunidad.", err);
+      }
+    };
+    void loadSubscribers();
+    return () => { cancelled = true; };
   }, [activeTab, isAdminLogged]);
 
   useEffect(() => {
@@ -1653,7 +1670,7 @@ function App() {
     }
   };
 
-  const isAdminTab = isAdminLogged && ["dashboard", "catalogo", "venta_rapida", "inicio_admin", "categorias", "productos", "clientes", "inventario", "pedidos", "reposicion", "finanzas"].includes(activeTab);
+  const isAdminTab = isAdminLogged && ["dashboard", "catalogo", "venta_rapida", "inicio_admin", "categorias", "productos", "clientes", "inventario", "pedidos", "reposicion", "finanzas", "comunidad"].includes(activeTab);
 
   if (isAdminTab) {
     return (
@@ -1670,6 +1687,9 @@ function App() {
             onOpenMenu={() => setIsAdminSidebarOpen(true)}
             onPreview={() => setActiveTab("catalogo")}
             onLogout={logoutAdmin}
+            orders={orders}
+            clients={clients}
+            lowStockProducts={lowStockProducts}
           />
           
           <div className="flex-1 overflow-x-hidden pb-28 md:pb-0">
@@ -1712,6 +1732,7 @@ function App() {
                   onCategoryChange={setCatalogCategoryFilter}
                   onPanelCategoryClick={navigateToCategoryInCatalog}
                   onOpenFullCatalog={openFullCatalog}
+                  onSubscribeCommunity={async (email) => { await api.subscribeToCommunity(email); }}
                 />
               </div>
             )}
@@ -1860,6 +1881,21 @@ function App() {
                   onDeleteExpense={deleteFinanceExpense}
                 />
               </div>
+            )}
+
+
+            {activeTab === "comunidad" && (
+              <CommunityPanel
+                subscribers={communitySubscribers}
+                onDeleteSubscriber={async (id) => {
+                  try {
+                    await api.deleteCommunitySubscriber(id);
+                    setCommunitySubscribers((prev) => prev.filter((s) => s.id !== id));
+                  } catch (err) {
+                    console.error("Error eliminando suscriptor:", err);
+                  }
+                }}
+              />
             )}
           </div>
 
@@ -2082,6 +2118,7 @@ function App() {
             onCategoryChange={setCatalogCategoryFilter}
             onPanelCategoryClick={navigateToCategoryInCatalog}
             onOpenFullCatalog={openFullCatalog}
+            onSubscribeCommunity={async (email) => { await api.subscribeToCommunity(email); }}
           />
         )
       ) : null}

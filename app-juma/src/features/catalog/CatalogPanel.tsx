@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Category, FeaturedPanel, HeroBanner, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
 import ProductImage from "../../components/ProductImage";
@@ -21,6 +21,7 @@ type CatalogPanelProps = {
   onCategoryChange: (cat: number | null) => void;
   onPanelCategoryClick: (categoryId: number | null) => void;
   onOpenFullCatalog: () => void;
+  onSubscribeCommunity: (email: string) => Promise<void>;
 };
 
 function CatalogPanel({
@@ -41,6 +42,7 @@ function CatalogPanel({
   onCategoryChange,
   onPanelCategoryClick,
   onOpenFullCatalog,
+  onSubscribeCommunity,
 }: CatalogPanelProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [selectedRootCategory, setSelectedRootCategory] = useState<number | null>(null);
@@ -478,17 +480,67 @@ function CatalogPanel({
       </section>
       ) : null}
 
-      <section className="px-6 md:px-40 py-20 bg-background">
-        <div className="rounded bg-secondary/45 border border-line p-8 md:p-16 flex flex-col items-center text-center gap-6 shadow-subtle">
-          <span className="material-symbols-outlined text-5xl text-primary/50">mail</span>
-          <h2 className="font-headline text-3xl font-light text-carbon">Unite a nuestra comunidad</h2>
-          <p className="text-muted max-w-lg">Suscribite para recibir novedades, promociones exclusivas y un 10% OFF en tu primera compra.</p>
-          <div className="flex flex-col sm:flex-row w-full max-w-md gap-3 mt-4">
-            <input className="flex-1 rounded border-line bg-white px-6 py-3 focus:border-primary focus:ring-primary/20 focus:ring-2 outline-none text-sm transition-all" placeholder="Tu email aqui" type="email" />
-            <button className="bg-primary text-white px-8 py-3 rounded font-bold uppercase tracking-[0.18em] text-xs hover:opacity-90 transition-colors">Suscribirme</button>
+      <CommunitySubscribeSection onSubscribe={onSubscribeCommunity} />
+    </div>
+  );
+}
+
+function CommunitySubscribeSection({ onSubscribe }: { onSubscribe: (email: string) => Promise<void> }) {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    setStatus("loading");
+    try {
+      await onSubscribe(trimmed);
+      setStatus("success");
+      setMessage("¡Gracias por suscribirte! 🎉");
+      setEmail("");
+    } catch (err: any) {
+      setStatus("error");
+      setMessage(err?.message || "No se pudo completar la suscripción.");
+    }
+  };
+
+  return (
+    <section className="px-6 md:px-40 py-20 bg-background">
+      <div className="rounded bg-secondary/45 border border-line p-8 md:p-16 flex flex-col items-center text-center gap-6 shadow-subtle">
+        <span className="material-symbols-outlined text-5xl text-primary/50">mail</span>
+        <h2 className="font-headline text-3xl font-light text-carbon">Unite a nuestra comunidad</h2>
+        <p className="text-muted max-w-lg">Suscribite para recibir novedades, promociones exclusivas y un 10% OFF en tu primera compra.</p>
+        {status === "success" ? (
+          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 px-6 py-3 rounded text-sm font-medium">
+            <span className="material-symbols-outlined text-lg">check_circle</span>
+            {message}
           </div>
-        </div>
-      </section>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row w-full max-w-md gap-3 mt-4">
+            <input
+              className="flex-1 rounded border-line bg-white px-6 py-3 focus:border-primary focus:ring-primary/20 focus:ring-2 outline-none text-sm transition-all"
+              placeholder="Tu email aqui"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); if (status === "error") setStatus("idle"); }}
+            />
+            <button
+              type="submit"
+              disabled={status === "loading"}
+              className="bg-primary text-white px-8 py-3 rounded font-bold uppercase tracking-[0.18em] text-xs hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {status === "loading" ? "Enviando..." : "Suscribirme"}
+            </button>
+          </form>
+        )}
+        {status === "error" && message && (
+          <p className="text-sm text-red-500 font-medium">{message}</p>
+        )}
+      </div>
+    </section>
     </div>
   );
 }

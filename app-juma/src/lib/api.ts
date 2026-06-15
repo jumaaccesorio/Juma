@@ -1,4 +1,4 @@
-import type { Category, Client, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, Order, OrderItem, Product, RestockCartItem } from "../types";
+import type { Category, Client, CommunitySubscriber, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, Order, OrderItem, Product, RestockCartItem } from "../types";
 import { supabase } from "./supabase";
 import { dataUrlToOptimizedFile, optimizeImageFile, type UploadImageVariant } from "./imageUpload";
 
@@ -679,6 +679,37 @@ export const api = {
     const { data } = supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(filePath);
     return data.publicUrl;
   },
+
+  // ── Community Subscribers ─────────────────────────────────────
+
+  async subscribeToCommunity(email: string): Promise<CommunitySubscriber> {
+    const query = await supabase
+      .from("community_subscribers")
+      .insert({ email: email.trim().toLowerCase() })
+      .select("*")
+      .single();
+    if (query.error) {
+      if (query.error.code === "23505") {
+        throw new Error("Este email ya está suscripto.");
+      }
+      throw query.error;
+    }
+    return mapCommunitySubscriber(query.data);
+  },
+
+  async getCommunitySubscribers(): Promise<CommunitySubscriber[]> {
+    const query = await supabase
+      .from("community_subscribers")
+      .select("id, email, created_at")
+      .order("created_at", { ascending: false });
+    if (query.error) throw query.error;
+    return (query.data ?? []).map(mapCommunitySubscriber);
+  },
+
+  async deleteCommunitySubscriber(id: number): Promise<void> {
+    const query = await supabase.from("community_subscribers").delete().eq("id", id);
+    if (query.error) throw query.error;
+  },
 };
 
 function mapClient(row: any): Client {
@@ -843,6 +874,14 @@ function mapFinanceExpense(row: any): FinanceExpense {
     category: row.category ?? "General",
     amount: Number(row.amount ?? 0),
     date: row.date,
+    createdAt: row.created_at ?? "",
+  };
+}
+
+function mapCommunitySubscriber(row: any): CommunitySubscriber {
+  return {
+    id: row.id,
+    email: row.email ?? "",
     createdAt: row.created_at ?? "",
   };
 }

@@ -19,6 +19,7 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
     { id: "pedidos", label: "Pedidos", icon: "shopping_bag" },
     { id: "reposicion", label: "Carrito Reposicion", icon: "add_shopping_cart" },
     { id: "finanzas", label: "Finanzas", icon: "payments" },
+    { id: "comunidad", label: "Comunidad", icon: "groups" },
     { id: "inicio_admin", label: "Configuración", icon: "settings" },
   ];
 
@@ -89,7 +90,7 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
           ))}
 
           <p className="px-3 pt-5 pb-3 text-[9px] font-bold text-white/25 uppercase tracking-[0.2em]">Gestión</p>
-          {menuItems.slice(2, 8).map((item) => (
+          {menuItems.slice(2, 9).map((item) => (
             <button
               key={item.id}
               onClick={() => handleNav(item.id)}
@@ -110,7 +111,7 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
           ))}
 
           <p className="px-3 pt-5 pb-3 text-[9px] font-bold text-white/25 uppercase tracking-[0.2em]">Sistema</p>
-          {menuItems.slice(8).map((item) => (
+          {menuItems.slice(9).map((item) => (
             <button
               key={item.id}
               onClick={() => handleNav(item.id)}

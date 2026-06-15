@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { Client, NewOrderItem, Order, OrderStatus, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
@@ -845,13 +845,14 @@ function OrdersPanel({
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-soft dark:divide-slate-800">
-              {filteredOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                  {(() => {
-                    const clientName = order.clientId ? getClientName(order.clientId) : order.guestName || "Invitado";
-                    const needsRestock = order.status === "PENDIENTE" && hasInsufficientStock(order.items);
-                    return (
-                      <>
+              {filteredOrders.map((order) => {
+                const clientName = order.clientId ? getClientName(order.clientId) : order.guestName || "Invitado";
+                const needsRestock = order.status === "PENDIENTE" && hasInsufficientStock(order.items);
+                const isExpanded = expandedOrderIds.includes(order.id);
+                const itemsDetail = isExpanded ? getOrderItemsDetail(order) : [];
+                return (
+                  <React.Fragment key={order.id}>
+                <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                   <td className="p-4 font-bold text-slate-900 dark:text-white">#{String(order.id).padStart(5, '0')}</td>
                   <td className="p-4">
                     <div className="flex items-center gap-2">
@@ -889,10 +890,10 @@ function OrdersPanel({
                     <button
                       type="button"
                       onClick={() => toggleOrderExpanded(order.id)}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors"
+                      className={`inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${isExpanded ? 'text-primary bg-primary/10 hover:bg-primary/20' : 'text-slate-600 bg-slate-100 hover:bg-slate-200'}`}
                     >
-                      <span className="material-symbols-outlined text-[16px]">receipt_long</span>
-                      {expandedOrderIds.includes(order.id) ? "Ocultar" : "Ver detalle"}
+                      <span className="material-symbols-outlined text-[16px]">{isExpanded ? 'expand_less' : 'receipt_long'}</span>
+                      {isExpanded ? "Ocultar" : "Ver detalle"}
                     </button>
                     {order.status === "PENDIENTE" ? (
                       <button 
@@ -918,11 +919,52 @@ function OrdersPanel({
                       <span className="material-symbols-outlined text-[16px]">delete</span>
                     </button>
                   </td>
-                      </>
-                    );
-                  })()}
                 </tr>
-              ))}
+                {isExpanded && (
+                  <tr>
+                    <td colSpan={6} className="p-0">
+                      <div className="border-t border-slate-100 bg-slate-50/80 px-6 py-4 animate-fade-in">
+                        <div className="flex items-center justify-between gap-3 mb-3">
+                          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                            Detalle del pedido #{String(order.id).padStart(5, "0")} · {clientName}
+                          </p>
+                          <span className="text-xs font-bold text-slate-700">${getOrderTotal(order).toLocaleString("es-AR")}</span>
+                        </div>
+                        <div className="grid gap-2">
+                          {itemsDetail.map((item, itemIndex) => (
+                            <button
+                              key={`${order.id}-inline-item-${itemIndex}`}
+                              type="button"
+                              onClick={() => onOpenProductDetail(item.productId)}
+                              className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm transition-colors hover:border-primary/40 hover:bg-primary/5"
+                            >
+                              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
+                                {item.productImage ? (
+                                  <img src={item.productImage} alt={item.productName} className="h-full w-full object-cover" />
+                                ) : (
+                                  <span className="material-symbols-outlined text-slate-300">image</span>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="font-bold text-sm text-slate-900">{item.productName}</p>
+                                <p className="text-xs text-slate-500">
+                                  {item.quantity} x ${item.unitSalePrice.toLocaleString("es-AR")}
+                                </p>
+                              </div>
+                              <p className="text-sm font-bold text-primary shrink-0">${item.subtotal.toLocaleString("es-AR")}</p>
+                            </button>
+                          ))}
+                          {itemsDetail.length === 0 ? (
+                            <p className="text-sm text-slate-500 py-2">Este pedido no tiene productos cargados.</p>
+                          ) : null}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                  </React.Fragment>
+                );
+              })}
               {filteredOrders.length === 0 && (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-slate-500 font-medium">No se encontraron pedidos registrados.</td>
@@ -931,66 +973,6 @@ function OrdersPanel({
             </tbody>
           </table>
         </div>
-
-        {expandedOrderIds.length > 0 ? (
-          <div className="border-t border-neutral-soft p-4">
-            <div className="space-y-4">
-              {filteredOrders
-                .filter((order) => expandedOrderIds.includes(order.id))
-                .map((order) => {
-                  const clientName = order.clientId ? getClientName(order.clientId) : order.guestName || "Invitado";
-                  const itemsDetail = getOrderItemsDetail(order);
-                  return (
-                    <div key={`detail-panel-${order.id}`} className="rounded-xl border border-line bg-slate-50/70 p-4">
-                      <div className="mb-4 flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">Detalle del pedido</p>
-                          <p className="mt-1 text-base font-bold text-slate-900">
-                            #{String(order.id).padStart(5, "0")} · {clientName}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => toggleOrderExpanded(order.id)}
-                          className="rounded-lg border border-line px-3 py-2 text-xs font-bold text-slate-600"
-                        >
-                          Cerrar
-                        </button>
-                      </div>
-                      <div className="grid gap-3">
-                        {itemsDetail.map((item, itemIndex) => (
-                          <button
-                            key={`${order.id}-detail-item-${itemIndex}`}
-                            type="button"
-                            onClick={() => onOpenProductDetail(item.productId)}
-                            className="flex w-full items-center gap-3 rounded-lg bg-white p-3 text-left shadow-sm transition-colors hover:bg-primary/5"
-                          >
-                            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
-                              {item.productImage ? (
-                                <img src={item.productImage} alt={item.productName} className="h-full w-full object-cover" />
-                              ) : (
-                                <span className="material-symbols-outlined text-slate-300">image</span>
-                              )}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="font-bold text-slate-900">{item.productName}</p>
-                              <p className="text-sm text-slate-500">
-                                Cantidad: {item.quantity} · Unitario: ${item.unitSalePrice.toLocaleString("es-AR")}
-                              </p>
-                            </div>
-                            <p className="text-sm font-bold text-primary">${item.subtotal.toLocaleString("es-AR")}</p>
-                          </button>
-                        ))}
-                        {itemsDetail.length === 0 ? (
-                          <p className="text-sm text-slate-500">Este pedido no tiene productos cargados.</p>
-                        ) : null}
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
-        ) : null}
       </div>
       </div>
     </div>

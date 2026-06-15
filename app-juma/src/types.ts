@@ -1,4 +1,4 @@
-export type Tab = "dashboard" | "inicio_admin" | "categorias" | "clientes" | "productos" | "catalogo" | "inventario" | "pedidos" | "reposicion" | "finanzas" | "carrito" | "perfil" | "venta_rapida";
+export type Tab = "dashboard" | "inicio_admin" | "categorias" | "clientes" | "productos" | "catalogo" | "inventario" | "pedidos" | "reposicion" | "finanzas" | "carrito" | "perfil" | "venta_rapida" | "comunidad";
 export type OrderStatus = "PENDIENTE" | "REALIZADO";
 export type CartItem = { productId: number; quantity: number };
 
@@ -105,4 +105,10 @@ export type HeroBanner = {
   title: string;
   subtitle: string;
   image: string;
+};
+
+export type CommunitySubscriber = {
+  id: number;
+  email: string;
+  createdAt: string;
 };
