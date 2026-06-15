@@ -45,12 +45,14 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   const [customTotalInput, setCustomTotalInput] = useState<string>("");
 
   const handleDiscountChange = (val: string) => {
-    setDiscountInput(val);
+    const sanitized = val.replace(/[^0-9]/g, "");
+    setDiscountInput(sanitized);
     setCustomTotalInput("");
   };
 
   const handleCustomTotalChange = (val: string) => {
-    setCustomTotalInput(val);
+    const sanitized = val.replace(/[^0-9]/g, "");
+    setCustomTotalInput(sanitized);
     setDiscountInput("");
   };
 
@@ -626,8 +628,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                       </label>
                       <div className="relative flex items-center rounded-lg border border-line bg-white shadow-sm overflow-hidden">
                         <input
-                          type="number"
-                          min="0"
+                          type="text"
+                          inputMode="numeric"
                           placeholder="0"
                           value={discountInput}
                           onChange={(e) => handleDiscountChange(e.target.value)}
@@ -665,8 +667,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                       <div className="relative flex items-center rounded-lg border border-line bg-white shadow-sm overflow-hidden">
                         <span className="pl-2 text-xs text-muted/60 font-semibold">$</span>
                         <input
-                          type="number"
-                          min="0"
+                          type="text"
+                          inputMode="numeric"
                           placeholder={subtotal > 0 ? String(Math.round(calculatedTotal)) : "Total"}
                           value={customTotalInput}
                           onChange={(e) => handleCustomTotalChange(e.target.value)}
@@ -966,8 +968,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                 </label>
                 <div className="relative flex items-center rounded-lg border border-line bg-white shadow-sm overflow-hidden">
                   <input
-                    type="number"
-                    min="0"
+                    type="text"
+                    inputMode="numeric"
                     placeholder="0"
                     value={discountInput}
                     onChange={(e) => handleDiscountChange(e.target.value)}
@@ -1005,8 +1007,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                 <div className="relative flex items-center rounded-lg border border-line bg-white shadow-sm overflow-hidden">
                   <span className="pl-2.5 text-xs text-muted/60 font-semibold">$</span>
                   <input
-                    type="number"
-                    min="0"
+                    type="text"
+                    inputMode="numeric"
                     placeholder={subtotal > 0 ? String(Math.round(calculatedTotal)) : "Total"}
                     value={customTotalInput}
                     onChange={(e) => handleCustomTotalChange(e.target.value)}
