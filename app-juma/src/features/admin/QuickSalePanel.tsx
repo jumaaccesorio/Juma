@@ -667,8 +667,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                         <input
                           type="number"
                           min="0"
-                          placeholder="Total"
-                          value={customTotalInput !== "" ? customTotalInput : (subtotal > 0 ? Math.round(calculatedTotal) : "")}
+                          placeholder={subtotal > 0 ? String(Math.round(calculatedTotal)) : "Total"}
+                          value={customTotalInput}
                           onChange={(e) => handleCustomTotalChange(e.target.value)}
                           className="w-full pl-1 pr-2 py-1.5 text-xs font-semibold text-primary outline-none border-none focus:ring-0 placeholder:text-muted/40"
                         />
@@ -1007,8 +1007,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                   <input
                     type="number"
                     min="0"
-                    placeholder="Total"
-                    value={customTotalInput !== "" ? customTotalInput : (subtotal > 0 ? Math.round(calculatedTotal) : "")}
+                    placeholder={subtotal > 0 ? String(Math.round(calculatedTotal)) : "Total"}
+                    value={customTotalInput}
                     onChange={(e) => handleCustomTotalChange(e.target.value)}
                     className="w-full pl-1.5 pr-2.5 py-1.5 text-xs font-semibold text-primary outline-none border-none focus:ring-0 placeholder:text-muted/40"
                   />
