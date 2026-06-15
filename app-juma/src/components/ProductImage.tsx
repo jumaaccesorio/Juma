@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from "react";
 import type { ImgHTMLAttributes } from "react";
-import type { Product } from "../types";
 
 type ProductImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
   product: {
