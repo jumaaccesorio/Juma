@@ -179,6 +179,36 @@ app.patch("/api/products/:id", async (req, res, next) => {
 });
 
 // ============================================================
+// PRODUCT SIZES
+// ============================================================
+app.get("/api/products/:id/sizes", async (req, res, next) => {
+  try {
+    const sizes = await all("SELECT * FROM product_sizes WHERE product_id = ? ORDER BY size ASC", [req.params.id]);
+    res.json(sizes);
+  } catch (e) { next(e); }
+});
+
+app.put("/api/products/:id/sizes", async (req, res, next) => {
+  try {
+    const productId = Number(req.params.id);
+    const sizes = Array.isArray(req.body.sizes) ? req.body.sizes : [];
+    await run("DELETE FROM product_sizes WHERE product_id = ?", [productId]);
+    for (const s of sizes) {
+      if (!s.size?.trim()) continue;
+      await run(
+        "INSERT OR REPLACE INTO product_sizes (product_id, size, stock) VALUES (?, ?, ?)",
+        [productId, s.size.trim(), Number(s.stock) || 0]
+      );
+    }
+    // Update product total stock
+    const totalStock = sizes.reduce((acc, s) => acc + (Number(s.stock) || 0), 0);
+    await run("UPDATE products SET stock = ? WHERE id = ?", [totalStock, productId]);
+    const updated = await all("SELECT * FROM product_sizes WHERE product_id = ? ORDER BY size ASC", [productId]);
+    res.json(updated);
+  } catch (e) { next(e); }
+});
+
+// ============================================================
 // ORDERS
 // ============================================================
 app.get("/api/orders", async (_req, res, next) => {

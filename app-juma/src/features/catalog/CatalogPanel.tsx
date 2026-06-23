@@ -464,7 +464,17 @@ function CatalogPanel({
                   <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.24em] text-primary/70">{product.categoryName || "Categoria"}</p>
                   <h4 className="min-h-[5.5rem] text-center font-headline text-[1.35rem] leading-tight text-carbon">{getProductDisplayName(product)}</h4>
                   <p className="mt-2 text-center text-lg font-semibold text-carbon">${product.salePrice.toLocaleString("es-AR")}</p>
-                  {product.size?.trim() ? (
+                  {/* Chips de talles disponibles */}
+                  {Array.isArray(product.sizes) && product.sizes.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap justify-center gap-1">
+                      {product.sizes.filter((s) => s.stock > 0).slice(0, 6).map((s) => (
+                        <span key={s.size} className="rounded border border-primary/25 bg-primary/5 px-2 py-0.5 text-[10px] font-bold text-primary">{s.size}</span>
+                      ))}
+                      {product.sizes.filter((s) => s.stock > 0).length > 6 && (
+                        <span className="rounded border border-primary/25 bg-primary/5 px-2 py-0.5 text-[10px] font-bold text-primary">+{product.sizes.filter((s) => s.stock > 0).length - 6}</span>
+                      )}
+                    </div>
+                  ) : product.size?.trim() ? (
                     <p className="mt-1 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-primary/60">
                       Talle {product.size}
                     </p>
@@ -476,12 +486,17 @@ function CatalogPanel({
                 <button
                   onClick={(event) => {
                     event.stopPropagation();
-                    onAddToCart(product.id);
+                    // If product has sizes, open detail page to let customer pick a size
+                    if (Array.isArray(product.sizes) && product.sizes.length > 0) {
+                      onOpenProduct(product.id);
+                    } else {
+                      onAddToCart(product.id);
+                    }
                   }}
                   className="mt-5 flex w-full items-center justify-center gap-2 rounded bg-primary py-3 text-sm font-bold uppercase tracking-[0.18em] text-white transition-all hover:opacity-90"
                 >
-                  <span className="material-symbols-outlined text-sm">{product.stock <= 0 ? "inventory_2" : "add_shopping_cart"}</span>
-                  {product.stock <= 0 ? "Pedir por encargo" : "Agregar al carrito"}
+                  <span className="material-symbols-outlined text-sm">{product.stock <= 0 ? "inventory_2" : Array.isArray(product.sizes) && product.sizes.length > 0 ? "straighten" : "add_shopping_cart"}</span>
+                  {product.stock <= 0 ? "Pedir por encargo" : Array.isArray(product.sizes) && product.sizes.length > 0 ? "Elegir talle" : "Agregar al carrito"}
                 </button>
               </div>
             ))

@@ -1,4 +1,4 @@
-import type { Category, Client, CommunitySubscriber, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, Order, OrderItem, Product, RestockCartItem } from "../types";
+import type { Category, Client, CommunitySubscriber, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, Order, OrderItem, Product, ProductSize, RestockCartItem } from "../types";
 import { supabase } from "./supabase";
 import { dataUrlToOptimizedFile, optimizeImageFile, type UploadImageVariant } from "./imageUpload";
 
@@ -289,10 +289,51 @@ export const api = {
     return mapProduct({ ...insert.data, category_name: insert.data.categories?.name ?? null });
   },
 
+  async getProductSizes(productId: number): Promise<ProductSize[]> {
+    const query = await supabase
+      .from("product_sizes")
+      .select("id, product_id, size, stock")
+      .eq("product_id", productId)
+      .order("size");
+    if (query.error) throw query.error;
+    return (query.data ?? []).map((row: any) => ({
+      id: row.id,
+      productId: row.product_id,
+      size: row.size,
+      stock: Number(row.stock ?? 0),
+    }));
+  },
+
+  async setProductSizes(productId: number, sizes: { size: string; stock: number }[]): Promise<ProductSize[]> {
+    // Delete all existing sizes for this product and reinsert
+    const deleteQuery = await supabase.from("product_sizes").delete().eq("product_id", productId);
+    if (deleteQuery.error) throw deleteQuery.error;
+
+    if (sizes.length === 0) return [];
+
+    const insertQuery = await supabase
+      .from("product_sizes")
+      .insert(sizes.map((s) => ({ product_id: productId, size: s.size.trim(), stock: s.stock })))
+      .select("id, product_id, size, stock");
+    if (insertQuery.error) throw insertQuery.error;
+
+    // Also update product total stock to sum of sizes
+    const totalStock = sizes.reduce((acc, s) => acc + s.stock, 0);
+    await supabase.from("products").update({ stock: totalStock }).eq("id", productId);
+
+    return (insertQuery.data ?? []).map((row: any) => ({
+      id: row.id,
+      productId: row.product_id,
+      size: row.size,
+      stock: Number(row.stock ?? 0),
+    }));
+  },
+
   async updateProduct(id: number, updates: Partial<Product>): Promise<void> {
     const basePayload: Record<string, unknown> = {};
     if (updates.name !== undefined) basePayload.name = updates.name;
     if (updates.subName !== undefined) basePayload.sub_name = updates.subName;
+    if (updates.size !== undefined) basePayload.size = updates.size;
     if (updates.categoryId !== undefined) basePayload.category_id = updates.categoryId;
     if (updates.isFeatured !== undefined) basePayload.is_featured = updates.isFeatured;
     if (updates.purchasePrice !== undefined) basePayload.purchase_price = updates.purchasePrice;
@@ -352,7 +393,7 @@ export const api = {
     const orderIds = orders.map((order) => order.id);
     const itemsQuery = await supabase
       .from("order_items")
-      .select("order_id, product_id, quantity, unit_sale_price, unit_purchase_price")
+      .select("order_id, product_id, quantity, size, unit_sale_price, unit_purchase_price")
       .in("order_id", orderIds);
     if (itemsQuery.error) throw itemsQuery.error;
 
@@ -433,6 +474,7 @@ export const api = {
       order_id: orderInsert.data.id,
       product_id: item.productId,
       quantity: item.quantity,
+      size: item.size ?? null,
       unit_sale_price: item.unitSalePrice,
       unit_purchase_price: item.unitPurchasePrice,
     }));
@@ -761,15 +803,21 @@ function normalizeStoragePublicUrl(value: unknown) {
 function mapProduct(row: any): Product {
   const rawName = typeof row.name === "string" ? row.name.trim() : "";
   const rawSubName = typeof row.sub_name === "string" ? row.sub_name.trim() : "";
+  const rawSize = typeof row.size === "string" ? row.size.trim() : undefined;
   const normalizedFull = normalizeRenderableProductImage(row.image_full, true);
   const normalizedLegacy = normalizeRenderableProductImage(row.image, true);
   const normalizedThumb = normalizeRenderableProductImage(row.image_thumb, true);
   const normalizedCard = normalizeRenderableProductImage(row.image_card, true);
   const normalizedImage = normalizedThumb || normalizedLegacy || normalizedFull;
+  const sizes: ProductSize[] | undefined = Array.isArray(row.product_sizes)
+    ? row.product_sizes.map((s: any) => ({ id: s.id, productId: row.id, size: s.size, stock: Number(s.stock ?? 0) }))
+    : undefined;
   return {
     id: row.id,
     name: rawName || rawSubName,
     subName: rawSubName,
+    size: rawSize || undefined,
+    sizes,
     categoryId: row.category_id ?? null,
     categoryName: row.category_name ?? undefined,
     isFeatured: Boolean(row.is_featured),
@@ -842,6 +890,7 @@ function mapOrder(row: any): Order {
     items: (row.items ?? []).map((item: any) => ({
       productId: item.product_id,
       quantity: item.quantity,
+      size: item.size ?? undefined,
       unitSalePrice: Number(item.unit_sale_price ?? 0),
       unitPurchasePrice: Number(item.unit_purchase_price ?? 0),
     })),

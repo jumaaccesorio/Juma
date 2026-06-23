@@ -2,7 +2,7 @@ import type { Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
 import ProductImage from "../../components/ProductImage";
 
-type CartRow = { product: Product; quantity: number; subtotal: number };
+type CartRow = { product: Product; quantity: number; size?: string; subtotal: number };
 type OrderConfirmation = { orderId: number; customerName?: string };
 
 type CartPanelProps = {
@@ -10,8 +10,8 @@ type CartPanelProps = {
   cartItemsCount: number;
   cartTotal: number;
   orderConfirmation: OrderConfirmation | null;
-  onUpdateCartQuantity: (productId: number, quantity: number) => void;
-  onRemoveFromCart: (productId: number) => void;
+  onUpdateCartQuantity: (productId: number, quantity: number, size?: string) => void;
+  onRemoveFromCart: (productId: number, size?: string) => void;
   onClearCart: () => void;
   onCheckoutClick: () => void;
   onBackToCatalog: () => void;
@@ -93,7 +93,7 @@ function CartPanel({
                 const isBackorder = row.product.stock < row.quantity;
 
                 return (
-                  <div key={row.product.id} className="flex flex-col items-center gap-6 rounded-xl border border-primary/5 bg-white p-6 shadow-sm dark:bg-slate-900/50 sm:flex-row">
+                  <div key={`${row.product.id}-${row.size ?? 'default'}`} className="flex flex-col items-center gap-6 rounded-xl border border-primary/5 bg-white p-6 shadow-sm dark:bg-slate-900/50 sm:flex-row">
                     <div className="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
                       {row.product.image ? (
                         <ProductImage
@@ -114,6 +114,12 @@ function CartPanel({
                           <p className="text-sm text-slate-500">
                             {row.product.categoryName || "Sin categoria"} • {row.product.stock > 0 ? `${row.product.stock} disp.` : "Sin stock inmediato"}
                           </p>
+                          {row.size ? (
+                            <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
+                              <span className="material-symbols-outlined text-[10px]">straighten</span>
+                              Talle {row.size}
+                            </p>
+                          ) : null}
                           {isBackorder ? (
                             <p className="mt-2 inline-flex items-center rounded-full bg-warning/25 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#9a6d48]">
                               Pedido por encargo
@@ -125,21 +131,21 @@ function CartPanel({
                       <div className="mt-4 flex items-center justify-between sm:mt-0">
                         <div className="flex items-center gap-3 rounded-lg border border-primary/10 bg-background p-1 dark:bg-slate-800">
                           <button
-                            onClick={() => onUpdateCartQuantity(row.product.id, row.quantity - 1)}
+                            onClick={() => onUpdateCartQuantity(row.product.id, row.quantity - 1, row.size)}
                             className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-primary/10"
                           >
                             <span className="material-symbols-outlined text-lg">remove</span>
                           </button>
                           <span className="w-8 text-center font-bold text-slate-900 dark:text-slate-100">{row.quantity}</span>
                           <button
-                            onClick={() => onUpdateCartQuantity(row.product.id, row.quantity + 1)}
+                            onClick={() => onUpdateCartQuantity(row.product.id, row.quantity + 1, row.size)}
                             className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-primary/10"
                           >
                             <span className="material-symbols-outlined text-lg">add</span>
                           </button>
                         </div>
                         <button
-                          onClick={() => onRemoveFromCart(row.product.id)}
+                          onClick={() => onRemoveFromCart(row.product.id, row.size)}
                           className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-slate-400 transition-colors hover:text-red-500"
                         >
                           <span className="material-symbols-outlined text-sm">delete</span> Eliminar

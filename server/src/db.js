@@ -79,6 +79,15 @@ export async function initDb() {
           created_at     TEXT NOT NULL DEFAULT (datetime('now'))
         )`);
 
+        await run(`CREATE TABLE IF NOT EXISTS product_sizes (
+          id         INTEGER PRIMARY KEY AUTOINCREMENT,
+          product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+          size       TEXT NOT NULL,
+          stock      INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          UNIQUE(product_id, size)
+        )`);
+
         await run(`CREATE TABLE IF NOT EXISTS orders (
           id           INTEGER PRIMARY KEY AUTOINCREMENT,
           client_id    INTEGER REFERENCES clients(id) ON DELETE SET NULL,
@@ -95,6 +104,7 @@ export async function initDb() {
           order_id            INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
           product_id          INTEGER REFERENCES products(id) ON DELETE SET NULL,
           quantity            INTEGER NOT NULL DEFAULT 1,
+          size                TEXT,
           unit_sale_price     REAL NOT NULL DEFAULT 0,
           unit_purchase_price REAL NOT NULL DEFAULT 0
         )`);
@@ -142,6 +152,13 @@ export async function initDb() {
           await run(`INSERT INTO featured_panels (title, cta, image, class_name) VALUES ('Acero Dorado', 'Mira mas', 'https://images.unsplash.com/photo-1535632787350-4e68ef0ac584?auto=format&fit=crop&w=1200&q=80', 'card-top')`);
           await run(`INSERT INTO featured_panels (title, cta, image, class_name) VALUES ('Acero Quirurgico', 'Mira mas', 'https://images.unsplash.com/photo-1588444650700-6d6db1f6f7fd?auto=format&fit=crop&w=1200&q=80', 'card-bottom-left')`);
           await run(`INSERT INTO featured_panels (title, cta, image, class_name) VALUES ('Pulseras Charms', 'Mira mas', 'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=1200&q=80', 'card-bottom-right')`);
+        }
+
+        // Migrations
+        try {
+          await run(`ALTER TABLE order_items ADD COLUMN size TEXT`);
+        } catch (e) {
+          // Ignore if column already exists
         }
 
         const productColumns = await all("PRAGMA table_info(products)");

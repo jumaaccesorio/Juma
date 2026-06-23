@@ -1,22 +1,31 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Product } from "../../types";
+import type { Product, ProductSize } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
 import ProductImage from "../../components/ProductImage";
 
 type ProductDetailPanelProps = {
   product: Product;
   onBack: () => void;
-  onAddToCart: (productId: number, quantity?: number) => void;
+  onAddToCart: (productId: number, quantity?: number, size?: string) => void;
 };
 
 function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanelProps) {
   const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const detailRef = useRef<HTMLDivElement | null>(null);
+  const hasSizes = Array.isArray(product.sizes) && product.sizes.length > 0;
+
   const description = useMemo(() => {
     if (product.subName?.trim()) return product.subName.trim();
     if (product.categoryName?.trim()) return `Pieza perteneciente a la categoria ${product.categoryName}.`;
     return "Accesorio disponible en la tienda online de Juma Accessory.";
   }, [product.categoryName, product.subName]);
+
+  // Reset size selection when product changes
+  useEffect(() => {
+    setSelectedSize(null);
+    setQuantity(1);
+  }, [product.id]);
 
   useEffect(() => {
     const node = detailRef.current;
@@ -30,6 +39,21 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
       });
     });
   }, [product.id]);
+
+  const selectedSizeData: ProductSize | undefined = hasSizes
+    ? product.sizes!.find((s) => s.size === selectedSize)
+    : undefined;
+
+  // Stock to show: if has sizes and one is selected, show that size's stock;
+  // otherwise show total product stock
+  const displayStock = selectedSizeData ? selectedSizeData.stock : product.stock;
+  const canAddToCart = !hasSizes || selectedSize !== null;
+  const isOutOfStock = displayStock <= 0;
+
+  const handleAddToCart = () => {
+    if (!canAddToCart) return;
+    onAddToCart(product.id, quantity, selectedSize ?? undefined);
+  };
 
   return (
     <div ref={detailRef} className="mx-auto w-full max-w-7xl px-6 py-10 md:px-20">
@@ -75,6 +99,48 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
             <p className="mt-3 text-sm leading-7 text-ink">{description}</p>
           </div>
 
+          {/* ── Selector de talle ───────────────────────── */}
+          {hasSizes && (
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-muted">Talle</p>
+                {selectedSize && (
+                  <span className="text-xs font-bold text-primary">Seleccionado: {selectedSize}</span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {product.sizes!.map((sizeOpt) => {
+                  const outOfStock = sizeOpt.stock <= 0;
+                  const isSelected = selectedSize === sizeOpt.size;
+                  return (
+                    <button
+                      key={sizeOpt.size}
+                      type="button"
+                      disabled={outOfStock}
+                      onClick={() => setSelectedSize(isSelected ? null : sizeOpt.size)}
+                      title={outOfStock ? `Talle ${sizeOpt.size} sin stock` : `Talle ${sizeOpt.size}`}
+                      className={`relative min-w-[3rem] rounded-lg border-2 px-4 py-2.5 text-sm font-bold transition-all ${
+                        outOfStock
+                          ? "cursor-not-allowed border-line bg-secondary/40 text-muted line-through"
+                          : isSelected
+                            ? "border-primary bg-primary text-white shadow-lg shadow-primary/25"
+                            : "border-line bg-white text-ink hover:border-primary hover:text-primary"
+                      }`}
+                    >
+                      {sizeOpt.size}
+                      {outOfStock && (
+                        <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-black text-white">×</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {!selectedSize && (
+                <p className="mt-2 text-xs text-amber-600 font-medium">Seleccioná un talle para continuar.</p>
+              )}
+            </div>
+          )}
+
           <div className="mt-6 flex flex-wrap items-center gap-4">
             <div className="inline-flex items-center rounded-lg border border-primary/15 bg-white p-1 shadow-subtle">
               <button
@@ -96,11 +162,16 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
 
             <button
               type="button"
-              onClick={() => onAddToCart(product.id, quantity)}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded bg-primary px-8 py-3 text-sm font-bold uppercase tracking-[0.18em] text-white transition-all hover:opacity-90"
+              disabled={!canAddToCart}
+              onClick={handleAddToCart}
+              className={`inline-flex min-h-12 items-center justify-center gap-2 rounded px-8 py-3 text-sm font-bold uppercase tracking-[0.18em] text-white transition-all ${
+                canAddToCart
+                  ? "bg-primary hover:opacity-90"
+                  : "cursor-not-allowed bg-slate-300"
+              }`}
             >
-              <span className="material-symbols-outlined text-sm">{product.stock <= 0 ? "inventory_2" : "add_shopping_cart"}</span>
-              {product.stock <= 0 ? "Pedir por encargo" : "Agregar al carrito"}
+              <span className="material-symbols-outlined text-sm">{isOutOfStock ? "inventory_2" : "add_shopping_cart"}</span>
+              {!canAddToCart ? "Seleccioná un talle" : isOutOfStock ? "Pedir por encargo" : "Agregar al carrito"}
             </button>
 
             <button
@@ -115,9 +186,13 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
 
           <div className="mt-6 flex flex-wrap gap-3">
             <span className="inline-flex items-center rounded-full bg-quaternary px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
-              {product.stock > 0 ? `${product.stock} disponibles` : "Disponible por encargo"}
+              {hasSizes
+                ? selectedSize
+                  ? `Talle ${selectedSize}: ${displayStock > 0 ? `${displayStock} disp.` : "Sin stock"}`
+                  : `${product.sizes!.reduce((a, s) => a + s.stock, 0)} u. en total`
+                : displayStock > 0 ? `${displayStock} disponibles` : "Disponible por encargo"}
             </span>
-            {product.size?.trim() ? (
+            {product.size?.trim() && !hasSizes ? (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
                 <span className="material-symbols-outlined text-sm">straighten</span>
                 Talle {product.size}

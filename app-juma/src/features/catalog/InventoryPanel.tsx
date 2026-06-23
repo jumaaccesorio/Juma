@@ -131,23 +131,38 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
                   ) : null}
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => onUpdateStock(product.id, Math.max(0, product.stock - 1))}
-                      className="flex h-8 w-8 items-center justify-center border border-outline-variant/30 text-primary transition-all active:scale-95 hover:bg-secondary-container"
-                    >
-                      <span className="material-symbols-outlined text-sm">remove</span>
-                    </button>
-                    <span className="w-6 text-center font-headline text-lg italic">{String(product.stock).padStart(2, "0")}</span>
-                    <button
-                      type="button"
-                      onClick={() => onUpdateStock(product.id, product.stock + 1)}
-                      className="flex h-8 w-8 items-center justify-center border border-outline-variant/30 text-primary transition-all active:scale-95 hover:bg-secondary-container"
-                    >
-                      <span className="material-symbols-outlined text-sm">add</span>
-                    </button>
-                  </div>
+                  {Array.isArray(product.sizes) && product.sizes.length > 0 ? (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">
+                        Total: {String(product.stock).padStart(2, "0")} u.
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => onOpenProductDetail(product.id)}
+                        className="text-[10px] font-bold uppercase text-primary hover:underline"
+                      >
+                        Gestionar talles
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onUpdateStock(product.id, Math.max(0, product.stock - 1))}
+                        className="flex h-8 w-8 items-center justify-center border border-outline-variant/30 text-primary transition-all active:scale-95 hover:bg-secondary-container"
+                      >
+                        <span className="material-symbols-outlined text-sm">remove</span>
+                      </button>
+                      <span className="w-6 text-center font-headline text-lg italic">{String(product.stock).padStart(2, "0")}</span>
+                      <button
+                        type="button"
+                        onClick={() => onUpdateStock(product.id, product.stock + 1)}
+                        className="flex h-8 w-8 items-center justify-center border border-outline-variant/30 text-primary transition-all active:scale-95 hover:bg-secondary-container"
+                      >
+                        <span className="material-symbols-outlined text-sm">add</span>
+                      </button>
+                    </div>
+                  )}
                   <span className={`rounded-full px-3 py-1 text-[10px] font-bold ${
                     product.stock <= 2 ? "bg-error-container/20 text-error" : "bg-tertiary-container/20 text-on-tertiary-container"
                   }`}>

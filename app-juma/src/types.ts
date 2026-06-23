@@ -1,6 +1,13 @@
 export type Tab = "dashboard" | "inicio_admin" | "categorias" | "clientes" | "productos" | "catalogo" | "inventario" | "pedidos" | "reposicion" | "finanzas" | "carrito" | "perfil" | "venta_rapida" | "comunidad";
 export type OrderStatus = "PENDIENTE" | "REALIZADO";
-export type CartItem = { productId: number; quantity: number };
+export type CartItem = { productId: number; quantity: number; size?: string };
+
+export type ProductSize = {
+  id: number;
+  productId: number;
+  size: string;
+  stock: number;
+};
 
 export type Category = {
   id: number;
@@ -30,13 +37,14 @@ export type Product = {
   id: number;
   name: string;
   subName: string;
-  size?: string; // Talle o medida del producto (ej. "17", "18", "Única")
+  size?: string; // Campo legado — usar sizes[] para variantes múltiples
+  sizes?: ProductSize[]; // Variantes de talle con stock individual
   categoryId?: number | null;
   categoryName?: string; // Denormalized or joined for UI
   isFeatured: boolean;
   purchasePrice: number;
   salePrice: number;
-  stock: number;
+  stock: number; // Total (suma de sizes o stock directo si no hay sizes)
   initialStock: number;
   enabled: boolean;
   image: string;
@@ -51,6 +59,7 @@ export type Product = {
 export type OrderItem = {
   productId: number;
   quantity: number;
+  size?: string;
   unitSalePrice: number;
   unitPurchasePrice: number;
 };
@@ -90,6 +99,7 @@ export type FinanceExpense = {
 export type NewOrderItem = {
   productId: string;
   quantity: string;
+  size?: string;
 };
 
 export type FeaturedPanel = {

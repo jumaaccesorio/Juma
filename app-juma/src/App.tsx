@@ -614,12 +614,11 @@ function App() {
   const cartRows = useMemo(
     () =>
       cartItems
-        .map((item) => {
+        .flatMap((item) => {
           const product = productMap.get(item.productId);
-          if (!product) return null;
-          return { product, quantity: item.quantity, subtotal: item.quantity * product.salePrice };
-        })
-        .filter((row): row is { product: Product; quantity: number; subtotal: number } => row !== null),
+          if (!product) return [];
+          return [{ product, quantity: item.quantity, size: item.size, subtotal: item.quantity * product.salePrice }];
+        }),
     [cartItems, productMap],
   );
   const cartTotal = useMemo(() => cartRows.reduce((acc, row) => acc + row.subtotal, 0), [cartRows]);
@@ -900,7 +899,7 @@ function App() {
       const quantity = Number(row.quantity);
       const product = productMap.get(productId);
       if (!product || Number.isNaN(quantity) || quantity <= 0) continue;
-      normalized.push({ productId, quantity, unitSalePrice: product.salePrice, unitPurchasePrice: product.purchasePrice });
+      normalized.push({ productId, quantity, size: row.size, unitSalePrice: product.salePrice, unitPurchasePrice: product.purchasePrice });
     }
     return normalized;
   };
@@ -1068,6 +1067,22 @@ function App() {
       );
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const setProductSizes = async (productId: number, sizes: { size: string; stock: number }[]) => {
+    try {
+      const savedSizes = await api.setProductSizes(productId, sizes);
+      const totalStock = savedSizes.reduce((acc, s) => acc + s.stock, 0);
+      setProducts((prev) =>
+        prev.map((product) => {
+          if (product.id !== productId) return product;
+          return { ...product, sizes: savedSizes, stock: totalStock };
+        }),
+      );
+    } catch (err) {
+      console.error(err);
+      setError("No se pudieron guardar los talles.");
     }
   };
 
@@ -1308,14 +1323,14 @@ function App() {
     setActiveTab("catalogo");
   };
 
-  const addToCart = (productId: number, quantity = 1) => {
+  const addToCart = (productId: number, quantity = 1, size?: string) => {
     setError("");
     setLastOrderConfirmation(null);
     const product = productMap.get(productId);
     if (quantity <= 0) return;
     if (!product) return;
     setCartItems((prev) => {
-      const existing = prev.find((item) => item.productId === productId);
+      const existing = prev.find((item) => item.productId === productId && item.size === size);
       const nextQuantity = existing ? existing.quantity + quantity : quantity;
       const nextItemsCount = prev.reduce((acc, item) => acc + item.quantity, 0) + quantity;
       const nextCartTotal =
@@ -1323,45 +1338,46 @@ function App() {
           const currentProduct = productMap.get(item.productId);
           return acc + (currentProduct ? currentProduct.salePrice * item.quantity : 0);
         }, 0) + product.salePrice * quantity;
+      const sizeLabel = size ? ` (Talle ${size})` : "";
       if (!existing) {
         setCartSuccessToast({
           productId: product.id,
-          name: getProductDisplayName(product),
+          name: getProductDisplayName(product) + sizeLabel,
           image: product.image,
           price: product.salePrice,
           quantity,
           cartItemsCount: nextItemsCount,
           cartTotal: nextCartTotal,
         });
-        return [...prev, { productId, quantity }];
+        return [...prev, { productId, quantity, size }];
       }
       setCartSuccessToast({
         productId: product.id,
-        name: getProductDisplayName(product),
+        name: getProductDisplayName(product) + sizeLabel,
         image: product.image,
         price: product.salePrice,
         quantity: nextQuantity,
         cartItemsCount: nextItemsCount,
         cartTotal: nextCartTotal,
       });
-      return prev.map((item) => (item.productId === productId ? { ...item, quantity: nextQuantity } : item));
+      return prev.map((item) => (item.productId === productId && item.size === size ? { ...item, quantity: nextQuantity } : item));
     });
   };
 
-  const updateCartQuantity = (productId: number, quantity: number) => {
+  const updateCartQuantity = (productId: number, quantity: number, size?: string) => {
     setLastOrderConfirmation(null);
     if (quantity <= 0) {
-      setCartItems((prev) => prev.filter((item) => item.productId !== productId));
+      setCartItems((prev) => prev.filter((item) => !(item.productId === productId && item.size === size)));
       return;
     }
     const product = productMap.get(productId);
     if (!product) return;
-    setCartItems((prev) => prev.map((item) => (item.productId === productId ? { ...item, quantity } : item)));
+    setCartItems((prev) => prev.map((item) => (item.productId === productId && item.size === size ? { ...item, quantity } : item)));
   };
 
-  const removeFromCart = (productId: number) => {
+  const removeFromCart = (productId: number, size?: string) => {
     setLastOrderConfirmation(null);
-    setCartItems((prev) => prev.filter((item) => item.productId !== productId));
+    setCartItems((prev) => prev.filter((item) => !(item.productId === productId && item.size === size)));
   };
 
   const clearCart = () => {
@@ -1636,7 +1652,7 @@ function App() {
     try {
       if (cartItems.length === 0) return;
       
-      const orderItems = buildOrderItems(cartItems.map(c => ({ productId: String(c.productId), quantity: String(c.quantity) })));
+      const orderItems = buildOrderItems(cartItems.map(c => ({ productId: String(c.productId), quantity: String(c.quantity), size: c.size })));
       const newOrder = await api.addOrder({
         clientId: currentClient?.id,
         guestName: guestData?.name,
@@ -1801,6 +1817,7 @@ function App() {
                   onToggleProductEnabled={toggleProductEnabled}
                   onUpdateExistingProductImage={updateExistingProductImage}
                   onSaveProductEdits={saveProductEdits}
+                  onSetProductSizes={setProductSizes}
                   onDeleteProduct={deleteProduct}
                   onImportProducts={importProducts}
                   focusedProductId={focusedAdminProductId}

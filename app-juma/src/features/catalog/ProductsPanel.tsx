@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
-import type { Category, Product } from "../../types";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
+import type { Category, Product, ProductSize } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
 import ProductImage from "../../components/ProductImage";
 
@@ -39,6 +38,7 @@ type ProductsPanelProps = {
   onToggleProductEnabled: (productId: number) => void;
   onUpdateExistingProductImage: (productId: number, file: File | null) => void;
   onSaveProductEdits: (productId: number, updates: Partial<Product>) => void;
+  onSetProductSizes: (productId: number, sizes: { size: string; stock: number }[]) => Promise<void>;
   onDeleteProduct: (productId: number) => void;
   onImportProducts: (file: File | null) => void;
   focusedProductId: number | null;
@@ -70,6 +70,7 @@ function ProductsPanel({
   onToggleProductEnabled,
   onUpdateExistingProductImage,
   onSaveProductEdits,
+  onSetProductSizes,
   onDeleteProduct,
   onImportProducts,
   focusedProductId,
@@ -82,6 +83,11 @@ function ProductsPanel({
   const [showForm, setShowForm] = useState(false);
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [drafts, setDrafts] = useState<Record<number, ProductDraft>>({});
+  // Size manager state (keyed by productId)
+  const [sizeDrafts, setSizeDrafts] = useState<Record<number, ProductSize[]>>({});
+  const [newSizeInput, setNewSizeInput] = useState("");
+  const [newSizeStock, setNewSizeStock] = useState("1");
+  const [isSavingSizes, setIsSavingSizes] = useState(false);
 
   useEffect(() => {
     setDrafts((prev) => {
@@ -179,6 +185,13 @@ function ProductsPanel({
       ...prev,
       [product.id]: prev[product.id] ?? buildDraft(product),
     }));
+    // Init size drafts from existing product sizes
+    setSizeDrafts((prev) => ({
+      ...prev,
+      [product.id]: prev[product.id] ?? (product.sizes ? [...product.sizes] : []),
+    }));
+    setNewSizeInput("");
+    setNewSizeStock("1");
     setEditingProductId(product.id);
     onFocusedProductChange(product.id);
   };
@@ -191,8 +204,38 @@ function ProductsPanel({
       ...prev,
       [product.id]: prev[product.id] ?? buildDraft(product),
     }));
-    setEditingProductId(product.id);
+    setSizeDrafts((prev) => ({
+      ...prev,
+      [product.id]: prev[product.id] ?? (product.sizes ? [...product.sizes] : []),
+    }));
   }, [focusedProductId, products]);
+
+  const addSizeToDraft = (productId: number) => {
+    const trimmed = newSizeInput.trim();
+    if (!trimmed) return;
+    const stock = Math.max(0, Number(newSizeStock) || 0);
+    setSizeDrafts((prev) => {
+      const current = prev[productId] ?? [];
+      if (current.some((s) => s.size.toLowerCase() === trimmed.toLowerCase())) return prev;
+      return { ...prev, [productId]: [...current, { id: Date.now(), productId, size: trimmed, stock }] };
+    });
+    setNewSizeInput("");
+    setNewSizeStock("1");
+  };
+
+  const removeSizeFromDraft = (productId: number, size: string) => {
+    setSizeDrafts((prev) => ({
+      ...prev,
+      [productId]: (prev[productId] ?? []).filter((s) => s.size !== size),
+    }));
+  };
+
+  const updateSizeStockInDraft = (productId: number, size: string, newStock: number) => {
+    setSizeDrafts((prev) => ({
+      ...prev,
+      [productId]: (prev[productId] ?? []).map((s) => s.size === size ? { ...s, stock: Math.max(0, newStock) } : s),
+    }));
+  };
 
   const editingProduct = editingProductId ? products.find((product) => product.id === editingProductId) ?? null : null;
   const editingDraft = editingProduct ? drafts[editingProduct.id] ?? buildDraft(editingProduct) : null;
@@ -834,6 +877,71 @@ function ProductsPanel({
               </div>
             </div>
 
+            {/* ── Gestor de Talles ────────────────────────── */}
+            <div className="border-t border-line px-6 py-5">
+              <p className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-muted">Talles disponibles</p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {(sizeDrafts[editingProduct.id] ?? []).length === 0 ? (
+                  <p className="text-sm text-muted italic">Sin talles cargados. El producto no tendrá selector de talle.</p>
+                ) : (
+                  (sizeDrafts[editingProduct.id] ?? []).map((s) => (
+                    <div key={s.size} className="flex items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+                      <span className="text-sm font-bold text-primary min-w-[1.5rem] text-center">{s.size}</span>
+                      <span className="text-muted text-xs">·</span>
+                      <input
+                        type="number"
+                        min="0"
+                        className="w-12 rounded border border-line bg-white px-1 py-0.5 text-center text-xs outline-none focus:ring-1 focus:ring-primary/30"
+                        value={s.stock}
+                        onChange={(e) => updateSizeStockInDraft(editingProduct.id, s.size, Number(e.target.value))}
+                        title={`Stock para talle ${s.size}`}
+                      />
+                      <span className="text-[10px] text-muted">u.</span>
+                      <button
+                        type="button"
+                        onClick={() => removeSizeFromDraft(editingProduct.id, s.size)}
+                        className="ml-1 text-red-400 hover:text-red-600 transition-colors"
+                        title="Eliminar talle"
+                      >
+                        <span className="material-symbols-outlined text-base">close</span>
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  className="w-24 rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                  placeholder="Talle"
+                  value={newSizeInput}
+                  onChange={(e) => setNewSizeInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSizeToDraft(editingProduct.id); } }}
+                />
+                <input
+                  type="number"
+                  min="0"
+                  className="w-20 rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                  placeholder="Stock"
+                  value={newSizeStock}
+                  onChange={(e) => setNewSizeStock(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSizeToDraft(editingProduct.id); } }}
+                />
+                <button
+                  type="button"
+                  onClick={() => addSizeToDraft(editingProduct.id)}
+                  className="flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-primary/90"
+                >
+                  <span className="material-symbols-outlined text-base">add</span>
+                  Agregar
+                </button>
+              </div>
+              {(sizeDrafts[editingProduct.id] ?? []).length > 0 && (
+                <p className="mt-2 text-[11px] text-muted">
+                  Stock total: {(sizeDrafts[editingProduct.id] ?? []).reduce((a, s) => a + s.stock, 0)} unidades
+                </p>
+              )}
+            </div>
+
             <div className="flex flex-col gap-3 border-t border-line px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
               <button
                 type="button"
@@ -860,8 +968,16 @@ function ProductsPanel({
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
+                  disabled={isSavingSizes}
+                  onClick={async () => {
                     handleSaveDraft(editingProduct);
+                    const currentSizes = sizeDrafts[editingProduct.id] ?? [];
+                    try {
+                      setIsSavingSizes(true);
+                      await onSetProductSizes(editingProduct.id, currentSizes.map((s) => ({ size: s.size, stock: s.stock })));
+                    } finally {
+                      setIsSavingSizes(false);
+                    }
                     setEditingProductId(null);
                     onFocusedProductChange(null);
                   }}
