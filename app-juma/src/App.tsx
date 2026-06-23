@@ -230,6 +230,7 @@ function App() {
   const [productForm, setProductForm] = useState({
     name: "",
     subName: "",
+    size: "",
     categoryId: "",
     purchasePrice: "",
     salePrice: "",
@@ -841,6 +842,7 @@ function App() {
       const newProduct = await api.addProduct({
         name: productForm.name.trim() || productForm.subName.trim(),
         subName: productForm.subName.trim(),
+        size: productForm.size.trim(),
         categoryId: Number(productForm.categoryId) || undefined,
         isFeatured: productForm.isFeatured,
         purchasePrice: Number(productForm.purchasePrice),
@@ -854,7 +856,7 @@ function App() {
       });
       setProducts((prev) => [newProduct, ...prev]);
       
-      setProductForm({ name: "", subName: "", categoryId: "", purchasePrice: "", salePrice: "", stock: "", sourceUrl: "", isFeatured: false });
+      setProductForm({ name: "", subName: "", size: "", categoryId: "", purchasePrice: "", salePrice: "", stock: "", sourceUrl: "", isFeatured: false });
       setProductImageData("");
       setProductImageFile(null);
       setActiveTab("carrito");

@@ -7,6 +7,7 @@ import ProductImage from "../../components/ProductImage";
 type ProductForm = {
   name: string;
   subName: string;
+  size: string;
   categoryId: string;
   purchasePrice: string;
   salePrice: string;
@@ -18,6 +19,7 @@ type ProductForm = {
 type ProductDraft = {
   name: string;
   subName: string;
+  size: string;
   categoryId: string;
   purchasePrice: string;
   salePrice: string;
@@ -47,6 +49,7 @@ function buildDraft(product: Product): ProductDraft {
   return {
     name: product.name ?? "",
     subName: product.subName ?? "",
+    size: product.size ?? "",
     categoryId: product.categoryId ? String(product.categoryId) : "",
     purchasePrice: String(product.purchasePrice ?? 0),
     salePrice: String(product.salePrice ?? 0),
@@ -161,6 +164,7 @@ function ProductsPanel({
     onSaveProductEdits(product.id, {
       name: draft.name.trim() || draft.subName.trim(),
       subName: draft.subName.trim(),
+      size: draft.size.trim(),
       categoryId: draft.categoryId ? Number(draft.categoryId) : null,
       purchasePrice,
       salePrice,
@@ -288,6 +292,15 @@ function ProductsPanel({
                 placeholder="Ej. Collar serpiente"
                 value={productForm.subName}
                 onChange={(e) => onProductFormChange({ ...productForm, subName: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Talle / Medida <span className="font-normal text-slate-400">(Opcional)</span></label>
+              <input
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                placeholder="Ej. 17, 18, Única, 15-20cm"
+                value={productForm.size}
+                onChange={(e) => onProductFormChange({ ...productForm, size: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -738,6 +751,15 @@ function ProductsPanel({
                     value={editingDraft.subName}
                     onChange={(e) => updateDraft(editingProduct.id, "subName", e.target.value)}
                     placeholder="Nombre de busqueda"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Talle / Medida</label>
+                  <input
+                    className="w-full rounded-lg border border-line bg-white px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-primary/20"
+                    value={editingDraft.size}
+                    onChange={(e) => updateDraft(editingProduct.id, "size", e.target.value)}
+                    placeholder="Ej. 17, 18, Única"
                   />
                 </div>
                 <div className="space-y-2">

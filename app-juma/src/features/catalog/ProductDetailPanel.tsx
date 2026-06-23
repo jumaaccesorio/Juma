@@ -117,6 +117,12 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
             <span className="inline-flex items-center rounded-full bg-quaternary px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
               {product.stock > 0 ? `${product.stock} disponibles` : "Disponible por encargo"}
             </span>
+            {product.size?.trim() ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+                <span className="material-symbols-outlined text-sm">straighten</span>
+                Talle {product.size}
+              </span>
+            ) : null}
             {product.subName?.trim() ? (
               <span className="inline-flex items-center rounded-full bg-tertiary/16 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#4f6780]">
                 {product.subName}

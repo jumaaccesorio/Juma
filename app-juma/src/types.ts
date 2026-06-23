@@ -30,6 +30,7 @@ export type Product = {
   id: number;
   name: string;
   subName: string;
+  size?: string; // Talle o medida del producto (ej. "17", "18", "Única")
   categoryId?: number | null;
   categoryName?: string; // Denormalized or joined for UI
   isFeatured: boolean;

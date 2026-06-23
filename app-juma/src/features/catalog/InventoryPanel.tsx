@@ -18,6 +18,7 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
   const [editSubName, setEditSubName] = useState("");
+  const [editSize, setEditSize] = useState("");
 
   const filteredProducts = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -41,6 +42,7 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
     setEditingProductId(product.id);
     setEditName(product.name);
     setEditSubName(product.subName);
+    setEditSize(product.size ?? "");
   };
 
   const saveEdit = (product: Product) => {
@@ -50,6 +52,7 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
     onSaveProductEdits(product.id, {
       name: normalizedName || normalizedSubName,
       subName: normalizedSubName,
+      size: editSize.trim(),
     });
     setEditingProductId(null);
   };
@@ -121,6 +124,11 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
                     {getProductDisplayName(product)}
                   </button>
                   <p className="mt-0.5 text-[10px] uppercase tracking-widest text-secondary">{product.categoryName || "Sin categoria"}</p>
+                  {product.size?.trim() ? (
+                    <span className="mt-1 inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
+                      Talle {product.size}
+                    </span>
+                  ) : null}
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
@@ -250,6 +258,12 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
                     onChange={(e) => setEditSubName(e.target.value)}
                     placeholder="Subnombre"
                   />
+                  <input
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                    value={editSize}
+                    onChange={(e) => setEditSize(e.target.value)}
+                    placeholder="Talle / Medida (ej. 17, 18, Única)"
+                  />
                 </div>
               ) : null}
               <div className="mt-4 flex items-center justify-between gap-3">
@@ -322,6 +336,11 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
                         >
                           {getProductDisplayName(product)}
                         </button>
+                        {product.size?.trim() ? (
+                          <span className="mt-1 inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
+                            Talle {product.size}
+                          </span>
+                        ) : null}
                         {editingProductId === product.id ? (
                           <div className="mt-2 flex flex-col gap-2">
                             <input
@@ -335,6 +354,12 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
                               value={editSubName}
                               onChange={(e) => setEditSubName(e.target.value)}
                               placeholder="Subnombre"
+                            />
+                            <input
+                              className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                              value={editSize}
+                              onChange={(e) => setEditSize(e.target.value)}
+                              placeholder="Talle / Medida (ej. 17, 18, Única)"
                             />
                           </div>
                         ) : null}

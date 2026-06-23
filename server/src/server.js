@@ -145,11 +145,11 @@ app.get("/api/products", async (_req, res, next) => {
 
 app.post("/api/products", async (req, res, next) => {
   try {
-    const { name, subName, categoryId, isFeatured, purchasePrice, salePrice, stock, initialStock, enabled, image, sourceUrl } = req.body;
+    const { name, subName, size, categoryId, isFeatured, purchasePrice, salePrice, stock, initialStock, enabled, image, sourceUrl } = req.body;
     const result = await run(
-      `INSERT INTO products (name, sub_name, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, source_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, subName ?? "", categoryId ?? null, isFeatured ? 1 : 0, purchasePrice, salePrice, stock, initialStock ?? stock, enabled ? 1 : 0, image ?? "", sourceUrl ?? ""]
+      `INSERT INTO products (name, sub_name, size, category_id, is_featured, purchase_price, sale_price, stock, initial_stock, enabled, image, source_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, subName ?? "", size ?? "", categoryId ?? null, isFeatured ? 1 : 0, purchasePrice, salePrice, stock, initialStock ?? stock, enabled ? 1 : 0, image ?? "", sourceUrl ?? ""]
     );
     const row = await get("SELECT p.*, c.name AS category_name FROM products p LEFT JOIN categories c ON c.id = p.category_id WHERE p.id = ?", [result.lastID]);
     res.status(201).json(row);
@@ -160,7 +160,6 @@ app.patch("/api/products/:id", async (req, res, next) => {
   try {
     const fields = [];
     const vals = [];
-    const allowed = { stock: "stock", enabled: "enabled", image: "image", is_featured: "isFeatured", category_id: "categoryId", name: "name", sale_price: "salePrice", purchase_price: "purchasePrice" };
     const body = req.body;
     if (body.stock !== undefined)        { fields.push("stock = ?");           vals.push(body.stock); }
     if (body.enabled !== undefined)      { fields.push("enabled = ?");         vals.push(body.enabled ? 1 : 0); }
@@ -169,6 +168,7 @@ app.patch("/api/products/:id", async (req, res, next) => {
     if (body.categoryId !== undefined)   { fields.push("category_id = ?");     vals.push(body.categoryId); }
     if (body.name !== undefined)         { fields.push("name = ?");            vals.push(body.name); }
     if (body.subName !== undefined)      { fields.push("sub_name = ?");        vals.push(body.subName); }
+    if (body.size !== undefined)         { fields.push("size = ?");            vals.push(body.size); }
     if (body.salePrice !== undefined)    { fields.push("sale_price = ?");      vals.push(body.salePrice); }
     if (body.purchasePrice !== undefined){ fields.push("purchase_price = ?");  vals.push(body.purchasePrice); }
     if (!fields.length) return res.status(400).json({ error: "Nada que actualizar." });

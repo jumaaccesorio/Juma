@@ -66,6 +66,7 @@ export async function initDb() {
           id             INTEGER PRIMARY KEY AUTOINCREMENT,
           name           TEXT NOT NULL,
           sub_name       TEXT NOT NULL DEFAULT '',
+          size           TEXT NOT NULL DEFAULT '',
           category_id    INTEGER REFERENCES categories(id) ON DELETE SET NULL,
           is_featured    INTEGER NOT NULL DEFAULT 0,
           purchase_price REAL NOT NULL DEFAULT 0,
@@ -147,6 +148,10 @@ export async function initDb() {
         const hasSubName = productColumns.some((column) => column.name === "sub_name");
         if (!hasSubName) {
           await run("ALTER TABLE products ADD COLUMN sub_name TEXT NOT NULL DEFAULT ''");
+        }
+        const hasSize = productColumns.some((column) => column.name === "size");
+        if (!hasSize) {
+          await run("ALTER TABLE products ADD COLUMN size TEXT NOT NULL DEFAULT ''");
         }
 
         resolve();

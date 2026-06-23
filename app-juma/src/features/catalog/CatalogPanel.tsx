@@ -299,6 +299,11 @@ function CatalogPanel({
                   <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.24em] text-primary/70">{product.categoryName || "Categoria"}</p>
                   <h3 className="min-h-[5.5rem] text-center font-headline text-[1.35rem] leading-tight text-carbon">{getProductDisplayName(product)}</h3>
                   <p className="mt-2 text-center text-lg font-semibold text-carbon">${product.salePrice.toLocaleString("es-AR")}</p>
+                  {product.size?.trim() ? (
+                    <p className="mt-1 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-primary/60">
+                      Talle {product.size}
+                    </p>
+                  ) : null}
                 </div>
                 <button
                   type="button"
@@ -459,6 +464,11 @@ function CatalogPanel({
                   <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.24em] text-primary/70">{product.categoryName || "Categoria"}</p>
                   <h4 className="min-h-[5.5rem] text-center font-headline text-[1.35rem] leading-tight text-carbon">{getProductDisplayName(product)}</h4>
                   <p className="mt-2 text-center text-lg font-semibold text-carbon">${product.salePrice.toLocaleString("es-AR")}</p>
+                  {product.size?.trim() ? (
+                    <p className="mt-1 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-primary/60">
+                      Talle {product.size}
+                    </p>
+                  ) : null}
                   <p className="mt-2 min-h-[2.5rem] text-center text-xs text-muted">
                     {product.stock > 0 ? `${product.stock} disponibles` : "Sin stock inmediato. Se puede pedir por encargo."}
                   </p>
