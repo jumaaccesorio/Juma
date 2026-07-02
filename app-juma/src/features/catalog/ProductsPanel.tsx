@@ -973,11 +973,14 @@ function ProductsPanel({
                   onClick={async () => {
                     await handleSaveDraft(editingProduct);
                     const currentSizes = sizeDrafts[editingProduct.id] ?? [];
-                    try {
-                      setIsSavingSizes(true);
-                      await onSetProductSizes(editingProduct.id, currentSizes.map((s) => ({ size: s.size, stock: s.stock })));
-                    } finally {
-                      setIsSavingSizes(false);
+                    const hadSizesBefore = Array.isArray(editingProduct.sizes) && editingProduct.sizes.length > 0;
+                    if (currentSizes.length > 0 || hadSizesBefore) {
+                      try {
+                        setIsSavingSizes(true);
+                        await onSetProductSizes(editingProduct.id, currentSizes.map((s) => ({ size: s.size, stock: s.stock })));
+                      } finally {
+                        setIsSavingSizes(false);
+                      }
                     }
                     setEditingProductId(null);
                     onFocusedProductChange(null);
