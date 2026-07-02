@@ -37,7 +37,7 @@ type ProductsPanelProps = {
   onAddProduct: (event: FormEvent<HTMLFormElement>) => void;
   onToggleProductEnabled: (productId: number) => void;
   onUpdateExistingProductImage: (productId: number, file: File | null) => void;
-  onSaveProductEdits: (productId: number, updates: Partial<Product>) => void;
+  onSaveProductEdits: (productId: number, updates: Partial<Product>) => Promise<void>;
   onSetProductSizes: (productId: number, sizes: { size: string; stock: number }[]) => Promise<void>;
   onDeleteProduct: (productId: number) => void;
   onImportProducts: (file: File | null) => void;
@@ -152,7 +152,7 @@ function ProductsPanel({
     }));
   };
 
-  const handleSaveDraft = (product: Product) => {
+  const handleSaveDraft = async (product: Product) => {
     const draft = drafts[product.id];
     if (!draft) return;
     const purchasePrice = Number(draft.purchasePrice);
@@ -167,7 +167,7 @@ function ProductsPanel({
     ) {
       return;
     }
-    onSaveProductEdits(product.id, {
+    await onSaveProductEdits(product.id, {
       name: draft.name.trim() || draft.subName.trim(),
       subName: draft.subName.trim(),
       size: draft.size.trim(),
@@ -970,7 +970,7 @@ function ProductsPanel({
                   type="button"
                   disabled={isSavingSizes}
                   onClick={async () => {
-                    handleSaveDraft(editingProduct);
+                    await handleSaveDraft(editingProduct);
                     const currentSizes = sizeDrafts[editingProduct.id] ?? [];
                     try {
                       setIsSavingSizes(true);
