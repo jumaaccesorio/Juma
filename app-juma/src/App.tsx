@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ADMIN_PASS,
   ADMIN_SESSION_KEY,
@@ -181,9 +182,71 @@ function App() {
     }, 120);
   };
 
-  const [activeTab, setActiveTab] = useState<Tab>("catalogo");
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const activeTab = useMemo(() => {
+    const PATH_TO_TAB: Record<string, Tab> = {
+      "/": "catalogo",
+      "/carrito": "carrito",
+      "/perfil": "perfil",
+      "/admin": "dashboard",
+      "/admin/venta-rapida": "venta_rapida",
+      "/admin/inicio": "inicio_admin",
+      "/admin/categorias": "categorias",
+      "/admin/productos": "productos",
+      "/admin/clientes": "clientes",
+      "/admin/inventario": "inventario",
+      "/admin/pedidos": "pedidos",
+      "/admin/reposicion": "reposicion",
+      "/admin/finanzas": "finanzas",
+      "/admin/comunidad": "comunidad",
+    };
+    if (PATH_TO_TAB[location.pathname]) {
+      return PATH_TO_TAB[location.pathname];
+    }
+    if (location.pathname.startsWith("/admin")) {
+      return "dashboard";
+    }
+    return "catalogo";
+  }, [location.pathname]);
+
+  const setActiveTab = useCallback((tab: Tab) => {
+    const TAB_TO_PATH: Record<Tab, string> = {
+      catalogo: "/",
+      carrito: "/carrito",
+      perfil: "/perfil",
+      dashboard: "/admin",
+      venta_rapida: "/admin/venta-rapida",
+      inicio_admin: "/admin/inicio",
+      categorias: "/admin/categorias",
+      productos: "/admin/productos",
+      clientes: "/admin/clientes",
+      inventario: "/admin/inventario",
+      pedidos: "/admin/pedidos",
+      reposicion: "/admin/reposicion",
+      finanzas: "/admin/finanzas",
+      comunidad: "/admin/comunidad",
+    };
+    navigate(TAB_TO_PATH[tab] || "/");
+  }, [navigate]);
   const [catalogViewMode, setCatalogViewMode] = useState<"home" | "catalog" | "search">("home");
-  const [selectedCatalogProductId, setSelectedCatalogProductId] = useState<number | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedCatalogProductId = useMemo(() => {
+    const p = searchParams.get("producto");
+    return p ? parseInt(p, 10) : null;
+  }, [searchParams]);
+
+  const setSelectedCatalogProductId = useCallback((id: number | null) => {
+    setSearchParams(prev => {
+      if (id === null) {
+        prev.delete("producto");
+      } else {
+        prev.set("producto", id.toString());
+      }
+      return prev;
+    });
+  }, [setSearchParams]);
   const [clients, setClients] = useState<Client[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);

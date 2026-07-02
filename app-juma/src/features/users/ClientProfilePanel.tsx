@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Order, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
 import ProductImage from "../../components/ProductImage";
@@ -11,6 +12,8 @@ type ClientProfilePanelProps = {
 };
 
 export default function ClientProfilePanel({ clientName, myOrders, myFavorites, products, onLogout }: ClientProfilePanelProps) {
+  const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
+
   return (
     <div className="max-w-5xl mx-auto w-full px-6 md:px-20 py-10 space-y-12 min-h-screen">
       <div className="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-slate-200 pb-10">
@@ -37,88 +40,74 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
             <p className="text-slate-500 font-medium">Aún no tienes pedidos registrados en tu cuenta.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6">
+          <div className="space-y-4">
             {myOrders.map(order => (
-              <div key={order.id} className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between gap-6">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <span className="font-black text-lg text-slate-900 dark:text-white">Pedido #{String(order.id).padStart(5, '0')}</span>
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${order.status === 'REALIZADO' ? 'bg-green-100 text-green-700' : 'bg-primary/10 text-primary'}`}>
-                      {order.status}
-                    </span>
+              <div key={order.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
+                <div 
+                  className="p-6 cursor-pointer flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group"
+                  onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <span className="font-black text-lg text-slate-900 dark:text-white">Pedido #{String(order.id).padStart(5, '0')}</span>
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${order.status === 'REALIZADO' ? 'bg-green-100 text-green-700' : 'bg-primary/10 text-primary'}`}>
+                        {order.status}
+                      </span>
+                    </div>
+                    <p className="text-slate-500 text-sm flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[16px]">calendar_month</span>
+                      {new Date(order.date).toLocaleDateString("es-AR", { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
                   </div>
-                  <p className="text-slate-500 text-sm flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm">calendar_month</span>
-                    {new Date(order.date).toLocaleDateString("es-AR", { year: 'numeric', month: 'long', day: 'numeric' })}
-                  </p>
-                  <p className="text-slate-500 text-sm flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm">inventory_2</span>
-                    {order.items.reduce((acc, item) => acc + item.quantity, 0)} productos
-                  </p>
-                </div>
-
-                <div className="flex flex-col items-end justify-center">
-                  <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Total</span>
-                  <span className="text-2xl font-black text-primary">${order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0).toLocaleString("es-AR")}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="space-y-6">
-        <h2 className="font-serif text-2xl font-black text-slate-900 dark:text-slate-100 border-b border-primary/5 pb-4">Registro de Carritos</h2>
-
-        {myOrders.length === 0 ? (
-          <div className="text-center py-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200">
-            <span className="material-symbols-outlined text-4xl text-slate-300 mb-4 block">shopping_cart</span>
-            <p className="text-slate-500 font-medium">Aun no tienes carritos registrados en tu cuenta.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6">
-            {myOrders.map((order) => (
-              <div key={`cart-${order.id}`} className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Carrito asociado</p>
-                    <p className="mt-2 text-lg font-black text-slate-900">Pedido #{String(order.id).padStart(5, "0")}</p>
-                  </div>
-                  <div className="text-sm text-slate-500">
-                    {new Date(order.date).toLocaleDateString("es-AR", { year: "numeric", month: "long", day: "numeric" })}
+                  
+                  <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
+                    <div className="flex flex-col items-start md:items-end">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total</span>
+                      <span className="text-xl font-black text-primary">${order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0).toLocaleString("es-AR")}</span>
+                    </div>
+                    <button className="text-slate-400 group-hover:text-primary transition-colors flex items-center justify-center p-2 rounded-full group-hover:bg-primary/5">
+                      <span className="material-symbols-outlined" style={{ transform: expandedOrderId === order.id ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s ease' }}>expand_more</span>
+                    </button>
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-xl bg-slate-50 px-4 py-4">
-                  <div className="space-y-3">
-                    {order.items.map((item) => (
-                      <div key={`${order.id}-${item.productId}`} className="flex items-center justify-between gap-4 border-b border-slate-200/70 pb-3 last:border-b-0 last:pb-0">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-slate-800">
-                            {item.quantity} x {getProductDisplayName(products.find((product) => product.id === item.productId) ?? {
-                              id: item.productId,
-                              name: `Producto #${item.productId}`,
-                              subName: "",
-                              isFeatured: false,
-                              purchasePrice: 0,
-                              salePrice: item.unitSalePrice,
-                              stock: 0,
-                              initialStock: 0,
-                              enabled: true,
-                              image: "",
-                              sourceUrl: "",
-                              createdAt: "",
-                            })}
-                          </p>
-                          <p className="text-xs text-slate-500">Unitario: ${item.unitSalePrice.toLocaleString("es-AR")}</p>
-                        </div>
-                        <p className="shrink-0 text-sm font-black text-primary">
-                          ${(item.quantity * item.unitSalePrice).toLocaleString("es-AR")}
-                        </p>
-                      </div>
-                    ))}
+                {expandedOrderId === order.id && (
+                  <div className="bg-slate-50 dark:bg-slate-800/80 p-6 border-t border-slate-100 dark:border-slate-700 animate-fade-in">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[18px] text-primary">shopping_bag</span>
+                      Detalle de productos
+                    </h4>
+                    <div className="space-y-3">
+                      {order.items.map((item) => {
+                        const product = products.find((p) => p.id === item.productId);
+                        return (
+                          <div key={`${order.id}-${item.productId}`} className="flex items-center justify-between gap-4 bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200/60 shadow-sm">
+                            <div className="flex items-center gap-3 min-w-0">
+                               <div className="h-12 w-12 rounded bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
+                                 {product?.image ? (
+                                    <ProductImage product={product} className="h-full w-full object-cover" alt="Producto" />
+                                 ) : (
+                                    <span className="material-symbols-outlined text-slate-300">image</span>
+                                 )}
+                               </div>
+                               <div className="min-w-0">
+                                 <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-200">
+                                   {product ? getProductDisplayName(product) : `Producto #${item.productId}`}
+                                 </p>
+                                 <p className="text-xs text-slate-500 font-medium">
+                                   {item.quantity} un. <span className="mx-1 text-slate-300">•</span> ${item.unitSalePrice.toLocaleString("es-AR")} c/u
+                                 </p>
+                               </div>
+                            </div>
+                            <p className="shrink-0 text-sm font-black text-primary">
+                              ${(item.quantity * item.unitSalePrice).toLocaleString("es-AR")}
+                            </p>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ))}
           </div>
