@@ -188,23 +188,6 @@ function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock,
         </div>
       </div>
 
-      {lowStockProducts.length > 0 ? (
-        <div className="flex items-start gap-3 rounded-r-lg border-l-4 border-warning bg-warning/18 p-4 shadow-sm">
-          <span className="material-symbols-outlined mt-0.5 text-[#9a6d48]">warning</span>
-          <div>
-            <h4 className="text-sm font-bold text-[#8a6140]">Atencion: Productos con bajo stock</h4>
-            <p className="mt-1 text-sm text-[#8a6140]">
-              Los siguientes productos requieren reposicion inminente:{" "}
-              <strong className="font-bold">{lowStockProducts.map((product) => getProductDisplayName(product)).join(", ")}</strong>.
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-3 rounded-r-lg border-l-4 border-success bg-success/20 p-4 shadow-sm">
-          <span className="material-symbols-outlined text-[#647554]">check_circle</span>
-          <p className="text-sm font-bold text-[#647554]">El inventario se encuentra en niveles optimos. No hay productos en falta critica.</p>
-        </div>
-      )}
 
       <div className="bg-background rounded-xl border border-line overflow-hidden shadow-sm">
         <div className="p-4 border-b border-line flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">

@@ -61,12 +61,7 @@ export default function AdminDashboard({ orders, clients, lowStockProducts, onSe
 
   const getOrderTotal = (order: Order) => order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0);
 
-  const chartData = useMemo(() => {
-    const days = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
-    const values = [32, 45, 40, 68, 58, 86, 64];
-    const max = Math.max(...values);
-    return days.map((day, i) => ({ day, value: values[i], pct: (values[i] / max) * 100 }));
-  }, []);
+
 
   const statCards = [
     {
@@ -152,30 +147,7 @@ export default function AdminDashboard({ orders, clients, lowStockProducts, onSe
           ))}
         </section>
 
-        {/* Mobile chart */}
-        <section className="rounded-xl bg-white p-5 shadow-sm border border-line/40">
-          <div className="mb-5 flex items-end justify-between gap-4">
-            <div>
-              <h3 className="font-headline text-xl text-ink">Rendimiento</h3>
-              <p className="text-xs text-muted">{stats.growthLabel} vs mes anterior</p>
-            </div>
-            <span className="font-headline text-2xl text-primary">${stats.currentMonthSales.toLocaleString("es-AR")}</span>
-          </div>
-          <div className="flex h-28 items-end justify-between gap-2">
-            {chartData.map((item) => (
-              <div
-                key={item.day}
-                className="w-full rounded-t-md"
-                style={{
-                  height: `${item.pct}%`,
-                  background: item.pct > 70
-                    ? "linear-gradient(180deg, #C5A37F, #D4A574)"
-                    : "rgba(197,163,127,0.25)",
-                }}
-              />
-            ))}
-          </div>
-        </section>
+
 
         {/* Mobile recent orders */}
         <section className="rounded-xl bg-white p-5 shadow-sm border border-line/40">
@@ -257,46 +229,11 @@ export default function AdminDashboard({ orders, clients, lowStockProducts, onSe
           ))}
         </section>
 
-        {/* Chart + Stock Critical */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          {/* Chart */}
-          <div className="col-span-12 lg:col-span-8 bg-white p-5 lg:p-6 rounded-xl border border-line/60 shadow-sm">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h3 className="font-headline text-lg text-ink">Rendimiento de Ventas</h3>
-                <p className="text-xs text-muted mt-0.5">Últimos 7 días de actividad</p>
-              </div>
-              <select className="bg-secondary/60 border-none text-[10px] font-bold uppercase tracking-widest focus:ring-1 focus:ring-primary/30 text-primary cursor-pointer rounded-lg px-3 py-1.5">
-                <option>Semanal</option>
-                <option>Mensual</option>
-              </select>
-            </div>
-            <div className="h-48 lg:h-56 flex items-end justify-between gap-2 lg:gap-4 px-2">
-              {chartData.map((item) => (
-                <div key={item.day} className="flex flex-col items-center gap-2 flex-1">
-                  <div
-                    className="w-full rounded-lg transition-all duration-500 cursor-pointer group relative hover:opacity-80"
-                    style={{
-                      height: `${item.pct}%`,
-                      background: item.pct > 70
-                        ? "linear-gradient(180deg, #C5A37F, #D4A574)"
-                        : "linear-gradient(180deg, rgba(197,163,127,0.3), rgba(197,163,127,0.15))",
-                    }}
-                  >
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-sidebar text-white text-[10px] py-1 px-2.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
-                      {item.value}%
-                    </div>
-                  </div>
-                  <span className={`text-[10px] uppercase tracking-tight font-bold ${item.pct > 70 ? "text-primary" : "text-muted/60"}`}>
-                    {item.day}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Stock Critical */}
+        <div className="grid grid-cols-1 gap-4 lg:gap-6">
 
           {/* Stock Critical */}
-          <div className="col-span-12 lg:col-span-4 bg-white p-5 lg:p-6 rounded-xl border border-line/60 shadow-sm flex flex-col">
+          <div className="bg-white p-5 lg:p-6 rounded-xl border border-line/60 shadow-sm flex flex-col">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-line/40">
               <h3 className="font-headline text-lg text-ink">Stock Crítico</h3>
               <span className="bg-red-50 text-red-500 text-[10px] font-bold px-2.5 py-1 rounded-full">{lowStockProducts.length} items</span>

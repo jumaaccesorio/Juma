@@ -67,51 +67,8 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto admin-scrollbar">
-          <p className="px-3 pt-2 pb-3 text-[9px] font-bold text-white/25 uppercase tracking-[0.2em]">Principal</p>
-          {menuItems.slice(0, 2).map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleNav(item.id)}
-              className={`
-                w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                ${activeTab === item.id
-                  ? "bg-primary/15 text-primary"
-                  : "text-white/50 hover:text-white/80 hover:bg-white/[0.04]"
-                }
-              `}
-            >
-              <span className={`material-symbols-outlined text-[20px] ${activeTab === item.id ? "text-primary" : ""}`}>
-                {item.icon}
-              </span>
-              <span className="font-body text-xs uppercase tracking-[0.14em] md:text-sm md:normal-case md:tracking-wide">{item.label}</span>
-              {activeTab === item.id && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
-            </button>
-          ))}
-
-          <p className="px-3 pt-5 pb-3 text-[9px] font-bold text-white/25 uppercase tracking-[0.2em]">Gestión</p>
-          {menuItems.slice(2, 9).map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleNav(item.id)}
-              className={`
-                w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                ${activeTab === item.id
-                  ? "bg-primary/15 text-primary"
-                  : "text-white/50 hover:text-white/80 hover:bg-white/[0.04]"
-                }
-              `}
-            >
-              <span className={`material-symbols-outlined text-[20px] ${activeTab === item.id ? "text-primary" : ""}`}>
-                {item.icon}
-              </span>
-              <span className="font-body text-xs uppercase tracking-[0.14em] md:text-sm md:normal-case md:tracking-wide">{item.label}</span>
-              {activeTab === item.id && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
-            </button>
-          ))}
-
-          <p className="px-3 pt-5 pb-3 text-[9px] font-bold text-white/25 uppercase tracking-[0.2em]">Sistema</p>
-          {menuItems.slice(9).map((item) => (
+        <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto admin-scrollbar">
+          {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => handleNav(item.id)}

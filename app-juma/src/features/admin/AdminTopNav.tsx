@@ -170,17 +170,7 @@ export default function AdminTopNav({ onOpenMenu, onPreview, onLogout, orders, c
           <p className="truncate text-[9px] font-semibold uppercase tracking-[0.18em] text-muted">Panel de Control</p>
         </div>
 
-        {/* Desktop search */}
-        <div className="relative hidden w-full max-w-md min-w-0 group sm:block">
-          <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-muted/60 text-[18px] group-focus-within:text-primary transition-colors">
-            search
-          </span>
-          <input
-            className="w-full bg-secondary/60 border border-transparent focus:border-primary/20 focus:bg-white focus:shadow-sm py-2.5 pl-11 pr-4 text-sm font-body tracking-tight placeholder:text-muted/50 rounded-xl outline-none transition-all duration-200"
-            placeholder="Buscar pedidos, productos o clientes..."
-            type="text"
-          />
-        </div>
+
       </div>
 
       {/* Right actions */}

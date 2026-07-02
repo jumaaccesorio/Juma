@@ -858,7 +858,7 @@ function App() {
       setProductForm({ name: "", subName: "", size: "", categoryId: "", purchasePrice: "", salePrice: "", stock: "", sourceUrl: "", isFeatured: false });
       setProductImageData("");
       setProductImageFile(null);
-      setActiveTab("carrito");
+      window.alert("Producto guardado correctamente.");
     } catch (err) {
       console.error(err);
       setError("Error al guardar producto");
