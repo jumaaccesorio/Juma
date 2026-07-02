@@ -1382,8 +1382,10 @@ function App() {
 
   const openProductDetail = (productId: number) => {
     requestProductImages([productId]);
-    setSelectedCatalogProductId(productId);
-    setActiveTab("catalogo");
+    navigate({
+      pathname: "/",
+      search: `?producto=${productId}`
+    });
   };
 
   const addToCart = (productId: number, quantity = 1, size?: string) => {
@@ -2173,8 +2175,7 @@ function App() {
               <ProductDetailPanel
                 product={selectedProduct}
                 onBack={() => {
-                  setSelectedCatalogProductId(null);
-                  setActiveTab("catalogo");
+                  navigate("/");
                 }}
                 onAddToCart={addToCart}
               />
