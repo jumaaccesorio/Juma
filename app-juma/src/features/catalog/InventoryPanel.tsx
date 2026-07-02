@@ -6,13 +6,12 @@ import ProductImage from "../../components/ProductImage";
 type InventoryPanelProps = {
   products: Product[];
   categories: Category[];
-  lowStockProducts: Product[];
   onUpdateStock: (productId: number, newStock: number) => void;
   onSaveProductEdits: (productId: number, updates: Partial<Product>) => void;
   onOpenProductDetail: (productId: number) => void;
 };
 
-function InventoryPanel({ products, categories, lowStockProducts, onUpdateStock, onSaveProductEdits, onOpenProductDetail }: InventoryPanelProps) {
+function InventoryPanel({ products, categories, onUpdateStock, onSaveProductEdits, onOpenProductDetail }: InventoryPanelProps) {
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [editingProductId, setEditingProductId] = useState<number | null>(null);

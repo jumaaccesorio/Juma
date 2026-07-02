@@ -1850,7 +1850,6 @@ function App() {
                 <InventoryPanel
                   products={products}
                   categories={categories}
-                  lowStockProducts={lowStockProducts}
                   onUpdateStock={updateStock}
                   onSaveProductEdits={saveProductEdits}
                   onOpenProductDetail={openAdminProductDetail}
