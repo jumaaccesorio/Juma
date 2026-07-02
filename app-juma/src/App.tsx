@@ -1114,6 +1114,7 @@ function App() {
       ...updates,
       name: normalizedName || normalizedSubName,
       subName: normalizedSubName,
+      description: updates.description?.trim() ?? "",
     };
     try {
       await api.updateProduct(productId, payload);

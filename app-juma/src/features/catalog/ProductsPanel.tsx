@@ -18,7 +18,7 @@ type ProductForm = {
 type ProductDraft = {
   name: string;
   subName: string;
-  size: string;
+  description: string;
   categoryId: string;
   purchasePrice: string;
   salePrice: string;
@@ -49,7 +49,7 @@ function buildDraft(product: Product): ProductDraft {
   return {
     name: product.name ?? "",
     subName: product.subName ?? "",
-    size: product.size ?? "",
+    description: product.description ?? "",
     categoryId: product.categoryId ? String(product.categoryId) : "",
     purchasePrice: String(product.purchasePrice ?? 0),
     salePrice: String(product.salePrice ?? 0),
@@ -90,10 +90,10 @@ function ProductsPanel({
   const [isSavingSizes, setIsSavingSizes] = useState(false);
 
   useEffect(() => {
-    setDrafts((prev) => {
+    setDrafts(() => {
       const next: Record<number, ProductDraft> = {};
       for (const product of products) {
-        next[product.id] = prev[product.id] ?? buildDraft(product);
+        next[product.id] = buildDraft(product);
       }
       return next;
     });
@@ -170,7 +170,7 @@ function ProductsPanel({
     await onSaveProductEdits(product.id, {
       name: draft.name.trim() || draft.subName.trim(),
       subName: draft.subName.trim(),
-      size: draft.size.trim(),
+      description: draft.description.trim(),
       categoryId: draft.categoryId ? Number(draft.categoryId) : null,
       purchasePrice,
       salePrice,
@@ -796,13 +796,14 @@ function ProductsPanel({
                     placeholder="Nombre de busqueda"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Talle / Medida</label>
-                  <input
-                    className="w-full rounded-lg border border-line bg-white px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-primary/20"
-                    value={editingDraft.size}
-                    onChange={(e) => updateDraft(editingProduct.id, "size", e.target.value)}
-                    placeholder="Ej. 17, 18, Única"
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Descripción</label>
+                  <textarea
+                    className="w-full rounded-lg border border-line bg-white px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-primary/20 resize-none"
+                    rows={3}
+                    value={editingDraft.description}
+                    onChange={(e) => updateDraft(editingProduct.id, "description", e.target.value)}
+                    placeholder="Descripción visible en el detalle del producto"
                   />
                 </div>
                 <div className="space-y-2">

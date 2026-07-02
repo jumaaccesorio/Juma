@@ -341,7 +341,10 @@ export const api = {
     if (updates.stock !== undefined) basePayload.stock = updates.stock;
     if (updates.enabled !== undefined) basePayload.enabled = updates.enabled;
     if (updates.image !== undefined) basePayload.image = updates.image;
-    if (updates.sourceUrl !== undefined) basePayload.source_url = updates.sourceUrl;
+    // Encode sourceUrl + description into source_url meta
+    if (updates.sourceUrl !== undefined || updates.description !== undefined) {
+      basePayload.source_url = encodeProductMeta(updates.sourceUrl ?? "", updates.description ?? "");
+    }
 
     const payload =
       supportsProductImageVariants === false
@@ -812,10 +815,12 @@ function mapProduct(row: any): Product {
   const sizes: ProductSize[] | undefined = Array.isArray(row.product_sizes)
     ? row.product_sizes.map((s: any) => ({ id: s.id, productId: row.id, size: s.size, stock: Number(s.stock ?? 0) }))
     : undefined;
+  const meta = parseProductMeta(row.source_url);
   return {
     id: row.id,
     name: rawName || rawSubName,
     subName: rawSubName,
+    description: meta.description,
     size: rawSize || undefined,
     sizes,
     categoryId: row.category_id ?? null,
@@ -831,21 +836,32 @@ function mapProduct(row: any): Product {
     imageThumb: normalizedThumb || normalizedLegacy || normalizedFull,
     imageCard: normalizedCard || normalizedLegacy || normalizedFull,
     imageFull: normalizedFull || normalizedLegacy || normalizedImage,
-    sourceUrl: parseProductSourceUrl(row.source_url),
+    sourceUrl: meta.sourceUrl,
     createdAt: row.created_at ?? "",
   };
 }
 
-function parseProductSourceUrl(rawValue: unknown): string {
+function parseProductMeta(rawValue: unknown): { sourceUrl: string; description: string } {
   const raw = typeof rawValue === "string" ? rawValue.trim() : "";
-  if (!raw) return "";
-  if (!raw.startsWith("__JUMA_META__:")) return raw;
+  if (!raw) return { sourceUrl: "", description: "" };
+  if (!raw.startsWith("__JUMA_META__:")) return { sourceUrl: raw, description: "" };
   try {
     const parsed = JSON.parse(raw.slice("__JUMA_META__:".length));
-    return typeof parsed?.sourceUrl === "string" ? parsed.sourceUrl.trim() : "";
+    return {
+      sourceUrl: typeof parsed?.sourceUrl === "string" ? parsed.sourceUrl.trim() : "",
+      description: typeof parsed?.description === "string" ? parsed.description.trim() : "",
+    };
   } catch {
-    return raw;
+    return { sourceUrl: raw, description: "" };
   }
+}
+
+function encodeProductMeta(sourceUrl: string, description: string): string {
+  const trimmedUrl = sourceUrl.trim();
+  const trimmedDesc = description.trim();
+  // If no description, store raw URL for backward compatibility
+  if (!trimmedDesc) return trimmedUrl;
+  return `__JUMA_META__:${JSON.stringify({ sourceUrl: trimmedUrl, description: trimmedDesc })}`;
 }
 
 function isMissingColumnError(error: unknown, columnName: string) {

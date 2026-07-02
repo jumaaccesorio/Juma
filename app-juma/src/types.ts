@@ -37,6 +37,7 @@ export type Product = {
   id: number;
   name: string;
   subName: string;
+  description?: string;
   size?: string; // Campo legado — usar sizes[] para variantes múltiples
   sizes?: ProductSize[]; // Variantes de talle con stock individual
   categoryId?: number | null;

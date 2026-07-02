@@ -16,10 +16,10 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
   const hasSizes = Array.isArray(product.sizes) && product.sizes.length > 0;
 
   const description = useMemo(() => {
-    if (product.subName?.trim()) return product.subName.trim();
+    if (product.description?.trim()) return product.description.trim();
     if (product.categoryName?.trim()) return `Pieza perteneciente a la categoria ${product.categoryName}.`;
     return "Accesorio disponible en la tienda online de Juma Accessory.";
-  }, [product.categoryName, product.subName]);
+  }, [product.categoryName, product.description]);
 
   // Reset size selection when product changes
   useEffect(() => {
@@ -196,11 +196,6 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
               <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
                 <span className="material-symbols-outlined text-sm">straighten</span>
                 Talle {product.size}
-              </span>
-            ) : null}
-            {product.subName?.trim() ? (
-              <span className="inline-flex items-center rounded-full bg-tertiary/16 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#4f6780]">
-                {product.subName}
               </span>
             ) : null}
           </div>
