@@ -264,12 +264,15 @@ function App() {
   const [isSavingHomeConfig, setIsSavingHomeConfig] = useState(false);
   const [error, setError] = useState("");
   const [adminError, setAdminError] = useState("");
-  const [isAdminLogged, setIsAdminLogged] = useState(false);
+  const [isAdminLogged, setIsAdminLogged] = useState(() => localStorage.getItem(ADMIN_SESSION_KEY) === "1");
   const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState(false);
   const [adminForm, setAdminForm] = useState({ user: "", password: "" });
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [adminLockedUntil, setAdminLockedUntil] = useState<number | null>(null);
-  const [currentClient, setCurrentClient] = useState<Client | null>(null);
+  const [currentClient, setCurrentClient] = useState<Client | null>(() => {
+    const raw = localStorage.getItem(CLIENT_SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  });
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<"login" | "checkout">("login");
   const [lastOrderConfirmation, setLastOrderConfirmation] = useState<{ orderId: number; customerName?: string } | null>(null);
@@ -607,16 +610,9 @@ function App() {
     if (stored) {
       try {
         const client: Client = JSON.parse(stored);
-        setCurrentClient(client);
         api.getFavorites(client.id).then(setFavorites).catch(() => {});
       } catch { /* ignore */ }
     }
-  }, []);
-
-
-  useEffect(() => {
-    const raw = localStorage.getItem(ADMIN_SESSION_KEY);
-    setIsAdminLogged(raw === "1");
   }, []);
 
   useEffect(() => {
