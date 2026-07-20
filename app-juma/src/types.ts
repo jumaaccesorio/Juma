@@ -1,4 +1,4 @@
-export type Tab = "dashboard" | "inicio_admin" | "categorias" | "clientes" | "productos" | "catalogo" | "inventario" | "pedidos" | "reposicion" | "finanzas" | "carrito" | "perfil" | "venta_rapida" | "comunidad";
+export type Tab = "dashboard" | "inicio_admin" | "clientes" | "productos" | "catalogo" | "pedidos" | "reposicion" | "finanzas" | "carrito" | "perfil" | "venta_rapida" | "comunidad";
 export type OrderStatus = "PENDIENTE" | "REALIZADO";
 export type CartItem = { productId: number; quantity: number; size?: string };
 

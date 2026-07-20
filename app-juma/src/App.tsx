@@ -17,8 +17,6 @@ import CommunityPanel from "./features/admin/CommunityPanel";
 import CartPanel from "./features/cart/CartPanel";
 import CatalogPanel from "./features/catalog/CatalogPanel";
 import ProductDetailPanel from "./features/catalog/ProductDetailPanel";
-import CategoriesPanel from "./features/catalog/CategoriesPanel";
-import InventoryPanel from "./features/catalog/InventoryPanel";
 import ProductsPanel from "./features/catalog/ProductsPanel";
 import FinancePanel from "./features/finance/FinancePanel";
 import OrdersPanel from "./features/orders/OrdersPanel";
@@ -38,6 +36,7 @@ const ADMIN_LOGIN_ATTEMPTS_KEY = "juma_admin_login_attempts_v1";
 const ADMIN_LOGIN_LOCK_UNTIL_KEY = "juma_admin_login_lock_until_v1";
 const ADMIN_MAX_LOGIN_ATTEMPTS = 5;
 const ADMIN_LOGIN_LOCK_MS = 15 * 60 * 1000;
+
 
 const DEFAULT_FEATURED_PANELS: FeaturedPanel[] = [
   {
@@ -193,10 +192,8 @@ function App() {
       "/admin": "dashboard",
       "/admin/venta-rapida": "venta_rapida",
       "/admin/inicio": "inicio_admin",
-      "/admin/categorias": "categorias",
       "/admin/productos": "productos",
       "/admin/clientes": "clientes",
-      "/admin/inventario": "inventario",
       "/admin/pedidos": "pedidos",
       "/admin/reposicion": "reposicion",
       "/admin/finanzas": "finanzas",
@@ -219,10 +216,8 @@ function App() {
       dashboard: "/admin",
       venta_rapida: "/admin/venta-rapida",
       inicio_admin: "/admin/inicio",
-      categorias: "/admin/categorias",
       productos: "/admin/productos",
       clientes: "/admin/clientes",
-      inventario: "/admin/inventario",
       pedidos: "/admin/pedidos",
       reposicion: "/admin/reposicion",
       finanzas: "/admin/finanzas",
@@ -1712,9 +1707,14 @@ function App() {
 
   const handleCustomerCheckout = async (guestData?: { name: string, email: string, phone: string }) => {
     try {
+      setError("");
       if (cartItems.length === 0) return;
       
       const orderItems = buildOrderItems(cartItems.map(c => ({ productId: String(c.productId), quantity: String(c.quantity), size: c.size })));
+      if (orderItems.length === 0) {
+        setError("No hay productos válidos en el carrito para procesar.");
+        return;
+      }
       const newOrder = await api.addOrder({
         clientId: currentClient?.id,
         guestName: guestData?.name,
@@ -1734,7 +1734,7 @@ function App() {
       setActiveTab("carrito");
     } catch(err) {
       console.error(err);
-      setError("Error al procesar el pedido.");
+      setError(getErrorMessage(err, "Error al procesar el pedido. Revisá la conexión o intentá de nuevo."));
     }
   };
 
@@ -1750,7 +1750,7 @@ function App() {
     }
   };
 
-  const isAdminTab = isAdminLogged && ["dashboard", "catalogo", "venta_rapida", "inicio_admin", "categorias", "productos", "clientes", "inventario", "pedidos", "reposicion", "finanzas", "comunidad"].includes(activeTab);
+  const isAdminTab = isAdminLogged && ["dashboard", "catalogo", "venta_rapida", "inicio_admin", "productos", "clientes", "pedidos", "reposicion", "finanzas", "comunidad"].includes(activeTab);
 
   if (isAdminTab) {
     return (
@@ -1854,18 +1854,6 @@ function App() {
               </div>
             )}
 
-            {activeTab === "categorias" && (
-              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
-                <CategoriesPanel
-                  categories={categories}
-                  products={products}
-                  onAddCategory={addCategory}
-                  onUpdateCategory={updateCategory}
-                  onDeleteCategory={deleteCategory}
-                />
-              </div>
-            )}
-
             {activeTab === "productos" && (
               <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
                 <ProductsPanel
@@ -1882,8 +1870,12 @@ function App() {
                   onSetProductSizes={setProductSizes}
                   onDeleteProduct={deleteProduct}
                   onImportProducts={importProducts}
+                  onUpdateStock={updateStock}
                   focusedProductId={focusedAdminProductId}
                   onFocusedProductChange={setFocusedAdminProductId}
+                  onAddCategory={addCategory}
+                  onUpdateCategory={updateCategory}
+                  onDeleteCategory={deleteCategory}
                 />
               </div>
             )}
@@ -1903,18 +1895,6 @@ function App() {
                     setEditingUserId(null);
                     setClientForm({ name: "", phone: "", email: "", password: "" });
                   }}
-                />
-              </div>
-            )}
-
-            {activeTab === "inventario" && (
-              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
-                <InventoryPanel
-                  products={products}
-                  categories={categories}
-                  onUpdateStock={updateStock}
-                  onSaveProductEdits={saveProductEdits}
-                  onOpenProductDetail={openAdminProductDetail}
                 />
               </div>
             )}
@@ -1984,7 +1964,7 @@ function App() {
               {[
                 { id: "dashboard", label: "Inicio", icon: "dashboard" },
                 { id: "venta_rapida", label: "Ventas", icon: "payments" },
-                { id: "inventario", label: "Stock", icon: "inventory_2" },
+                { id: "productos", label: "Productos", icon: "inventory_2" },
                 { id: "reposicion", label: "Repos.", icon: "add_shopping_cart" },
               ].map((item) => {
                 const isActive = activeTab === item.id;

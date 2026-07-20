@@ -41,8 +41,12 @@ type ProductsPanelProps = {
   onSetProductSizes: (productId: number, sizes: { size: string; stock: number }[]) => Promise<void>;
   onDeleteProduct: (productId: number) => void;
   onImportProducts: (file: File | null) => void;
+  onUpdateStock: (productId: number, newStock: number) => void;
   focusedProductId: number | null;
   onFocusedProductChange: (productId: number | null) => void;
+  onAddCategory: (name: string, parentId?: number | null) => void;
+  onUpdateCategory: (id: number, name: string) => void;
+  onDeleteCategory: (id: number) => void;
 };
 
 function buildDraft(product: Product): ProductDraft {
@@ -73,9 +77,14 @@ function ProductsPanel({
   onSetProductSizes,
   onDeleteProduct,
   onImportProducts,
+  onUpdateStock,
   focusedProductId,
   onFocusedProductChange,
+  onAddCategory,
+  onUpdateCategory,
+  onDeleteCategory,
 }: ProductsPanelProps) {
+  const [activeSubTab, setActiveSubTab] = useState<"productos" | "categorias">("productos");
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [visibilityFilter, setVisibilityFilter] = useState<"ALL" | "VISIBLE" | "HIDDEN">("ALL");
@@ -244,18 +253,50 @@ function ProductsPanel({
     <div className="min-h-screen flex-1 space-y-8 bg-secondary p-4 text-ink md:space-y-12 md:p-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h2 className="font-serif text-3xl font-bold text-slate-900 dark:text-white">Admin Productos</h2>
-          <p className="mt-1 text-slate-600">Gestiona tu catálogo de joyería e inventario.</p>
+          <h2 className="font-serif text-3xl font-bold text-slate-900 dark:text-white">Productos</h2>
+          <p className="mt-1 text-slate-600">Gestiona tu catálogo de joyería, inventario y categorías.</p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg shadow-primary/20"
-        >
-          <span className="material-symbols-outlined text-xl">{showForm ? "close" : "add"}</span>
-          {showForm ? "Cerrar Formulario" : "Nuevo Producto"}
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Sub-tab toggle */}
+          <div className="flex bg-white rounded-lg border border-line p-1 gap-1">
+            <button
+              type="button"
+              onClick={() => setActiveSubTab("productos")}
+              className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-bold transition-all ${
+                activeSubTab === "productos"
+                  ? "bg-primary text-white shadow-sm"
+                  : "text-slate-500 hover:text-ink hover:bg-slate-50"
+              }`}
+            >
+              <span className="material-symbols-outlined text-base">inventory_2</span>
+              Productos
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSubTab("categorias")}
+              className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-bold transition-all ${
+                activeSubTab === "categorias"
+                  ? "bg-primary text-white shadow-sm"
+                  : "text-slate-500 hover:text-ink hover:bg-slate-50"
+              }`}
+            >
+              <span className="material-symbols-outlined text-base">category</span>
+              Categorías
+            </button>
+          </div>
+          {activeSubTab === "productos" && (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg shadow-primary/20"
+            >
+              <span className="material-symbols-outlined text-xl">{showForm ? "close" : "add"}</span>
+              {showForm ? "Cerrar" : "Nuevo Producto"}
+            </button>
+          )}
+        </div>
       </div>
 
+      {activeSubTab === "productos" && (<>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:gap-6">
         <div className="bg-background p-6 rounded-xl border border-line flex items-center gap-4 shadow-sm">
           <div className="p-3 bg-tertiary/18 text-[#4f6780] rounded-lg">
@@ -661,17 +702,25 @@ function ProductsPanel({
                     <td className="p-4 text-sm font-medium text-slate-500">${product.purchasePrice.toLocaleString("es-AR")}</td>
                     <td className="p-4 text-sm font-bold text-primary">${product.salePrice.toLocaleString("es-AR")}</td>
                     <td className="p-4">
-                      <span
-                        className={`inline-flex min-w-[72px] items-center justify-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] ${
-                          product.stock <= 2
-                            ? "bg-warning/30 text-[#9a6d48]"
-                            : product.stock <= 10
-                              ? "bg-quaternary text-primary"
-                              : "bg-tertiary/20 text-[#4f6780]"
-                        }`}
-                      >
-                        {product.stock} units
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-0.5">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); onUpdateStock(product.id, Math.max(0, product.stock - 1)); }}
+                            className="w-7 h-7 flex items-center justify-center rounded text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-xs">remove</span>
+                          </button>
+                          <span className="w-8 text-center text-xs font-bold text-slate-900">{product.stock}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); onUpdateStock(product.id, product.stock + 1); }}
+                            className="w-7 h-7 flex items-center justify-center rounded text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-xs">add</span>
+                          </button>
+                        </div>
+                      </div>
                     </td>
                     <td className="p-4">
                       <button
@@ -994,6 +1043,176 @@ function ProductsPanel({
           </div>
         </div>
       )}
+      </>)}
+
+      {activeSubTab === "categorias" && (
+        <CategoriesSubPanel
+          categories={categories}
+          products={products}
+          onAddCategory={onAddCategory}
+          onUpdateCategory={onUpdateCategory}
+          onDeleteCategory={onDeleteCategory}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ── Inline Categories Manager ──────────────────────────────── */
+
+type CategoriesSubPanelProps = {
+  categories: Category[];
+  products: Product[];
+  onAddCategory: (name: string, parentId?: number | null) => void;
+  onUpdateCategory: (id: number, name: string) => void;
+  onDeleteCategory: (id: number) => void;
+};
+
+function CategoriesSubPanel({ categories, products, onAddCategory, onUpdateCategory, onDeleteCategory }: CategoriesSubPanelProps) {
+  const [name, setName] = useState("");
+  const [parentId, setParentId] = useState<string>("");
+  const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState("");
+
+  const rootCategories = categories.filter((c) => !c.parentId);
+  const subCategories = categories.filter((c) => !!c.parentId);
+
+  const productCountByCategory = useMemo(() => {
+    const counts = new Map<number, number>();
+    const collectDescendants = (categoryId: number) => {
+      const visited = new Set<number>();
+      const queue = [categoryId];
+      while (queue.length > 0) {
+        const currentId = queue.shift();
+        if (!currentId || visited.has(currentId)) continue;
+        visited.add(currentId);
+        categories.filter((c) => c.parentId === currentId).forEach((c) => queue.push(c.id));
+      }
+      return visited;
+    };
+    categories.forEach((c) => {
+      const descendantIds = collectDescendants(c.id);
+      counts.set(c.id, products.filter((p) => p.categoryId != null && descendantIds.has(p.categoryId)).length);
+    });
+    return counts;
+  }, [categories, products]);
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!name.trim()) return;
+    onAddCategory(name.trim(), parentId ? Number(parentId) : null);
+    setName("");
+    setParentId("");
+  };
+
+  const startEdit = (category: Category) => {
+    setEditingCategoryId(category.id);
+    setEditingName(category.name);
+  };
+  const cancelEdit = () => { setEditingCategoryId(null); setEditingName(""); };
+  const saveEdit = (categoryId: number) => {
+    if (!editingName.trim()) return;
+    onUpdateCategory(categoryId, editingName.trim());
+    cancelEdit();
+  };
+
+  const renderCategoryRow = (category: Category, isSubcategory = false) => {
+    const isEditing = editingCategoryId === category.id;
+    return (
+      <div
+        key={category.id}
+        className={`flex flex-col gap-3 border-t border-neutral-soft/50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5 ${
+          isSubcategory ? "bg-slate-50/60 sm:pl-14" : "hover:bg-slate-50"
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <span className={`material-symbols-outlined ${isSubcategory ? "text-slate-400" : "text-primary"} text-xl`}>
+            {isSubcategory ? "subdirectory_arrow_right" : "folder"}
+          </span>
+          {isEditing ? (
+            <input
+              value={editingName}
+              onChange={(e) => setEditingName(e.target.value)}
+              className="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20 sm:w-64"
+            />
+          ) : (
+            <span className={`font-medium ${isSubcategory ? "text-slate-700" : "font-bold text-slate-800"}`}>{category.name}</span>
+          )}
+          <span className="rounded-full bg-quaternary px-2 py-0.5 text-xs font-bold text-primary">
+            {productCountByCategory.get(category.id) ?? 0} productos
+          </span>
+        </div>
+        <div className="flex items-center justify-end gap-2">
+          {isEditing ? (
+            <>
+              <button type="button" onClick={() => saveEdit(category.id)} className="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-white">Guardar</button>
+              <button type="button" onClick={cancelEdit} className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600">Cancelar</button>
+            </>
+          ) : (
+            <button type="button" onClick={() => startEdit(category)} className="rounded-lg bg-tertiary/18 p-2 text-[#4f6780] transition-colors hover:bg-tertiary hover:text-white" title="Editar categoria">
+              <span className="material-symbols-outlined text-lg">edit</span>
+            </button>
+          )}
+          <button type="button" onClick={() => onDeleteCategory(category.id)} className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500" title="Eliminar categoria">
+            <span className="material-symbols-outlined text-lg">delete</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-8">
+      <form onSubmit={handleSubmit} className="flex flex-col items-stretch gap-4 rounded-xl border border-neutral-soft bg-white p-5 shadow-sm sm:flex-row sm:items-end">
+        <div className="w-full flex-1 space-y-2">
+          <label className="text-sm font-bold text-slate-700">Nombre de la categoría</label>
+          <input
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Ej. Aros, Cadenas, Plata..."
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        <div className="w-full flex-1 space-y-2">
+          <label className="text-sm font-bold text-slate-700">Subcategoría de (opcional)</label>
+          <select
+            value={parentId}
+            onChange={(e) => setParentId(e.target.value)}
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="">Categoría principal</option>
+            {rootCategories.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 sm:self-auto">
+          <span className="material-symbols-outlined">add</span>
+          Agregar
+        </button>
+      </form>
+
+      <div className="overflow-hidden rounded-xl border border-neutral-soft bg-white shadow-sm">
+        <div className="border-b border-neutral-soft p-4">
+          <h3 className="font-bold text-slate-800">Categorías ({categories.length})</h3>
+        </div>
+        {categories.length === 0 ? (
+          <div className="p-12 text-center text-slate-400">
+            <span className="material-symbols-outlined mb-3 block text-5xl">category</span>
+            No hay categorías creadas todavía.
+          </div>
+        ) : (
+          <div className="divide-y divide-neutral-soft">
+            {rootCategories.map((category) => (
+              <div key={`group-${category.id}`}>
+                {renderCategoryRow(category)}
+                {subCategories.filter((sub) => sub.parentId === category.id).map((sub) => renderCategoryRow(sub, true))}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

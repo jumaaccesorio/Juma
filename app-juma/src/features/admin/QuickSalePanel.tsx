@@ -34,6 +34,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
   const [mobilePage, setMobilePage] = useState(1);
   const [desktopPage, setDesktopPage] = useState(1);
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
@@ -244,6 +245,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   const handleFinalizeSale = async () => {
     if (cart.length === 0) return;
     setIsSubmitting(true);
+    setErrorMsg("");
     try {
       const items: OrderItem[] = cart.map(i => {
         const itemSubtotal = i.product.salePrice * i.quantity;
@@ -284,6 +286,11 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
       setTimeout(() => setSuccessMsg(""), 4000);
     } catch (err) {
       console.error(err);
+      const message = err && typeof err === "object" && "message" in err && typeof (err as { message?: unknown }).message === "string"
+        ? (err as { message: string }).message
+        : "Error al procesar la venta. Revisá la conexión o los permisos de Supabase.";
+      setErrorMsg(message);
+      setTimeout(() => setErrorMsg(""), 8000);
     } finally {
       setIsSubmitting(false);
     }
@@ -302,6 +309,12 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           <div className="mb-5 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm font-semibold text-emerald-700 flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">check_circle</span>
             {successMsg}
+          </div>
+        )}
+        {errorMsg && (
+          <div className="mb-5 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-semibold text-red-600 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">error</span>
+            {errorMsg}
           </div>
         )}
 
@@ -751,6 +764,11 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         {successMsg && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-sm px-5 py-3 rounded-xl flex items-center gap-2">
             <span className="material-symbols-outlined">check_circle</span>{successMsg}
+          </div>
+        )}
+        {errorMsg && (
+          <div className="bg-red-50 border border-red-200 text-red-600 font-bold text-sm px-5 py-3 rounded-xl flex items-center gap-2">
+            <span className="material-symbols-outlined">error</span>{errorMsg}
           </div>
         )}
 

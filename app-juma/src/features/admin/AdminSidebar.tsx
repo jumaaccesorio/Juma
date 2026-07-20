@@ -12,9 +12,7 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
   const menuItems = [
     { id: "dashboard", label: "Inicio", icon: "dashboard" },
     { id: "venta_rapida", label: "Venta Rápida", icon: "bolt" },
-    { id: "categorias", label: "Categorías", icon: "category" },
-    { id: "inventario", label: "Inventario", icon: "inventory_2" },
-    { id: "productos", label: "Productos", icon: "layers" },
+    { id: "productos", label: "Productos", icon: "inventory_2" },
     { id: "clientes", label: "Usuarios", icon: "group" },
     { id: "pedidos", label: "Pedidos", icon: "shopping_bag" },
     { id: "reposicion", label: "Carrito Reposicion", icon: "add_shopping_cart" },
