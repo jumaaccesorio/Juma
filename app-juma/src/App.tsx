@@ -1786,6 +1786,7 @@ function App() {
               <AdminDashboard 
                 orders={orders} 
                 products={products} 
+                categories={categories}
                 clients={clients} 
                 lowStockProducts={lowStockProducts}
                 onSetActiveTab={setActiveTab}

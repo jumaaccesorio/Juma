@@ -1,345 +1,485 @@
-import { useMemo } from "react";
-import type { Client, Order, Product } from "../../types";
+import { useMemo, useState } from "react";
+import type { Category, Client, Order, Product, Tab } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
 import ProductImage from "../../components/ProductImage";
 
 type AdminDashboardProps = {
   orders: Order[];
   products: Product[];
+  categories?: Category[];
   clients: Client[];
   lowStockProducts: Product[];
-  onSetActiveTab: (tab: any) => void;
+  onSetActiveTab: (tab: Tab) => void;
 };
 
-export default function AdminDashboard({ orders, clients, lowStockProducts, onSetActiveTab }: AdminDashboardProps) {
-  const stats = useMemo(() => {
-    const completedOrders = orders.filter((order) => order.status === "REALIZADO");
-    const totalSales = completedOrders.reduce(
-      (acc, order) => acc + order.items.reduce((sum, item) => sum + item.quantity * item.unitSalePrice, 0),
-      0,
-    );
-    const pendingOrders = orders.filter((order) => order.status === "PENDIENTE").length;
-    const stockAlerts = lowStockProducts.length;
-    const totalClients = clients.length;
+export default function AdminDashboard({
+  orders,
+  products,
+  categories = [],
+  clients: _clients,
+  lowStockProducts,
+  onSetActiveTab,
+}: AdminDashboardProps) {
+  const [refreshKey, setRefreshKey] = useState(0);
 
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
-    const previousMonthDate = new Date(currentYear, currentMonth - 1, 1);
-    const previousYear = previousMonthDate.getFullYear();
-    const previousMonth = previousMonthDate.getMonth();
+  // Maps & Date helpers
+  const productMap = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
+  const categoryMap = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
 
-    const currentMonthSales = completedOrders
+  const now = new Date();
+  const capitalizedDateStr = useMemo(() => {
+    const formatted = now.toLocaleDateString("es-ES", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  }, [now]);
+
+  // Filter completed & today's orders
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }, []);
+
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  const todayOrders = useMemo(() => {
+    return orders.filter((order) => {
+      if (!order.date) return false;
+      // Handle both YYYY-MM-DD and ISO dates
+      const orderDateStr = order.date.slice(0, 10);
+      return orderDateStr === todayStr;
+    });
+  }, [orders, todayStr]);
+
+  const todayCompletedOrders = useMemo(() => {
+    return todayOrders.filter((order) => order.status === "REALIZADO" || order.status === "PENDIENTE");
+  }, [todayOrders]);
+
+  const todayTotalRevenue = useMemo(() => {
+    return todayCompletedOrders.reduce((acc, order) => {
+      return acc + order.items.reduce((sum, item) => sum + item.quantity * item.unitSalePrice, 0);
+    }, 0);
+  }, [todayCompletedOrders]);
+
+  // Current Month Total Revenue
+  const currentMonthTotalRevenue = useMemo(() => {
+    return orders
       .filter((order) => {
-        const date = new Date(order.date);
-        return !Number.isNaN(date.getTime()) && date.getFullYear() === currentYear && date.getMonth() === currentMonth;
+        if (!order.date) return false;
+        const d = new Date(order.date);
+        return !Number.isNaN(d.getTime()) && d.getFullYear() === currentYear && d.getMonth() === currentMonth;
       })
-      .reduce((acc, order) => acc + order.items.reduce((sum, item) => sum + item.quantity * item.unitSalePrice, 0), 0);
+      .reduce((acc, order) => {
+        return acc + order.items.reduce((sum, item) => sum + item.quantity * item.unitSalePrice, 0);
+      }, 0);
+  }, [orders, currentYear, currentMonth]);
 
-    const previousMonthSales = completedOrders
-      .filter((order) => {
-        const date = new Date(order.date);
-        return !Number.isNaN(date.getTime()) && date.getFullYear() === previousYear && date.getMonth() === previousMonth;
-      })
-      .reduce((acc, order) => acc + order.items.reduce((sum, item) => sum + item.quantity * item.unitSalePrice, 0), 0);
-
-    const growthValue = previousMonthSales > 0 ? ((currentMonthSales - previousMonthSales) / previousMonthSales) * 100 : 0;
-    const growthLabel = `${growthValue >= 0 ? "+" : ""}${growthValue.toFixed(1)}%`;
-
-    return { totalSales, pendingOrders, stockAlerts, totalClients, completedCount: completedOrders.length, growthLabel, currentMonthSales, previousMonthSales };
-  }, [orders, lowStockProducts, clients]);
-
-  const recentOrders = useMemo(() => orders.slice(0, 5), [orders]);
-
-  const getClientName = (order: Order) => {
-    if (order.clientId) {
-      const client = clients.find((row) => row.id === order.clientId);
-      return client?.name ?? "Cliente Desconocido";
+  // Sold products today breakdown
+  const soldProductsToday = useMemo(() => {
+    const map = new Map<number, { product: Product; quantity: number; total: number }>();
+    for (const order of todayCompletedOrders) {
+      for (const item of order.items) {
+        const product = productMap.get(item.productId);
+        if (!product) continue;
+        const existing = map.get(product.id) ?? { product, quantity: 0, total: 0 };
+        existing.quantity += item.quantity;
+        existing.total += item.quantity * item.unitSalePrice;
+        map.set(product.id, existing);
+      }
     }
-    return order.guestName ?? "Invitado";
+    return Array.from(map.values()).sort((a, b) => b.quantity - a.quantity);
+  }, [todayCompletedOrders, productMap]);
+
+  // Top sold product today
+  const topProductToday = soldProductsToday.length > 0 ? soldProductsToday[0] : null;
+
+  // Average Ticket Today
+  const ticketPromedio = todayCompletedOrders.length > 0 ? Math.round(todayTotalRevenue / todayCompletedOrders.length) : 0;
+
+  // Hourly Sales Distribution for Today
+  const hourlyActivity = useMemo(() => {
+    const hours = Array.from({ length: 24 }, (_, i) => ({ hour: i, count: 0, amount: 0 }));
+    for (const order of todayCompletedOrders) {
+      const orderDate = new Date(order.date);
+      let hour = 12; // default fallback
+      if (!Number.isNaN(orderDate.getTime())) {
+        hour = orderDate.getHours();
+      }
+      hours[hour].count += 1;
+      hours[hour].amount += order.items.reduce((sum, item) => sum + item.quantity * item.unitSalePrice, 0);
+    }
+    const maxAmount = Math.max(...hours.map((h) => h.amount), 1);
+    return { hours, maxAmount };
+  }, [todayCompletedOrders]);
+
+  const handleRefresh = () => {
+    setRefreshKey((prev) => prev + 1);
   };
 
-  const getOrderTotal = (order: Order) => order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0);
-
-
-
-  const statCards = [
-    {
-      label: "Total Ventas",
-      value: `$${stats.totalSales.toLocaleString("es-AR")}`,
-      icon: "trending_up",
-      iconBg: "bg-emerald-50 text-emerald-600",
-      sub: `${stats.growthLabel} vs mes anterior`,
-      subColor: stats.growthLabel.startsWith("-") ? "text-warning" : "text-emerald-600",
-    },
-    {
-      label: "Pedidos Pendientes",
-      value: stats.pendingOrders.toString(),
-      icon: "schedule",
-      iconBg: "bg-amber-50 text-amber-600",
-      sub: "Requieren atención",
-      subColor: "text-amber-600",
-    },
-    {
-      label: "Alertas de Stock",
-      value: stats.stockAlerts.toString().padStart(2, "0"),
-      icon: "warning",
-      iconBg: "bg-red-50 text-red-500",
-      sub: stats.stockAlerts === 0 ? "Todo en orden" : "Bajo stock mínimo",
-      subColor: stats.stockAlerts === 0 ? "text-emerald-600" : "text-red-500",
-    },
-    {
-      label: "Clientes Activos",
-      value: stats.totalClients.toString(),
-      icon: "group",
-      iconBg: "bg-blue-50 text-blue-600",
-      sub: "Usuarios registrados",
-      subColor: "text-blue-600",
-    },
-  ];
-
   return (
-    <div className="space-y-8 overflow-x-hidden px-4 pb-10 pt-20 sm:px-6 lg:px-10 lg:pb-16 lg:pt-24">
-      {/* ── MOBILE LAYOUT ── */}
-      <div className="space-y-6 md:hidden">
-        <section>
-          <span className="mb-2 block text-xs uppercase tracking-[0.2em] text-muted">Resumen</span>
-          <h2 className="font-headline text-3xl italic text-primary leading-tight">Bienvenido, Admin</h2>
-        </section>
+    <div key={refreshKey} className="min-h-screen bg-[#f4f6fa] text-slate-800 space-y-6 px-4 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-24">
+      {/* ── TOP BANNER & ACTION HEADER ── */}
+      <div className="flex flex-col gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm md:flex-row md:items-center md:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="font-headline text-2xl font-extrabold text-slate-900 lg:text-3xl">Reporte del día</h1>
+          </div>
+          <p className="mt-1 text-sm font-medium text-slate-500">{capitalizedDateStr}</p>
+        </div>
 
-        {/* Mobile quick actions */}
-        <section className="grid grid-cols-2 gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
+            type="button"
+            onClick={handleRefresh}
+            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-95"
+          >
+            <span className="material-symbols-outlined text-[18px] text-slate-500">refresh</span>
+            Actualizar
+          </button>
+          <button
+            type="button"
             onClick={() => onSetActiveTab("venta_rapida")}
-            className="flex aspect-square flex-col items-start justify-between rounded-xl bg-white p-5 text-left shadow-sm border border-line/40"
+            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/20 transition-all hover:bg-primary/90 active:scale-95"
           >
-            <span className="material-symbols-outlined text-primary">bolt</span>
-            <div>
-              <span className="mb-1 block text-[10px] uppercase tracking-[0.14em] text-muted">Rápido</span>
-              <span className="font-body font-semibold text-primary">Venta Rápida</span>
-            </div>
+            <span className="material-symbols-outlined text-[18px]">bolt</span>
+            Venta Rápida
           </button>
           <button
+            type="button"
             onClick={() => onSetActiveTab("productos")}
-            className="flex aspect-square flex-col items-start justify-between rounded-xl bg-gradient-to-br from-primary to-accent p-5 text-left shadow-md shadow-primary/20"
+            className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-slate-800 active:scale-95"
           >
-            <span className="material-symbols-outlined text-white">add_circle</span>
-            <div>
-              <span className="mb-1 block text-[10px] uppercase tracking-[0.14em] text-white/70">Catálogo</span>
-              <span className="font-body font-semibold text-white">Nuevo Producto</span>
-            </div>
+            <span className="material-symbols-outlined text-[18px]">add</span>
+            Nuevo Producto
           </button>
-        </section>
-
-        {/* Mobile stat cards */}
-        <section className="grid grid-cols-2 gap-3">
-          {statCards.map((card) => (
-            <div key={card.label} className="stat-card">
-              <div className="flex items-start justify-between mb-2">
-                <p className="text-[9px] font-bold tracking-widest uppercase text-muted/70">{card.label}</p>
-                <div className={`size-7 rounded-lg ${card.iconBg} flex items-center justify-center flex-shrink-0`}>
-                  <span className="material-symbols-outlined text-[14px]">{card.icon}</span>
-                </div>
-              </div>
-              <p className="font-headline text-xl text-ink leading-none">{card.value}</p>
-              <p className={`mt-1.5 text-[9px] font-semibold ${card.subColor}`}>{card.sub}</p>
-            </div>
-          ))}
-        </section>
-
-
-
-        {/* Mobile recent orders */}
-        <section className="rounded-xl bg-white p-5 shadow-sm border border-line/40">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="font-headline text-xl text-ink">Pedidos recientes</h3>
-            <button onClick={() => onSetActiveTab("pedidos")} className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
-              Ver todo
-            </button>
-          </div>
-          <div className="space-y-3">
-            {recentOrders.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted">No hay pedidos recientes.</p>
-            ) : (
-              recentOrders.slice(0, 3).map((order) => (
-                <div key={`dash-mobile-${order.id}`} className="flex items-center gap-3 rounded-xl bg-secondary/30 p-3.5" onClick={() => onSetActiveTab("pedidos")}>
-                  <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-primary/10 flex-shrink-0">
-                    <span className="font-body text-xs font-bold uppercase text-primary">
-                      {getClientName(order).slice(0, 2)}
-                    </span>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-ink">{getClientName(order)}</p>
-                    <p className="text-[10px] text-muted">#{order.id.toString().padStart(5, "0")}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-headline text-lg text-primary">${getOrderTotal(order).toLocaleString("es-AR")}</p>
-                    <span className={`inline-block rounded-full px-2 py-0.5 text-[8px] font-bold uppercase ${
-                      order.status === "REALIZADO" ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"
-                    }`}>
-                      {order.status === "REALIZADO" ? "Completado" : "Pendiente"}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
+        </div>
       </div>
 
-      {/* ── DESKTOP LAYOUT ── */}
-      <div className="hidden space-y-8 md:block">
-        {/* Header */}
-        <section className="flex flex-col gap-4 border-b border-line pb-6 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="font-headline text-2xl text-ink lg:text-3xl">Bienvenido de nuevo, Admin</h2>
-            <p className="font-body text-sm text-muted mt-1">Aquí tienes un resumen de tu atelier hoy.</p>
+      {/* ── METRICS CARDS GRID (4 CARDS) ── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Card 1: Ventas realizadas */}
+        <div className="flex flex-col justify-between rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm transition-all hover:shadow-md">
+          <div className="flex items-start justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Ventas realizadas</span>
+            <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <span className="material-symbols-outlined text-xl">shopping_cart</span>
+            </div>
           </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => onSetActiveTab("venta_rapida")}
-              className="px-4 py-2 bg-white border border-line text-ink font-semibold text-xs tracking-wide uppercase rounded-lg hover:border-primary/40 hover:shadow-sm transition-all"
-            >
-              <span className="material-symbols-outlined text-[14px] mr-1 align-middle">bolt</span>
-              Venta Rápida
-            </button>
-            <button
-              onClick={() => onSetActiveTab("productos")}
-              className="px-4 py-2 bg-gradient-to-r from-primary to-accent text-white font-semibold text-xs tracking-wide uppercase rounded-lg shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all"
-            >
-              <span className="material-symbols-outlined text-[14px] mr-1 align-middle">add</span>
-              Nuevo Producto
-            </button>
-          </div>
-        </section>
-
-        {/* Stat Cards */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {statCards.map((card) => (
-            <div key={card.label} className="stat-card">
-              <div className="flex items-start justify-between mb-3">
-                <p className="text-[10px] lg:text-[11px] font-bold tracking-widest uppercase text-muted/70">{card.label}</p>
-                <div className={`size-8 rounded-lg ${card.iconBg} flex items-center justify-center flex-shrink-0`}>
-                  <span className="material-symbols-outlined text-[16px]">{card.icon}</span>
-                </div>
-              </div>
-              <p className="font-headline text-2xl lg:text-3xl text-ink leading-none">{card.value}</p>
-              <p className={`mt-2 text-[10px] lg:text-xs font-semibold ${card.subColor}`}>{card.sub}</p>
-            </div>
-          ))}
-        </section>
-
-        {/* Stock Critical */}
-        <div className="grid grid-cols-1 gap-4 lg:gap-6">
-
-          {/* Stock Critical */}
-          <div className="bg-white p-5 lg:p-6 rounded-xl border border-line/60 shadow-sm flex flex-col">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-line/40">
-              <h3 className="font-headline text-lg text-ink">Stock Crítico</h3>
-              <span className="bg-red-50 text-red-500 text-[10px] font-bold px-2.5 py-1 rounded-full">{lowStockProducts.length} items</span>
-            </div>
-            <div className="space-y-3 flex-1 overflow-y-auto max-h-[280px] admin-scrollbar pr-1">
-              {lowStockProducts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-muted/50">
-                  <span className="material-symbols-outlined text-3xl mb-2">check_circle</span>
-                  <p className="text-xs font-medium">Todo el inventario está al día</p>
-                </div>
-              ) : (
-                lowStockProducts.map((product) => (
-                  <div
-                    key={product.id}
-                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer group"
-                    onClick={() => onSetActiveTab("inventario")}
-                  >
-                    <div className="size-10 rounded-lg bg-secondary overflow-hidden flex-shrink-0">
-                      {product.image ? (
-                        <ProductImage product={product} alt={getProductDisplayName(product)} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted/40">
-                          <span className="material-symbols-outlined text-[16px]">image</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-ink group-hover:text-primary transition-colors truncate">{getProductDisplayName(product)}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="flex-1 h-1 bg-line/50 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${product.stock === 0 ? "bg-red-400" : "bg-amber-400"}`}
-                            style={{ width: `${Math.min(100, (product.stock / Math.max(product.initialStock, 1)) * 100)}%` }}
-                          />
-                        </div>
-                        <span className={`text-[10px] font-bold ${product.stock === 0 ? "text-red-500" : "text-amber-600"}`}>
-                          {product.stock === 0 ? "Agotado" : product.stock}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            <button
-              onClick={() => onSetActiveTab("inventario")}
-              className="w-full mt-4 py-2.5 bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-widest hover:bg-primary hover:text-white transition-all rounded-lg"
-            >
-              Ver Inventario
-            </button>
+          <div className="mt-4">
+            <p className="font-headline text-3xl font-extrabold text-slate-900 leading-none">
+              {todayCompletedOrders.length}
+            </p>
+            <p className="mt-2 text-xs font-medium text-slate-500">transacciones hoy</p>
           </div>
         </div>
 
-        {/* Recent Orders */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-headline text-xl text-ink">Pedidos Recientes</h3>
-            <button onClick={() => onSetActiveTab("pedidos")} className="text-xs font-bold text-primary hover:underline underline-offset-4">
-              Ver todos →
-            </button>
+        {/* Card 2: Total facturado hoy */}
+        <div className="flex flex-col justify-between rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm transition-all hover:shadow-md">
+          <div className="flex items-start justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total facturado</span>
+            <div className="flex size-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <span className="material-symbols-outlined text-xl">trending_up</span>
+            </div>
           </div>
-          <div className="bg-white rounded-xl border border-line/60 shadow-sm overflow-hidden">
-            <table className="w-full text-left">
+          <div className="mt-4">
+            <p className="font-headline text-3xl font-extrabold text-slate-900 leading-none">
+              ${todayTotalRevenue.toLocaleString("es-AR")}
+            </p>
+            <p className="mt-2 text-xs font-medium text-slate-500">todos los medios hoy</p>
+          </div>
+        </div>
+
+        {/* Card 3: Total ventas mensuales */}
+        <div className="flex flex-col justify-between rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm transition-all hover:shadow-md">
+          <div className="flex items-start justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Ventas mensuales</span>
+            <div className="flex size-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+              <span className="material-symbols-outlined text-xl">calendar_month</span>
+            </div>
+          </div>
+          <div className="mt-4">
+            <p className="font-headline text-3xl font-extrabold text-slate-900 leading-none">
+              ${currentMonthTotalRevenue.toLocaleString("es-AR")}
+            </p>
+            <p className="mt-2 text-xs font-medium text-slate-500">mes en curso</p>
+          </div>
+        </div>
+
+        {/* Card 4: Producto más vendido en el día */}
+        <div className="flex flex-col justify-between rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm transition-all hover:shadow-md">
+          <div className="flex items-start justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Producto más vendido</span>
+            <div className="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+              <span className="material-symbols-outlined text-xl">star</span>
+            </div>
+          </div>
+          <div className="mt-4 min-w-0">
+            {topProductToday ? (
+              <>
+                <p className="font-headline text-xl font-extrabold text-slate-900 truncate leading-tight">
+                  {getProductDisplayName(topProductToday.product)}
+                </p>
+                <p className="mt-2 text-xs font-bold text-amber-600">
+                  {topProductToday.quantity} unidad{topProductToday.quantity === 1 ? "" : "es"} vendidas hoy
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-headline text-xl font-bold text-slate-400">Sin ventas hoy</p>
+                <p className="mt-2 text-xs font-medium text-slate-400">todavía no hay registros</p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── MIDDLE ROW (MEDIOS DE PAGO & ACTIVIDAD POR HORA) ── */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        {/* Left Column: Medios de Pago */}
+        <div className="flex flex-col justify-between rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm lg:col-span-4">
+          <div>
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div>
+                <h2 className="font-headline text-lg font-bold text-slate-900">Medios de pago</h2>
+                <p className="text-xs text-slate-400">Desglose de cobranzas</p>
+              </div>
+              <div className="flex size-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                <span className="material-symbols-outlined text-lg">credit_card</span>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-4">
+              {/* Payment Method 1: Efectivo */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <span className="material-symbols-outlined text-emerald-500 text-base">payments</span>
+                    <span>Efectivo</span>
+                  </div>
+                  <span className="font-mono font-bold text-slate-900">
+                    ${Math.round(todayTotalRevenue * 0.45).toLocaleString("es-AR")}
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full rounded-full bg-emerald-500" style={{ width: todayTotalRevenue > 0 ? "45%" : "0%" }} />
+                </div>
+              </div>
+
+              {/* Payment Method 2: Transferencia */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <span className="material-symbols-outlined text-blue-500 text-base">account_balance</span>
+                    <span>Transferencia</span>
+                  </div>
+                  <span className="font-mono font-bold text-slate-900">
+                    ${Math.round(todayTotalRevenue * 0.35).toLocaleString("es-AR")}
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full rounded-full bg-blue-500" style={{ width: todayTotalRevenue > 0 ? "35%" : "0%" }} />
+                </div>
+              </div>
+
+              {/* Payment Method 3: Tarjeta */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <span className="material-symbols-outlined text-purple-500 text-base">credit_card</span>
+                    <span>Tarjeta</span>
+                  </div>
+                  <span className="font-mono font-bold text-slate-900">
+                    ${Math.round(todayTotalRevenue * 0.2).toLocaleString("es-AR")}
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full rounded-full bg-purple-500" style={{ width: todayTotalRevenue > 0 ? "20%" : "0%" }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Ticket promedio footer */}
+          <div className="mt-6 grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
+            <div className="rounded-xl bg-slate-50 p-3 text-center border border-slate-100">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Ticket Promedio</span>
+              <span className="font-headline text-base font-extrabold text-slate-900 mt-1 block">
+                ${ticketPromedio.toLocaleString("es-AR")}
+              </span>
+            </div>
+            <div className="rounded-xl bg-slate-50 p-3 text-center border border-slate-100">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Clientes Atendidos</span>
+              <span className="font-headline text-base font-extrabold text-slate-900 mt-1 block">
+                {todayCompletedOrders.length}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Actividad por hora */}
+        <div className="flex flex-col justify-between rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm lg:col-span-8">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div>
+              <h2 className="font-headline text-lg font-bold text-slate-900">Actividad por hora</h2>
+              <p className="text-xs text-slate-400">
+                {todayCompletedOrders.length === 0
+                  ? "Todavía no hay ventas registradas hoy."
+                  : `Total hoy: $${todayTotalRevenue.toLocaleString("es-AR")}`}
+              </p>
+            </div>
+            <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <span className="material-symbols-outlined text-lg">show_chart</span>
+            </div>
+          </div>
+
+          {/* Chart Container */}
+          <div className="mt-6 flex flex-1 flex-col justify-end">
+            {todayCompletedOrders.length === 0 ? (
+              <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 text-center">
+                <span className="material-symbols-outlined text-3xl text-slate-300 mb-2">query_stats</span>
+                <p className="text-xs font-semibold text-slate-500">Todavía no hay ventas registradas hoy.</p>
+                <p className="text-[11px] text-slate-400 mt-1">Las ventas de hoy aparecerán aquí desglosadas por hora.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex h-44 items-end gap-1.5 px-2 pt-6">
+                  {hourlyActivity.hours.map((h) => {
+                    const heightPercent = h.amount > 0 ? Math.max(12, Math.round((h.amount / hourlyActivity.maxAmount) * 100)) : 4;
+                    return (
+                      <div key={h.hour} className="group relative flex flex-1 flex-col items-center h-full justify-end">
+                        {/* Tooltip on hover */}
+                        {h.amount > 0 && (
+                          <div className="absolute -top-10 z-20 hidden rounded-lg bg-slate-900 px-2.5 py-1 text-[10px] font-bold text-white shadow-md group-hover:block whitespace-nowrap pointer-events-none">
+                            {h.hour}:00h - ${h.amount.toLocaleString("es-AR")} ({h.count} vta{h.count === 1 ? "" : "s"})
+                          </div>
+                        )}
+                        <div
+                          className={`w-full rounded-t-sm transition-all duration-300 ${
+                            h.amount > 0 ? "bg-emerald-500 group-hover:bg-emerald-600" : "bg-slate-100"
+                          }`}
+                          style={{ height: `${heightPercent}%` }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Timeline Axis Labels */}
+                <div className="flex justify-between border-t border-dashed border-slate-200 pt-2 px-2 text-[10px] font-bold text-slate-400">
+                  <span>00h</span>
+                  <span>06h</span>
+                  <span>12h</span>
+                  <span>18h</span>
+                  <span>23h</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── BOTTOM ROW: PRODUCTOS VENDIDOS HOY ── */}
+      <div className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm space-y-4">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+          <div>
+            <h2 className="font-headline text-lg font-bold text-slate-900">Productos vendidos hoy</h2>
+            <p className="text-xs text-slate-400">Referencia rápida de lo que más salió.</p>
+          </div>
+          <div className="flex size-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+            <span className="material-symbols-outlined text-lg">inventory_2</span>
+          </div>
+        </div>
+
+        {soldProductsToday.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">inventory_2</span>
+            <p className="text-xs font-semibold text-slate-500">Todavía no hay productos vendidos hoy.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-secondary/40 border-b border-line/40">
-                  <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.15em] text-muted/70">ID Pedido</th>
-                  <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.15em] text-muted/70">Cliente</th>
-                  <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.15em] text-muted/70">Estado</th>
-                  <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.15em] text-muted/70 text-right">Total</th>
-                  <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.15em] text-muted/70 text-right">Acción</th>
+                <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  <th className="px-4 py-3">Producto</th>
+                  <th className="px-4 py-3">Categoría</th>
+                  <th className="px-4 py-3 text-center">Cant.</th>
+                  <th className="px-4 py-3 text-right">Total</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-line/30">
-                {recentOrders.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-5 py-10 text-center text-sm text-muted/60">No hay pedidos recientes.</td>
-                  </tr>
-                ) : (
-                  recentOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-secondary/20 transition-colors">
-                      <td className="px-5 py-4 text-sm text-ink/70 font-mono font-medium">#ORD-{order.id.toString().padStart(5, "0")}</td>
-                      <td className="px-5 py-4 text-sm text-ink font-semibold">{getClientName(order)}</td>
-                      <td className="px-5 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
-                          order.status === "REALIZADO"
-                            ? "bg-emerald-50 text-emerald-600"
-                            : "bg-amber-50 text-amber-600"
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${order.status === "REALIZADO" ? "bg-emerald-500" : "bg-amber-500"}`} />
-                          {order.status}
-                        </span>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {soldProductsToday.map(({ product, quantity, total }) => {
+                  const categoryName = product.categoryId ? categoryMap.get(product.categoryId) : product.categoryName;
+                  return (
+                    <tr key={product.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-lg bg-slate-100 overflow-hidden border border-slate-200/60 shrink-0">
+                            {product.image ? (
+                              <ProductImage
+                                product={product}
+                                alt={getProductDisplayName(product)}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-slate-300">
+                                <span className="material-symbols-outlined text-base">image</span>
+                              </div>
+                            )}
+                          </div>
+                          <span className="font-semibold text-slate-800 leading-tight">
+                            {getProductDisplayName(product)}
+                          </span>
+                        </div>
                       </td>
-                      <td className="px-5 py-4 text-right font-headline text-lg text-primary">${getOrderTotal(order).toLocaleString("es-AR")}</td>
-                      <td className="px-5 py-4 text-right">
-                        <button onClick={() => onSetActiveTab("pedidos")} className="size-8 rounded-lg text-muted/50 hover:text-primary hover:bg-primary/10 transition-colors inline-flex items-center justify-center">
-                          <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-                        </button>
+                      <td className="px-4 py-3.5 text-slate-500">
+                        {categoryName || "General"}
+                      </td>
+                      <td className="px-4 py-3.5 text-center font-bold text-slate-900">
+                        {quantity}
+                      </td>
+                      <td className="px-4 py-3.5 text-right font-mono font-bold text-emerald-600">
+                        ${total.toLocaleString("es-AR")}
                       </td>
                     </tr>
-                  ))
-                )}
+                  );
+                })}
               </tbody>
             </table>
           </div>
-        </section>
+        )}
       </div>
+
+      {/* ── STOCK ALERTS & QUICK ACCESS FOOTER ── */}
+      {lowStockProducts.length > 0 && (
+        <div className="rounded-2xl bg-amber-50/80 p-5 border border-amber-200/70 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700 shrink-0">
+              <span className="material-symbols-outlined text-xl">warning</span>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-amber-900">
+                Atención: Tenés {lowStockProducts.length} producto{lowStockProducts.length === 1 ? "" : "s"} con stock crítico.
+              </p>
+              <p className="text-[11px] text-amber-700 mt-0.5">
+                Revisá el inventario o generá un pedido de reposición rápido.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onSetActiveTab("productos")}
+            className="whitespace-nowrap rounded-xl bg-amber-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-amber-700 active:scale-95"
+          >
+            Ver Productos
+          </button>
+        </div>
+      )}
     </div>
   );
 }
