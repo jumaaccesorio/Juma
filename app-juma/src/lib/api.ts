@@ -6,6 +6,7 @@ const PRODUCT_IMAGES_BUCKET = "products";
 const PRODUCT_PUBLIC_PREFIX = `/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/`;
 const PRODUCT_SIGNED_PREFIX = `/storage/v1/object/sign/${PRODUCT_IMAGES_BUCKET}/`;
 let supportsProductImageVariants: boolean | null = null;
+let supportsOrderItemSize: boolean | null = null;
 
 function toErrorMessage(error: unknown, fallback = "Ocurrio un error inesperado.") {
   if (error && typeof error === "object" && "message" in error && typeof (error as { message?: unknown }).message === "string") {
@@ -394,14 +395,39 @@ export const api = {
     if (orders.length === 0) return [];
 
     const orderIds = orders.map((order) => order.id);
-    const itemsQuery = await supabase
-      .from("order_items")
-      .select("order_id, product_id, quantity, size, unit_sale_price, unit_purchase_price")
-      .in("order_id", orderIds);
-    if (itemsQuery.error) throw itemsQuery.error;
+    let itemsData: any[] = [];
+
+    if (supportsOrderItemSize === false) {
+      const legacyQuery = await supabase
+        .from("order_items")
+        .select("order_id, product_id, quantity, unit_sale_price, unit_purchase_price")
+        .in("order_id", orderIds);
+      if (legacyQuery.error) throw legacyQuery.error;
+      itemsData = legacyQuery.data ?? [];
+    } else {
+      const queryWithSize = await supabase
+        .from("order_items")
+        .select("order_id, product_id, quantity, size, unit_sale_price, unit_purchase_price")
+        .in("order_id", orderIds);
+
+      if (queryWithSize.error && isMissingColumnError(queryWithSize.error, "size")) {
+        supportsOrderItemSize = false;
+        const legacyQuery = await supabase
+          .from("order_items")
+          .select("order_id, product_id, quantity, unit_sale_price, unit_purchase_price")
+          .in("order_id", orderIds);
+        if (legacyQuery.error) throw legacyQuery.error;
+        itemsData = legacyQuery.data ?? [];
+      } else if (queryWithSize.error) {
+        throw queryWithSize.error;
+      } else {
+        supportsOrderItemSize = true;
+        itemsData = queryWithSize.data ?? [];
+      }
+    }
 
     const itemsByOrderId = new Map<number, any[]>();
-    for (const item of itemsQuery.data ?? []) {
+    for (const item of itemsData) {
       const list = itemsByOrderId.get(item.order_id) ?? [];
       list.push(item);
       itemsByOrderId.set(item.order_id, list);
@@ -473,18 +499,31 @@ export const api = {
 
     if (orderInsert.error) throw orderInsert.error;
 
-    const orderItems = order.items.map((item) => ({
-      order_id: orderInsert.data.id,
-      product_id: item.productId,
-      quantity: item.quantity,
-      size: item.size ?? null,
-      unit_sale_price: item.unitSalePrice,
-      unit_purchase_price: item.unitPurchasePrice,
-    }));
+    const orderItems = order.items.map((item) => {
+      const baseItem: Record<string, any> = {
+        order_id: orderInsert.data.id,
+        product_id: item.productId,
+        quantity: item.quantity,
+        unit_sale_price: item.unitSalePrice,
+        unit_purchase_price: item.unitPurchasePrice,
+      };
+      if (supportsOrderItemSize !== false && item.size) {
+        baseItem.size = item.size;
+      }
+      return baseItem;
+    });
 
     if (orderItems.length > 0) {
-      const itemsInsert = await supabase.from("order_items").insert(orderItems);
+      let itemsInsert = await supabase.from("order_items").insert(orderItems);
+
+      if (itemsInsert.error && supportsOrderItemSize !== false && isMissingColumnError(itemsInsert.error, "size")) {
+        supportsOrderItemSize = false;
+        const legacyItems = orderItems.map(({ size, ...rest }) => rest);
+        itemsInsert = await supabase.from("order_items").insert(legacyItems);
+      }
+
       if (itemsInsert.error) throw itemsInsert.error;
+      if (supportsOrderItemSize !== false) supportsOrderItemSize = true;
     }
 
     return mapOrder({ ...orderInsert.data, items: orderItems });

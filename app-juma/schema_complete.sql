@@ -72,9 +72,13 @@ CREATE TABLE IF NOT EXISTS order_items (
   order_id            INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   product_id          INT REFERENCES products(id) ON DELETE SET NULL,
   quantity            INT NOT NULL DEFAULT 1,
+  size                TEXT,
   unit_sale_price     NUMERIC(12, 2) NOT NULL DEFAULT 0,
   unit_purchase_price NUMERIC(12, 2) NOT NULL DEFAULT 0
 );
+
+ALTER TABLE order_items
+  ADD COLUMN IF NOT EXISTS size TEXT;
 
 -- ============================================================
 -- 6. CARRITO DE REPOSICION
