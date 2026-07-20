@@ -250,46 +250,48 @@ function ProductsPanel({
   const editingDraft = editingProduct ? drafts[editingProduct.id] ?? buildDraft(editingProduct) : null;
 
   return (
-    <div className="min-h-screen flex-1 space-y-8 bg-secondary p-4 text-ink md:space-y-12 md:p-10">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="min-h-screen bg-[#f4f6fa] text-slate-800 space-y-6 px-4 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-24">
+      {/* ── TOP HEADER ── */}
+      <div className="flex flex-col gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="font-serif text-3xl font-bold text-slate-900 dark:text-white">Productos</h2>
-          <p className="mt-1 text-slate-600">Gestiona tu catálogo de joyería, inventario y categorías.</p>
+          <h1 className="font-headline text-2xl font-extrabold text-slate-900 lg:text-3xl">Gestión de Productos e Inventario</h1>
+          <p className="mt-1 text-sm font-medium text-slate-500">Gestioná tu catálogo de joyería, variantes de talles, inventario y categorías.</p>
         </div>
-        <div className="flex items-center gap-3">
-          {/* Sub-tab toggle */}
-          <div className="flex bg-white rounded-lg border border-line p-1 gap-1">
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200/60">
             <button
               type="button"
               onClick={() => setActiveSubTab("productos")}
-              className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-bold transition-all ${
+              className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all ${
                 activeSubTab === "productos"
-                  ? "bg-primary text-white shadow-sm"
-                  : "text-slate-500 hover:text-ink hover:bg-slate-50"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              <span className="material-symbols-outlined text-base">inventory_2</span>
+              <span className="material-symbols-outlined text-[16px]">inventory_2</span>
               Productos
             </button>
             <button
               type="button"
               onClick={() => setActiveSubTab("categorias")}
-              className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-bold transition-all ${
+              className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all ${
                 activeSubTab === "categorias"
-                  ? "bg-primary text-white shadow-sm"
-                  : "text-slate-500 hover:text-ink hover:bg-slate-50"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              <span className="material-symbols-outlined text-base">category</span>
+              <span className="material-symbols-outlined text-[16px]">category</span>
               Categorías
             </button>
           </div>
+
           {activeSubTab === "productos" && (
             <button
               onClick={() => setShowForm(!showForm)}
-              className="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg shadow-primary/20"
+              className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition-all hover:bg-slate-800 active:scale-95"
             >
-              <span className="material-symbols-outlined text-xl">{showForm ? "close" : "add"}</span>
+              <span className="material-symbols-outlined text-[18px]">{showForm ? "close" : "add"}</span>
               {showForm ? "Cerrar" : "Nuevo Producto"}
             </button>
           )}
@@ -297,57 +299,60 @@ function ProductsPanel({
       </div>
 
       {activeSubTab === "productos" && (<>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:gap-6">
-        <div className="bg-background p-6 rounded-xl border border-line flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-tertiary/18 text-[#4f6780] rounded-lg">
-            <span className="material-symbols-outlined text-3xl">inventory</span>
+      {/* ── METRICS CARDS (4 CARDS) ── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shrink-0">
+            <span className="material-symbols-outlined text-xl">inventory_2</span>
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Total Prod.</p>
-            <p className="text-2xl font-black text-ink">{stats.totalProducts}</p>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Total Productos</span>
+            <p className="font-headline text-2xl font-extrabold text-slate-900 leading-none mt-1">{stats.totalProducts}</p>
           </div>
         </div>
-        <div className="bg-background p-6 rounded-xl border border-line flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-warning/22 text-[#9a6d48] rounded-lg">
-            <span className="material-symbols-outlined text-3xl">warning</span>
+
+        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-red-50 text-red-600 shrink-0">
+            <span className="material-symbols-outlined text-xl">warning</span>
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Sin Stock</p>
-            <p className="text-2xl font-black text-ink">{outOfStockCount}</p>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Sin Stock</span>
+            <p className="font-headline text-2xl font-extrabold text-red-600 leading-none mt-1">{outOfStockCount}</p>
           </div>
         </div>
-        <div className="bg-background p-6 rounded-xl border border-line flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-primary/12 text-primary rounded-lg">
-            <span className="material-symbols-outlined text-3xl">payments</span>
+
+        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 shrink-0">
+            <span className="material-symbols-outlined text-xl">payments</span>
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Valor Stock</p>
-            <p className="text-xl font-black text-ink">${stats.totalSaleStock.toLocaleString("es-AR")}</p>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Valor Venta Stock</span>
+            <p className="font-headline text-xl font-extrabold text-emerald-600 leading-none mt-1">${stats.totalSaleStock.toLocaleString("es-AR")}</p>
           </div>
         </div>
-        <div className="bg-background p-6 rounded-xl border border-line flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-success/25 text-[#647554] rounded-lg">
-            <span className="material-symbols-outlined text-3xl">trending_up</span>
+
+        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600 shrink-0">
+            <span className="material-symbols-outlined text-xl">trending_up</span>
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Ganancia Proy.</p>
-            <p className="text-xl font-black text-ink">${stats.projectedProfit.toLocaleString("es-AR")}</p>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Ganancia Estimada</span>
+            <p className="font-headline text-xl font-extrabold text-slate-900 leading-none mt-1">${stats.projectedProfit.toLocaleString("es-AR")}</p>
           </div>
         </div>
       </div>
 
-      <div className="rounded-xl border border-line bg-background p-5 shadow-sm md:p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-bold text-ink">Importar productos</h3>
-            <p className="text-sm text-slate-500 mt-1">CSV con columnas: `Nombre, subnombre, precio_compra, precio_venta, stock, categoria`.</p>
-          </div>
-          <label className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary hover:text-white text-primary px-4 py-2.5 rounded-lg font-bold text-sm transition-colors cursor-pointer">
-            <span className="material-symbols-outlined text-base">upload_file</span>
-            Importar CSV
-            <input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => onImportProducts(e.target.files?.[0] ?? null)} />
-          </label>
+      {/* ── IMPORT CSV CARD ── */}
+      <div className="rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="font-headline text-base font-bold text-slate-900">Importar Productos masivamente</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Subí un archivo CSV con las columnas: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-mono text-slate-700">Nombre, subnombre, precio_compra, precio_venta, stock, categoria</code>.</p>
         </div>
+        <label className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 cursor-pointer shrink-0">
+          <span className="material-symbols-outlined text-slate-500 text-lg">upload_file</span>
+          Importar CSV
+          <input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => onImportProducts(e.target.files?.[0] ?? null)} />
+        </label>
       </div>
 
       {showForm && (
@@ -494,16 +499,17 @@ function ProductsPanel({
         </form>
       )}
 
-      <div className="bg-background rounded-xl border border-line overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-line flex flex-col lg:flex-row items-center justify-between gap-4">
-          <div className="flex w-full flex-nowrap items-center gap-3 overflow-x-auto md:w-auto md:overflow-visible">
+      {/* ── PRODUCTS DIRECTORY CONTAINER ── */}
+      <div className="rounded-2xl bg-white border border-slate-200/80 shadow-sm overflow-hidden p-6 space-y-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-1.5 overflow-x-auto">
             <button
               type="button"
               onClick={() => setVisibilityFilter("ALL")}
-              className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition-colors ${
+              className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
                 visibilityFilter === "ALL"
-                  ? "border-primary bg-primary text-white"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-primary hover:text-primary"
+                  ? "bg-slate-900 text-white shadow-2xs"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
             >
               Todos
@@ -511,10 +517,10 @@ function ProductsPanel({
             <button
               type="button"
               onClick={() => setVisibilityFilter("VISIBLE")}
-              className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition-colors ${
+              className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
                 visibilityFilter === "VISIBLE"
-                  ? "border-primary bg-primary text-white"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-primary hover:text-primary"
+                  ? "bg-slate-900 text-white shadow-2xs"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
             >
               Visibles ({stats.enabledCount})
@@ -522,39 +528,42 @@ function ProductsPanel({
             <button
               type="button"
               onClick={() => setVisibilityFilter("HIDDEN")}
-              className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition-colors ${
+              className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
                 visibilityFilter === "HIDDEN"
-                  ? "border-primary bg-primary text-white"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-primary hover:text-primary"
+                  ? "bg-slate-900 text-white shadow-2xs"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
             >
               Ocultos ({stats.disabledCount})
             </button>
           </div>
-          <div className="flex w-full flex-col gap-3 lg:w-auto lg:flex-row">
-            <div className="relative w-full sm:w-64">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+            <div className="relative w-full sm:w-60">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
               <input
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                placeholder="Buscar..."
+                className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-xs text-slate-800 outline-none focus:border-primary shadow-2xs"
+                placeholder="Buscar producto..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
+
             <select
-              className="w-full lg:w-56 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-primary shadow-2xs"
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
             >
-              <option value="">Todas las categorias</option>
+              <option value="">Todas las categorías</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
                 </option>
-                ))}
-              </select>
+              ))}
+            </select>
+
             <select
-              className="w-full lg:w-56 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-primary shadow-2xs"
               value={stockFilter}
               onChange={(e) => setStockFilter(e.target.value as "ALL" | "OUT" | "LOW" | "AVAILABLE")}
             >
