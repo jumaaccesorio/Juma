@@ -82,26 +82,7 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
     }
   }, [finance.months, finance.selectedMonthKey, selectedMonthKey]);
 
-  const monthlyPreviewDays = useMemo(() => {
-    if (!visibleFinance) return [];
 
-    const today = new Date();
-    const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
-    if (selectedMonthKey === currentMonthKey) {
-      const endIndex = today.getDate();
-      return visibleFinance.dailyBreakdown.slice(Math.max(0, endIndex - 7), endIndex);
-    }
-
-    const lastDayWithMovement = [...visibleFinance.dailyBreakdown]
-      .reverse()
-      .find((day) => day.income > 0 || day.expense > 0 || day.salesCount > 0);
-
-    if (lastDayWithMovement) {
-      return visibleFinance.dailyBreakdown.slice(Math.max(0, lastDayWithMovement.day - 7), lastDayWithMovement.day);
-    }
-
-    return visibleFinance.dailyBreakdown.slice(-7);
-  }, [selectedMonthKey, visibleFinance]);
 
   const weeklyBreakdown = useMemo(() => {
     if (!visibleFinance) {
@@ -178,272 +159,280 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
   };
 
   return (
-    <div className="flex-1 min-h-screen space-y-6 bg-secondary p-4 dark:bg-carbon md:space-y-8 md:p-8">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+    <div className="min-h-screen bg-[#f4f6fa] text-slate-800 space-y-6 px-4 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-24">
+      {/* ── TOP HEADER ── */}
+      <div className="flex flex-col gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="font-serif text-3xl font-bold text-slate-900 dark:text-white">Admin Finanzas</h2>
-          <p className="mt-1 text-slate-500">Monitorea ventas, egresos manuales y el historial diario.</p>
+          <h1 className="font-headline text-2xl font-extrabold text-slate-900 lg:text-3xl">Admin Finanzas</h1>
+          <p className="mt-1 text-sm font-medium text-slate-500">Monitoreá ventas, egresos manuales y el historial diario.</p>
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="w-full">
-            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Filtrar por mes</label>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative">
             <select
               value={selectedMonthKey}
               onChange={(event) => setSelectedMonthKey(event.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             >
               {finance.months.map((month) => (
                 <option key={month.key} value={month.key}>
-                  {month.label}
+                  🗓️ {month.label}
                 </option>
               ))}
             </select>
           </div>
-          <div className="w-full">
-            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Modo de vista</label>
-            <div className="grid grid-cols-3 gap-2 rounded-xl bg-white p-1 shadow-sm dark:bg-slate-900">
+
+          <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200/60">
+            {(["mensual", "semanal", "historial"] as const).map((mode) => (
               <button
+                key={mode}
                 type="button"
-                onClick={() => setViewMode("mensual")}
-                className={`rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-widest transition-colors ${
-                  viewMode === "mensual" ? "bg-primary text-white" : "text-slate-500"
+                onClick={() => setViewMode(mode)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-bold capitalize transition-all ${
+                  viewMode === mode ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
                 }`}
               >
-                Mensual
+                {mode}
               </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("semanal")}
-                className={`rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-widest transition-colors ${
-                  viewMode === "semanal" ? "bg-primary text-white" : "text-slate-500"
-                }`}
-              >
-                Semanal
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("historial")}
-                className={`rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-widest transition-colors ${
-                  viewMode === "historial" ? "bg-primary text-white" : "text-slate-500"
-                }`}
-              >
-                Historial
-              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── METRICS CARDS GRID (4 CARDS) ── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Income Month */}
+        <div className="flex flex-col justify-between rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm transition-all hover:shadow-md">
+          <div className="flex items-start justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Ingreso del mes</span>
+            <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <span className="material-symbols-outlined text-xl">payments</span>
             </div>
           </div>
+          <div className="mt-4">
+            <p className="font-headline text-3xl font-extrabold text-slate-900 leading-none">
+              ${visibleFinance.incomeMonth.toLocaleString("es-AR")}
+            </p>
+            <p className="mt-2 text-xs font-medium text-emerald-600 font-semibold">Total cobrado</p>
+          </div>
+        </div>
+
+        {/* Expense Month */}
+        <div className="flex flex-col justify-between rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm transition-all hover:shadow-md">
+          <div className="flex items-start justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Egreso del mes</span>
+            <div className="flex size-10 items-center justify-center rounded-xl bg-red-50 text-red-600">
+              <span className="material-symbols-outlined text-xl">trending_down</span>
+            </div>
+          </div>
+          <div className="mt-4">
+            <p className="font-headline text-3xl font-extrabold text-slate-900 leading-none">
+              ${visibleFinance.expenseMonth.toLocaleString("es-AR")}
+            </p>
+            <p className="mt-2 text-xs font-medium text-red-500 font-semibold">Gastos y compras</p>
+          </div>
+        </div>
+
+        {/* Sales count */}
+        <div className="flex flex-col justify-between rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm transition-all hover:shadow-md">
+          <div className="flex items-start justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Cantidad de ventas</span>
+            <div className="flex size-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <span className="material-symbols-outlined text-xl">receipt_long</span>
+            </div>
+          </div>
+          <div className="mt-4">
+            <p className="font-headline text-3xl font-extrabold text-slate-900 leading-none">
+              {visibleFinance.salesCountMonth}
+            </p>
+            <p className="mt-2 text-xs font-medium text-slate-500">transacciones realizadas</p>
+          </div>
+        </div>
+
+        {/* Balance Month */}
+        <div className="flex flex-col justify-between rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm transition-all hover:shadow-md">
+          <div className="flex items-start justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Balance neto</span>
+            <div className="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+              <span className="material-symbols-outlined text-xl">account_balance</span>
+            </div>
+          </div>
+          <div className="mt-4">
+            <p className="font-headline text-3xl font-extrabold text-slate-900 leading-none">
+              ${visibleFinance.balanceMonth.toLocaleString("es-AR")}
+            </p>
+            <p className="mt-2 text-xs font-bold text-amber-600">Resultado neto</p>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="flex items-center gap-4 rounded-xl border border-neutral-soft bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="rounded-lg bg-green-50 p-3 text-green-600 dark:bg-green-900/20">
-            <span className="material-symbols-outlined text-3xl">payments</span>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">Ingreso del mes</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white">${visibleFinance.incomeMonth.toLocaleString("es-AR")}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 rounded-xl border border-neutral-soft bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="rounded-lg bg-red-50 p-3 text-red-600 dark:bg-red-900/20">
-            <span className="material-symbols-outlined text-3xl">trending_down</span>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">Egreso del mes</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white">${visibleFinance.expenseMonth.toLocaleString("es-AR")}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 rounded-xl border border-neutral-soft bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="rounded-lg bg-blue-50 p-3 text-blue-600 dark:bg-blue-900/20">
-            <span className="material-symbols-outlined text-3xl">receipt_long</span>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">Cantidad de ventas</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white">{visibleFinance.salesCountMonth}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 rounded-xl border border-neutral-soft bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="rounded-lg bg-amber-50 p-3 text-amber-600 dark:bg-amber-900/20">
-            <span className="material-symbols-outlined text-3xl">account_balance</span>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">Balance del mes</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white">${visibleFinance.balanceMonth.toLocaleString("es-AR")}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <form onSubmit={handleSubmitExpense} className="rounded-xl border border-neutral-soft bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:p-6">
-          <div className="mb-5 flex items-center justify-between">
+      {/* ── FORM & STATS ROW ── */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        {/* Form: Add Manual Movement */}
+        <form onSubmit={handleSubmitExpense} className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm lg:col-span-7 space-y-4">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Agregar movimiento manual</h3>
-              <p className="mt-1 text-sm text-slate-500">Registra ingresos o egresos manuales con detalle para el historial.</p>
+              <h2 className="font-headline text-lg font-bold text-slate-900">Agregar movimiento manual</h2>
+              <p className="text-xs text-slate-400">Registrá ingresos o egresos con detalle.</p>
             </div>
-            <span className="rounded-full bg-red-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-red-600">
+            <span className="rounded-xl bg-red-50 border border-red-100 px-3 py-1.5 text-xs font-bold text-red-600">
               ${visibleFinance.manualExpenseMonth.toLocaleString("es-AR")} manual
             </span>
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Tipo</label>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400">Tipo</label>
               <select
                 value={expenseForm.type}
                 onChange={(event) => setExpenseForm((prev) => ({ ...prev, type: event.target.value as "INGRESO" | "EGRESO" }))}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm"
               >
-                <option value="EGRESO">Egreso</option>
-                <option value="INGRESO">Ingreso</option>
+                <option value="EGRESO">🔴 Egreso (Gasto / Compra)</option>
+                <option value="INGRESO">🟢 Ingreso Adicional</option>
               </select>
             </div>
-            <div className="md:col-span-2">
-              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Descripcion</label>
-              <input
-                value={expenseForm.description}
-                onChange={(event) => setExpenseForm((prev) => ({ ...prev, description: event.target.value }))}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="Ej. Packaging, envio, proveedor"
-              />
-            </div>
             <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Categoria</label>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400">Categoría</label>
               <input
                 value={expenseForm.category}
                 onChange={(event) => setExpenseForm((prev) => ({ ...prev, category: event.target.value }))}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="General"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs text-slate-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm"
+                placeholder="Ej. Packaging, Envío, Proveedor"
               />
             </div>
+
+            <div className="md:col-span-2">
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400">Descripción</label>
+              <input
+                value={expenseForm.description}
+                onChange={(event) => setExpenseForm((prev) => ({ ...prev, description: event.target.value }))}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs text-slate-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm"
+                placeholder="Ej. Compra de cajas y bolsa de organza"
+              />
+            </div>
+
             <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Monto</label>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400">Monto ($)</label>
               <input
                 type="number"
                 min="0"
                 step="0.01"
                 value={expenseForm.amount}
                 onChange={(event) => setExpenseForm((prev) => ({ ...prev, amount: event.target.value }))}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm"
                 placeholder="0"
               />
             </div>
-            <div className="md:col-span-2">
-              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Detalle</label>
-              <textarea
-                value={expenseForm.detail}
-                onChange={(event) => setExpenseForm((prev) => ({ ...prev, detail: event.target.value }))}
-                className="min-h-24 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="Notas, proveedor, motivo del gasto..."
-              />
-            </div>
             <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">Fecha</label>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400">Fecha</label>
               <input
                 type="date"
                 value={expenseForm.date}
                 onChange={(event) => setExpenseForm((prev) => ({ ...prev, date: event.target.value }))}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs text-slate-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm"
               />
             </div>
-            <div className="flex items-end">
-              <button
-                type="submit"
-                disabled={isSavingExpense}
-                className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-bold uppercase tracking-widest text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isSavingExpense ? "Guardando..." : `Guardar ${expenseForm.type === "INGRESO" ? "ingreso" : "egreso"}`}
-              </button>
+
+            <div className="md:col-span-2">
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400">Detalle (Opcional)</label>
+              <textarea
+                value={expenseForm.detail}
+                onChange={(event) => setExpenseForm((prev) => ({ ...prev, detail: event.target.value }))}
+                rows={2}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs text-slate-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm"
+                placeholder="Notas, proveedor, número de factura..."
+              />
             </div>
+          </div>
+
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={isSavingExpense}
+              className="w-full rounded-xl bg-slate-900 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all hover:bg-slate-800 active:scale-95 disabled:opacity-50"
+            >
+              {isSavingExpense ? "Guardando..." : `Registrar ${expenseForm.type === "INGRESO" ? "Ingreso" : "Egreso"}`}
+            </button>
           </div>
         </form>
 
-        <div className="grid grid-cols-1 gap-4">
-          <div className="rounded-xl border border-neutral-soft bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <p className="text-sm font-medium text-slate-500">Resumen de ventas</p>
-            <div className="mt-5 space-y-4">
-              <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
-                <span className="text-sm text-slate-500">Ticket promedio</span>
-                <span className="text-base font-bold text-slate-900">${visibleFinance.averageTicket.toLocaleString("es-AR")}</span>
+        {/* Right Stats & Inventory value */}
+        <div className="flex flex-col justify-between space-y-4 lg:col-span-5">
+          <div className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm space-y-4">
+            <h2 className="font-headline text-lg font-bold text-slate-900 pb-3 border-b border-slate-100">Resumen comercial</h2>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+                <span className="text-xs font-medium text-slate-500">Ticket promedio</span>
+                <span className="font-mono text-sm font-bold text-slate-900">${visibleFinance.averageTicket.toLocaleString("es-AR")}</span>
               </div>
-              <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
-                <span className="text-sm text-slate-500">Mejor dia</span>
-                <span className="text-base font-bold text-slate-900">{visibleFinance.bestDayLabel}</span>
+              <div className="flex items-center justify-between rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+                <span className="text-xs font-medium text-slate-500">Mejor día del mes</span>
+                <span className="text-xs font-bold text-slate-900">{visibleFinance.bestDayLabel}</span>
               </div>
-              <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
-                <span className="text-sm text-slate-500">Ingreso mejor dia</span>
-                <span className="text-base font-bold text-slate-900">${visibleFinance.bestDayIncome.toLocaleString("es-AR")}</span>
+              <div className="flex items-center justify-between rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+                <span className="text-xs font-medium text-slate-500">Facturado en mejor día</span>
+                <span className="font-mono text-sm font-bold text-emerald-600">${visibleFinance.bestDayIncome.toLocaleString("es-AR")}</span>
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-neutral-soft bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <p className="text-sm font-medium text-slate-500">Inversion vigente</p>
-              <p className="mt-4 text-3xl font-black text-slate-900 dark:text-white">${finance.totalInvestment.toLocaleString("es-AR")}</p>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Inversión vigente</span>
+              <p className="font-headline text-2xl font-extrabold text-slate-900 mt-2">
+                ${finance.totalInvestment.toLocaleString("es-AR")}
+              </p>
             </div>
-            <div className="rounded-xl border border-neutral-soft bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <p className="text-sm font-medium text-slate-500">Valor stock</p>
-              <p className="mt-4 text-3xl font-black text-slate-900 dark:text-white">${finance.totalAccessoriesPrice.toLocaleString("es-AR")}</p>
+            <div className="rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Valor stock</span>
+              <p className="font-headline text-2xl font-extrabold text-slate-900 mt-2">
+                ${finance.totalAccessoriesPrice.toLocaleString("es-AR")}
+              </p>
             </div>
           </div>
         </div>
       </div>
 
+      {/* ── VIEWS: MENSUAL / SEMANAL / HISTORIAL ── */}
       {viewMode === "mensual" ? (
-        <div className="rounded-xl border border-neutral-soft bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:p-8">
-          <div className="mb-8 flex flex-col gap-4 border-b border-neutral-soft pb-4 dark:border-slate-800 md:flex-row md:items-end md:justify-between">
+        <div className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm space-y-6">
+          <div className="flex flex-col justify-between gap-2 border-b border-slate-100 pb-4 md:flex-row md:items-center">
             <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Grafico mensual</h3>
-              <p className="mt-1 text-sm text-slate-500">Ingreso y egreso por dia dentro del mes seleccionado.</p>
+              <h2 className="font-headline text-lg font-bold text-slate-900">Gráfico mensual</h2>
+              <p className="text-xs text-slate-400">Ingresos vs Egresos por día del mes seleccionado.</p>
             </div>
-            <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-widest">
-              <span className="rounded-full bg-green-50 px-3 py-1 text-green-600">Ingresos</span>
-              <span className="rounded-full bg-red-50 px-3 py-1 text-red-600">Egresos</span>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-500">Ventas</span>
+            <div className="flex items-center gap-3 text-xs font-bold">
+              <span className="flex items-center gap-1.5 text-emerald-600">
+                <span className="size-3 rounded-full bg-emerald-500" /> Ingresos
+              </span>
+              <span className="flex items-center gap-1.5 text-red-500">
+                <span className="size-3 rounded-full bg-red-400" /> Egresos
+              </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-2 pb-2 md:hidden">
-            {monthlyPreviewDays.map((row) => {
-              const incomeHeight = visibleFinance.chartMax > 0 ? Math.max(10, (row.income / visibleFinance.chartMax) * 100) : 10;
-              const expenseHeight = visibleFinance.chartMax > 0 ? Math.max(10, (row.expense / visibleFinance.chartMax) * 100) : 10;
-              return (
-                <div key={`mobile-${row.day}`} className="flex min-w-0 flex-col items-center gap-2">
-                  <div className="flex h-32 w-full items-end gap-1 rounded-lg bg-slate-50 px-1 py-2">
-                    <div className="flex h-full w-1/2 items-end">
-                      <div className="w-full rounded-t-sm bg-green-400/85" style={{ height: `${incomeHeight}%` }} />
-                    </div>
-                    <div className="flex h-full w-1/2 items-end">
-                      <div className="w-full rounded-t-sm bg-red-300" style={{ height: `${expenseHeight}%` }} />
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-400">{row.day}</span>
-                  <span className="text-[9px] font-bold text-slate-500">{row.salesCount}</span>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="hidden w-full overflow-x-auto pb-4 md:block">
-            <div className="flex min-w-[640px] items-end gap-3 md:min-w-[960px]">
+          {/* Bar Chart Container */}
+          <div className="w-full overflow-x-auto pb-2">
+            <div className="flex min-w-[700px] items-end gap-2.5 h-64 pt-6">
               {visibleFinance.dailyBreakdown.map((row) => {
-                const incomeHeight = visibleFinance.chartMax > 0 ? Math.max(4, (row.income / visibleFinance.chartMax) * 100) : 4;
-                const expenseHeight = visibleFinance.chartMax > 0 ? Math.max(4, (row.expense / visibleFinance.chartMax) * 100) : 4;
+                const incomeHeight = visibleFinance.chartMax > 0 ? Math.max(6, (row.income / visibleFinance.chartMax) * 100) : 6;
+                const expenseHeight = visibleFinance.chartMax > 0 ? Math.max(6, (row.expense / visibleFinance.chartMax) * 100) : 6;
                 return (
-                  <div key={row.day} className="group relative flex min-w-[32px] flex-1 flex-col items-center justify-end">
-                    <div className="mb-2 flex h-64 w-full items-end gap-1">
-                      <div className="relative flex h-full flex-1 items-end">
-                        <div className="w-full rounded-t-sm bg-green-400/85 transition-all duration-500 group-hover:bg-green-500" style={{ height: `${incomeHeight}%` }} />
+                  <div key={row.day} className="group relative flex flex-1 flex-col items-center h-full justify-end">
+                    <div className="flex h-full w-full items-end gap-1 px-0.5">
+                      <div className="flex-1 h-full flex items-end">
+                        <div className="w-full rounded-t-md bg-emerald-500 transition-all group-hover:bg-emerald-600" style={{ height: `${incomeHeight}%` }} />
                       </div>
-                      <div className="relative flex h-full flex-1 items-end">
-                        <div className="w-full rounded-t-sm bg-red-300 transition-all duration-500 group-hover:bg-red-400" style={{ height: `${expenseHeight}%` }} />
+                      <div className="flex-1 h-full flex items-end">
+                        <div className="w-full rounded-t-md bg-red-400 transition-all group-hover:bg-red-500" style={{ height: `${expenseHeight}%` }} />
                       </div>
                     </div>
-                    <div className="mb-2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">
-                      {row.salesCount} vtas
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-400">{row.day}</span>
-                    <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-3 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-xs font-bold text-white opacity-0 transition-opacity group-hover:opacity-100">
-                      Ing. ${row.income.toLocaleString("es-AR")} · Egr. ${row.expense.toLocaleString("es-AR")}
+                    <span className="mt-2 text-[10px] font-bold text-slate-400">{row.day}</span>
+
+                    {/* Tooltip */}
+                    <div className="pointer-events-none absolute bottom-full mb-2 hidden rounded-lg bg-slate-900 px-3 py-1.5 text-[10px] font-bold text-white shadow-lg group-hover:block whitespace-nowrap z-20">
+                      Día {row.day}: Ing. ${row.income.toLocaleString("es-AR")} | Egr. ${row.expense.toLocaleString("es-AR")} ({row.salesCount} vtas)
                     </div>
                   </div>
                 );
@@ -452,110 +441,86 @@ function FinancePanel({ finance, onAddExpense, onDeleteExpense }: FinancePanelPr
           </div>
         </div>
       ) : viewMode === "semanal" ? (
-        <div className="rounded-xl border border-neutral-soft bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:p-6">
-          <div className="mb-5 flex flex-col gap-3 border-b border-neutral-soft pb-4 dark:border-slate-800 sm:flex-row sm:items-end sm:justify-between">
+        <div className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Grafico semanal</h3>
-              <p className="mt-1 text-sm text-slate-500">Resumen de la semana calendario del mes filtrado.</p>
-            </div>
-            <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-widest">
-              <span className="rounded-full bg-green-50 px-3 py-1 text-green-600">
-                ${weeklyBreakdown.incomeTotal.toLocaleString("es-AR")} ingresos
-              </span>
-              <span className="rounded-full bg-red-50 px-3 py-1 text-red-600">
-                ${weeklyBreakdown.expenseTotal.toLocaleString("es-AR")} egresos
-              </span>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-500">
-                {weeklyBreakdown.salesTotal} ventas
-              </span>
+              <h2 className="font-headline text-lg font-bold text-slate-900">Gráfico semanal</h2>
+              <p className="text-xs text-slate-400">Resumen de los últimos 7 días del mes.</p>
             </div>
           </div>
 
-          {weeklyBreakdown.days.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-              No hay suficientes movimientos para armar la vista semanal.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-7">
-              {weeklyBreakdown.days.map((row) => {
-                const incomeHeight = weeklyBreakdown.chartMax > 0 ? Math.max(12, (row.income / weeklyBreakdown.chartMax) * 100) : 12;
-                const expenseHeight = weeklyBreakdown.chartMax > 0 ? Math.max(12, (row.expense / weeklyBreakdown.chartMax) * 100) : 12;
-                return (
-                  <div key={`weekly-${row.day}`} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="text-xs font-bold uppercase tracking-widest text-slate-400">{row.label}</span>
-                      <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-500">{row.salesCount} vtas</span>
-                    </div>
-                    <div className="flex h-28 items-end gap-2">
-                      <div className="flex flex-1 flex-col items-center gap-2">
-                        <div className="flex h-full w-full items-end">
-                          <div className="w-full rounded-t-md bg-green-400/85" style={{ height: `${incomeHeight}%` }} />
-                        </div>
-                        <span className="text-[10px] font-bold text-green-700">Ing.</span>
-                      </div>
-                      <div className="flex flex-1 flex-col items-center gap-2">
-                        <div className="flex h-full w-full items-end">
-                          <div className="w-full rounded-t-md bg-red-300" style={{ height: `${expenseHeight}%` }} />
-                        </div>
-                        <span className="text-[10px] font-bold text-red-700">Egr.</span>
-                      </div>
-                    </div>
-                    <div className="mt-3 space-y-1 text-xs text-slate-500">
-                      <p>Ingresos: ${row.income.toLocaleString("es-AR")}</p>
-                      <p>Egresos: ${row.expense.toLocaleString("es-AR")}</p>
-                    </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-7">
+            {weeklyBreakdown.days.map((row) => (
+              <div key={`weekly-${row.day}`} className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-700">{row.label}</span>
+                  <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-500 shadow-2xs">
+                    {row.salesCount} vtas
+                  </span>
+                </div>
+                <div className="space-y-1.5 pt-2 border-t border-slate-200/60 text-xs">
+                  <div className="flex justify-between font-medium">
+                    <span className="text-slate-400">Ingresos:</span>
+                    <span className="font-bold text-emerald-600">${row.income.toLocaleString("es-AR")}</span>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                  <div className="flex justify-between font-medium">
+                    <span className="text-slate-400">Egresos:</span>
+                    <span className="font-bold text-red-500">${row.expense.toLocaleString("es-AR")}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-neutral-soft bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:p-6">
-          <div className="mb-5 flex items-center justify-between">
+        <div className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Historial diario</h3>
-              <p className="mt-1 text-sm text-slate-500">Ingresos y egresos del mes seleccionado.</p>
+              <h2 className="font-headline text-lg font-bold text-slate-900">Historial diario</h2>
+              <p className="text-xs text-slate-400">Movimientos registrados en el mes seleccionado.</p>
             </div>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-              {historyItems.length} movimientos
+            <span className="rounded-xl bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+              {historyItems.length} registros
             </span>
           </div>
 
           <div className="space-y-3">
             {historyItems.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+              <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-xs font-semibold text-slate-400">
                 No hay movimientos registrados para este mes.
               </div>
             ) : (
               historyItems.map((item) => {
                 const expenseId = item.id.startsWith("expense-") ? Number(item.id.replace("expense-", "")) : null;
                 return (
-                  <div key={item.id} className="flex flex-col gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-4 md:flex-row md:items-center md:justify-between">
+                  <div key={item.id} className="flex flex-col gap-3 rounded-xl border border-slate-100 bg-slate-50 p-4 transition-all hover:bg-slate-100/60 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest ${item.type === "INGRESO" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                        <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                          item.type === "INGRESO" ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
+                        }`}>
                           {item.type}
                         </span>
-                        <span className="text-[11px] font-medium uppercase tracking-widest text-slate-400">{item.category}</span>
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{item.category}</span>
                       </div>
-                      <p className="mt-2 truncate text-base font-bold text-slate-900">{item.description}</p>
-                      <p className="mt-1 text-sm text-slate-500">{item.detail || "Sin detalle adicional"}</p>
+                      <p className="mt-1.5 font-bold text-slate-900 text-sm truncate">{item.description}</p>
+                      {item.detail && <p className="text-xs text-slate-500 mt-0.5">{item.detail}</p>}
                     </div>
-                    <div className="flex items-center justify-between gap-4 md:justify-end">
+
+                    <div className="flex items-center justify-between gap-4 sm:justify-end">
                       <div className="text-right">
-                        <p className={`text-lg font-black ${item.type === "INGRESO" ? "text-green-700" : "text-red-700"}`}>
+                        <p className={`font-mono text-base font-extrabold ${item.type === "INGRESO" ? "text-emerald-600" : "text-red-500"}`}>
                           {item.type === "INGRESO" ? "+" : "-"}${item.amount.toLocaleString("es-AR")}
                         </p>
-                        <p className="text-[11px] uppercase tracking-widest text-slate-400">{new Date(item.date).toLocaleDateString("es-AR")}</p>
+                        <p className="text-[10px] text-slate-400 font-medium">{item.date}</p>
                       </div>
                       {expenseId ? (
                         <button
                           type="button"
                           onClick={() => onDeleteExpense(expenseId)}
-                          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
                         >
-                          <span className="material-symbols-outlined">delete</span>
+                          <span className="material-symbols-outlined text-lg">delete</span>
                         </button>
                       ) : null}
                     </div>

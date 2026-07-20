@@ -55,7 +55,7 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
       } catch (error) {
         if (!cancelled) {
           console.error(error);
-          setSaveError("No se pudo cargar el carrito de reposicion. Ejecuta la migracion SQL de restock_cart_items en Supabase.");
+          setSaveError("No se pudo cargar el carrito de reposición. Verifica los permisos o el esquema de Supabase.");
         }
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -218,73 +218,101 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
 
   const filters: Array<{ label: string; value: typeof statusFilter }> = [
     { label: "Pendiente", value: "PENDING" },
-    { label: "En carrito", value: "IN_CART" },
+    { label: "En Carrito", value: "IN_CART" },
     { label: "Pedido", value: "REQUESTED" },
   ];
 
   return (
-    <div className="space-y-6">
-      <section className="flex flex-col gap-4 border-b border-line pb-5 lg:flex-row lg:items-end lg:justify-between">
+    <div className="min-h-screen bg-[#f4f6fa] text-slate-800 space-y-6 px-4 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-24">
+      {/* ── TOP HEADER ── */}
+      <div className="flex flex-col gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-muted">Compras</p>
-          <h2 className="font-headline text-3xl text-ink">Carrito Reposicion</h2>
-          <p className="mt-1 text-sm text-muted">Productos vendidos agrupados para preparar la reposicion de stock.</p>
+          <h1 className="font-headline text-2xl font-extrabold text-slate-900 lg:text-3xl">Carrito Reposición</h1>
+          <p className="mt-1 text-sm font-medium text-slate-500">Productos vendidos agrupados para preparar la reposición de stock.</p>
         </div>
+
         <button
           type="button"
           onClick={resetHiddenRows}
-          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 text-xs font-bold uppercase tracking-[0.14em] text-primary transition-colors hover:bg-primary/10"
+          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 active:scale-95"
         >
-          <span className="material-symbols-outlined text-[18px]">restore</span>
+          <span className="material-symbols-outlined text-[18px] text-slate-500">restore</span>
           Recuperar eliminados
         </button>
-      </section>
+      </div>
 
-      {isLoading ? (
-        <div className="rounded-xl border border-line bg-white p-4 text-sm font-semibold text-muted shadow-sm">
-          Cargando carrito de reposicion...
+      {isLoading && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 text-xs font-bold text-slate-500 shadow-2xs">
+          Cargando carrito de reposición...
         </div>
-      ) : null}
+      )}
 
-      {saveError ? (
-        <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-600 shadow-sm">
+      {saveError && (
+        <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-xs font-bold text-red-600 shadow-2xs">
           {saveError}
         </div>
-      ) : null}
+      )}
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          { label: "Productos", value: totals.products, icon: "inventory_2" },
-          { label: "Unidades sugeridas", value: totals.units, icon: "production_quantity_limits" },
-          { label: "Pedido", value: totals.requested, icon: "check_circle" },
-          { label: "En carrito", value: totals.inCart, icon: "shopping_cart_checkout" },
-        ].map((item) => (
-          <div key={item.label} className="rounded-xl border border-line/60 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted">{item.label}</p>
-              <span className="material-symbols-outlined text-primary">{item.icon}</span>
-            </div>
-            <p className="mt-3 font-headline text-3xl text-ink">{item.value}</p>
+      {/* ── METRICS CARDS (4 CARDS) ── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shrink-0">
+            <span className="material-symbols-outlined text-xl">inventory_2</span>
           </div>
-        ))}
-      </section>
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Productos</span>
+            <p className="font-headline text-2xl font-extrabold text-slate-900 leading-none mt-1">{totals.products}</p>
+          </div>
+        </div>
 
-      <section className="grid gap-3 rounded-xl border border-line/60 bg-white p-4 shadow-sm lg:grid-cols-[1fr_220px_120px_auto]">
+        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600 shrink-0">
+            <span className="material-symbols-outlined text-xl">production_quantity_limits</span>
+          </div>
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Unidades sugeridas</span>
+            <p className="font-headline text-2xl font-extrabold text-amber-600 leading-none mt-1">{totals.units}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-purple-50 text-purple-600 shrink-0">
+            <span className="material-symbols-outlined text-xl">shopping_cart_checkout</span>
+          </div>
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">En carrito</span>
+            <p className="font-headline text-2xl font-extrabold text-purple-600 leading-none mt-1">{totals.inCart}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 shrink-0">
+            <span className="material-symbols-outlined text-xl">check_circle</span>
+          </div>
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Pedido</span>
+            <p className="font-headline text-2xl font-extrabold text-emerald-600 leading-none mt-1">{totals.requested}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── SEARCH & MANUAL ADD ROW ── */}
+      <div className="grid gap-3 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm lg:grid-cols-[1fr_220px_100px_auto]">
         <div className="relative">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted">search</span>
+          <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Buscar producto, categoria o URL..."
-            className="h-11 w-full rounded-lg border border-line bg-secondary/40 pl-10 pr-3 text-sm outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+            placeholder="Buscar producto o categoría..."
+            className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 py-2.5 text-xs text-slate-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-2xs"
           />
         </div>
         <select
           value={addProductId}
           onChange={(event) => setAddProductId(event.target.value)}
-          className="h-11 rounded-lg border border-line bg-secondary/40 px-3 text-sm outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+          className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-800 outline-none focus:border-primary shadow-2xs"
         >
-          <option value="">Agregar producto</option>
+          <option value="">+ Agregar ítem manual</option>
           {selectableProducts.map((product) => (
             <option key={product.id} value={product.id}>
               {getProductDisplayName(product)}
@@ -296,59 +324,66 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
           min={1}
           value={addQuantity}
           onChange={(event) => setAddQuantity(event.target.value)}
-          className="h-11 rounded-lg border border-line bg-secondary/40 px-3 text-sm outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+          className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-center text-slate-900 outline-none focus:border-primary shadow-2xs"
         />
         <button
           type="button"
           onClick={addManualProduct}
           disabled={!addProductId}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-xs font-bold uppercase tracking-[0.14em] text-white disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition-all hover:bg-slate-800 disabled:opacity-40"
         >
-          <span className="material-symbols-outlined text-[18px]">add</span>
+          <span className="material-symbols-outlined text-[16px]">add</span>
           Agregar
         </button>
-      </section>
+      </div>
 
-      <section className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+      {/* ── FILTER CHIPS ── */}
+      <div className="flex gap-2">
         {filters.map((filter) => (
           <button
             key={filter.value}
             type="button"
             onClick={() => setStatusFilter(filter.value)}
-            className={`rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] transition-colors ${
+            className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
               statusFilter === filter.value
-                ? "bg-primary text-white"
-                : "border border-line bg-white text-muted hover:text-primary"
+                ? "bg-slate-900 text-white shadow-sm"
+                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
             }`}
           >
             {filter.label}
           </button>
         ))}
-      </section>
+      </div>
 
-      <section className="overflow-hidden rounded-xl border border-line/60 bg-white shadow-sm">
-        <div className="hidden overflow-x-auto lg:block">
-          <table className="w-full text-left">
-            <thead className="bg-secondary/50">
-              <tr>
-                <th className="px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-muted">Producto</th>
-                <th className="px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-muted">Ventas</th>
-                <th className="px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-muted">Stock</th>
-                <th className="px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-muted">Estados</th>
-                <th className="px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-muted text-right">Acciones</th>
+      {/* ── RESTOCK TABLE DIRECTORY ── */}
+      <div className="rounded-2xl bg-white border border-slate-200/80 shadow-sm overflow-hidden p-6 space-y-4">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+          <h2 className="font-headline text-lg font-bold text-slate-900">Items para Reposición</h2>
+          <span className="text-xs font-bold text-slate-500">{rows.length} ítems</span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <th className="px-4 py-3">Producto</th>
+                <th className="px-4 py-3">Ventas</th>
+                <th className="px-4 py-3">Stock Actual</th>
+                <th className="px-4 py-3">Estados</th>
+                <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-line/50">
+            <tbody className="divide-y divide-slate-100 text-xs">
               {rows.map((row) => (
-                <tr key={row.product.id} className="transition-colors hover:bg-secondary/25">
-                  <td className="px-4 py-4">
+                <tr key={row.product.id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="px-4 py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-secondary">
+                      <div className="size-12 rounded-xl bg-slate-100 overflow-hidden border border-slate-200/60 shrink-0">
                         {row.product.image ? (
                           <ProductImage product={row.product} alt={row.name} className="h-full w-full object-cover" />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center text-muted/50">
-                            <span className="material-symbols-outlined">image</span>
+                          <div className="flex h-full w-full items-center justify-center text-slate-300">
+                            <span className="material-symbols-outlined text-base">image</span>
                           </div>
                         )}
                       </div>
@@ -356,33 +391,34 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
                         <button
                           type="button"
                           onClick={() => onOpenProductDetail(row.product.id)}
-                          className="text-left text-sm font-bold text-ink transition-colors hover:text-primary"
+                          className="font-bold text-slate-900 hover:text-primary transition-colors text-left block truncate"
                         >
                           {row.name}
                         </button>
-                        <p className="mt-1 text-xs text-muted">{row.product.categoryName ?? "Sin categoria"}</p>
+                        <span className="text-[11px] text-slate-400 font-medium block truncate">
+                          {row.product.categoryName ?? "General"}
+                        </span>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-4">
-                    <p className="text-sm font-bold text-ink">{row.suggestedQuantity} unidades</p>
-                    <p className="text-xs text-muted">
-                      Vendidas: {row.soldQuantity} / Pedidos: {row.orderCount || "-"}
-                    </p>
-                    <p className="text-xs text-muted">${row.salesAmount.toLocaleString("es-AR")} vendido</p>
+                  <td className="px-4 py-3.5">
+                    <p className="font-bold text-slate-900">{row.suggestedQuantity} uds. sugeridas</p>
+                    <p className="text-[11px] text-slate-400">Vendidas: {row.soldQuantity} ({row.orderCount} vtas)</p>
                   </td>
-                  <td className="px-4 py-4">
-                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${row.product.stock <= 2 ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"}`}>
+                  <td className="px-4 py-3.5">
+                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                      row.product.stock <= 2 ? "bg-red-50 text-red-600 border border-red-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100"
+                    }`}>
                       Stock {row.product.stock}
                     </span>
                   </td>
-                  <td className="px-4 py-4">
-                    <div className="flex flex-wrap gap-2">
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => updateRow(row.product.id, { requested: !row.requested })}
-                        className={`inline-flex min-h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-bold ${
-                          row.requested ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"
+                        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                          row.requested ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-slate-100 text-slate-500"
                         }`}
                       >
                         <span className="material-symbols-outlined text-[16px]">{row.requested ? "check_circle" : "radio_button_unchecked"}</span>
@@ -391,8 +427,8 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
                       <button
                         type="button"
                         onClick={() => updateRow(row.product.id, { inCart: !row.inCart })}
-                        className={`inline-flex min-h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-bold ${
-                          row.inCart ? "bg-primary/15 text-primary" : "bg-slate-100 text-slate-500"
+                        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                          row.inCart ? "bg-purple-50 text-purple-600 border border-purple-100" : "bg-slate-100 text-slate-500"
                         }`}
                       >
                         <span className="material-symbols-outlined text-[16px]">{row.inCart ? "shopping_cart_checkout" : "add_shopping_cart"}</span>
@@ -400,99 +436,42 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
                       </button>
                     </div>
                   </td>
-                  <td className="px-4 py-4 text-right">
-                    <div className="flex justify-end gap-2">
+                  <td className="px-4 py-3.5 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
                       <a
                         href={row.product.sourceUrl || undefined}
                         target="_blank"
                         rel="noreferrer"
-                        aria-disabled={!row.product.sourceUrl}
-                        className={`inline-flex min-h-9 items-center justify-center gap-1 rounded-lg px-3 text-xs font-bold uppercase tracking-[0.12em] ${
-                          row.product.sourceUrl
-                            ? "bg-primary text-white"
-                            : "pointer-events-none bg-slate-100 text-slate-400"
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          row.product.sourceUrl ? "text-primary hover:bg-primary/10" : "text-slate-300 pointer-events-none"
                         }`}
+                        title="Ver URL original"
                       >
-                        <span className="material-symbols-outlined text-[16px]">open_in_new</span>
-                        URL
+                        <span className="material-symbols-outlined text-lg">open_in_new</span>
                       </a>
                       <button
                         type="button"
                         onClick={() => removeRow(row.product.id)}
-                        className="inline-flex min-h-9 items-center justify-center rounded-lg bg-red-50 px-3 text-red-600 transition-colors hover:bg-red-100"
-                        title="Eliminar del carrito de reposicion"
+                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Quitar ítem"
                       >
-                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                        <span className="material-symbols-outlined text-lg">delete</span>
                       </button>
                     </div>
                   </td>
                 </tr>
               ))}
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-slate-400 font-semibold">
+                    No hay productos para reposición con los filtros actuales.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
-
-        <div className="space-y-3 p-4 lg:hidden">
-          {rows.map((row) => (
-            <article key={`mobile-${row.product.id}`} className="rounded-xl border border-line bg-white p-4 shadow-sm">
-              <div className="flex gap-3">
-                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-secondary">
-                  {row.product.image ? (
-                    <ProductImage product={row.product} alt={row.name} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-muted/50">
-                      <span className="material-symbols-outlined">image</span>
-                    </div>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <button type="button" onClick={() => onOpenProductDetail(row.product.id)} className="text-left text-sm font-bold text-ink">
-                    {row.name}
-                  </button>
-                  <p className="mt-1 text-xs text-muted">{row.suggestedQuantity} unidades sugeridas</p>
-                  <p className="text-xs text-muted">Stock actual: {row.product.stock}</p>
-                </div>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => updateRow(row.product.id, { requested: !row.requested })}
-                  className={`min-h-10 rounded-lg text-xs font-bold ${row.requested ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}
-                >
-                  Pedido
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateRow(row.product.id, { inCart: !row.inCart })}
-                  className={`min-h-10 rounded-lg text-xs font-bold ${row.inCart ? "bg-primary/15 text-primary" : "bg-slate-100 text-slate-500"}`}
-                >
-                  En carrito
-                </button>
-                <a
-                  href={row.product.sourceUrl || undefined}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={`inline-flex min-h-10 items-center justify-center rounded-lg text-xs font-bold ${
-                    row.product.sourceUrl ? "bg-primary text-white" : "pointer-events-none bg-slate-100 text-slate-400"
-                  }`}
-                >
-                  Abrir URL
-                </a>
-                <button type="button" onClick={() => removeRow(row.product.id)} className="min-h-10 rounded-lg bg-red-50 text-xs font-bold text-red-600">
-                  Eliminar
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        {rows.length === 0 ? (
-          <div className="p-10 text-center">
-            <span className="material-symbols-outlined text-4xl text-muted/40">inventory</span>
-            <p className="mt-3 text-sm font-semibold text-muted">No hay productos para reposicion con los filtros actuales.</p>
-          </div>
-        ) : null}
-      </section>
+      </div>
     </div>
   );
 }

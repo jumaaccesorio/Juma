@@ -97,14 +97,11 @@ function OrdersPanel({
 
   const mobileProductsTotalPages = Math.max(1, Math.ceil(filteredProducts.length / MOBILE_PRODUCTS_PER_PAGE));
   const desktopProductsTotalPages = Math.max(1, Math.ceil(filteredProducts.length / DESKTOP_PRODUCTS_PER_PAGE));
-  const mobileVisibleProducts = useMemo(
-    () => filteredProducts.slice((mobileProductsPage - 1) * MOBILE_PRODUCTS_PER_PAGE, mobileProductsPage * MOBILE_PRODUCTS_PER_PAGE),
-    [filteredProducts, mobileProductsPage],
-  );
   const desktopVisibleProducts = useMemo(
     () => filteredProducts.slice((desktopProductsPage - 1) * DESKTOP_PRODUCTS_PER_PAGE, desktopProductsPage * DESKTOP_PRODUCTS_PER_PAGE),
     [filteredProducts, desktopProductsPage],
   );
+
   useEffect(() => {
     if (mobileProductsPage > mobileProductsTotalPages) setMobileProductsPage(mobileProductsTotalPages);
     if (desktopProductsPage > desktopProductsTotalPages) setDesktopProductsPage(desktopProductsTotalPages);
@@ -157,23 +154,23 @@ function OrdersPanel({
   const renderPager = (page: number, totalPages: number, onPageChange: (page: number) => void) => {
     if (totalPages <= 1) return null;
     return (
-      <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-line/70 bg-white px-3 py-2 shadow-sm">
+      <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-2xs">
         <button
           type="button"
           onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={page === 1}
-          className="rounded-lg border border-line px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-primary disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-lg border border-slate-200 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 disabled:opacity-40"
         >
           Anterior
         </button>
-        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
-          Pagina {page}/{totalPages}
+        <span className="text-[10px] font-bold text-slate-400">
+          Página {page} de {totalPages}
         </span>
         <button
           type="button"
           onClick={() => onPageChange(Math.min(totalPages, page + 1))}
           disabled={page === totalPages}
-          className="rounded-lg border border-line px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-primary disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-lg border border-slate-200 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 disabled:opacity-40"
         >
           Siguiente
         </button>
@@ -182,515 +179,178 @@ function OrdersPanel({
   };
 
   return (
-    <div className="flex-1 min-h-screen space-y-8 bg-secondary p-4 md:p-8 dark:bg-carbon">
-      <div className="mx-auto max-w-lg space-y-6 md:hidden">
-        <div className="mb-2 flex items-end justify-between">
-          <div>
-            <p className="mb-1 text-xs uppercase tracking-widest text-secondary">Gestión</p>
-            <h2 className="font-headline text-4xl font-bold text-ink">Pedidos</h2>
-          </div>
-          <button
+    <div className="min-h-screen bg-[#f4f6fa] text-slate-800 space-y-6 px-4 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-24">
+      {/* ── TOP HEADER ── */}
+      <div className="flex flex-col gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="font-headline text-2xl font-extrabold text-slate-900 lg:text-3xl">Admin Pedidos</h1>
+          <p className="mt-1 text-sm font-medium text-slate-500">Gestioná los pedidos de tus clientes y estados de envío.</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button 
             type="button"
             onClick={() => setShowForm(!showForm)}
-            className="rounded-sm bg-gradient-to-br from-primary to-primary-container px-4 py-2 text-xs font-bold uppercase tracking-widest text-white shadow-sm transition-opacity hover:opacity-80"
+            className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-slate-800 active:scale-95"
           >
-            {showForm ? "Cerrar" : "Nuevo pedido"}
+            <span className="material-symbols-outlined text-[18px]">{showForm ? 'close' : 'add'}</span>
+            {showForm ? 'Cerrar Formulario' : 'Nuevo Pedido'}
           </button>
         </div>
-
-        <div className="space-y-4">
-          <div className="group relative">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
-            <input
-              className="w-full rounded-sm bg-surface-container-lowest py-4 pl-12 pr-4 text-sm shadow-sm transition-all placeholder:text-outline-variant focus:ring-1 focus:ring-primary"
-              placeholder="Buscar pedidos..."
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </div>
-
-          <div className="flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none]">
-            {statusTabs.map((tab) => (
-              <button
-                key={tab.value}
-                type="button"
-                onClick={() => setStatusFilter(tab.value)}
-                className={`rounded-full px-5 py-2 text-xs font-bold uppercase tracking-widest transition-colors ${
-                  statusFilter === tab.value
-                    ? "bg-primary text-on-primary"
-                    : "bg-surface-container-low text-secondary hover:bg-surface-container-high"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {showForm && (
-          <form
-            className="space-y-5 rounded-sm border border-outline-variant/10 bg-surface-container-lowest p-5 shadow-[0_4px_20px_rgba(45,45,45,0.02)]"
-            onSubmit={(event) => {
-              onAddOrder(event);
-              setShowForm(false);
-            }}
-          >
-            <div className="space-y-3">
-              <div>
-                <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-secondary">Cliente</label>
-                <select
-                  required
-                  className="w-full rounded-sm bg-surface-container-low px-4 py-3 text-sm outline-none focus:ring-1 focus:ring-primary"
-                  value={orderForm.clientId}
-                  onChange={(event) => onOrderFormChange({ ...orderForm, clientId: event.target.value })}
-                >
-                  <option value="">Seleccionar Cliente</option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-secondary">Fecha</label>
-                  <input
-                    required
-                    type="date"
-                    className="w-full rounded-sm bg-surface-container-low px-4 py-3 text-sm outline-none focus:ring-1 focus:ring-primary"
-                    value={orderForm.date}
-                    onChange={(event) => onOrderFormChange({ ...orderForm, date: event.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-secondary">Estado</label>
-                  <select
-                    required
-                    className="w-full rounded-sm bg-surface-container-low px-4 py-3 text-sm outline-none focus:ring-1 focus:ring-primary"
-                    value={orderForm.status}
-                    onChange={(event) => onOrderFormChange({ ...orderForm, status: event.target.value as OrderStatus })}
-                  >
-                    <option value="PENDIENTE">Pendiente</option>
-                    <option value="REALIZADO">Realizado</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-3 flex items-center justify-between">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-secondary">Productos</label>
-                <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white">
-                  {selectedRows.length}
-                </span>
-              </div>
-              <div ref={mobileProductsRef} className="grid max-h-56 grid-cols-2 gap-3 overflow-y-auto rounded-sm bg-surface-container-low p-3">
-                {mobileVisibleProducts.map((product) => (
-                  <div
-                    key={product.id}
-                    className={`rounded-sm bg-white p-3 text-left shadow-sm transition ${
-                      product.stock <= 0 ? "opacity-50 grayscale" : ""
-                    }`}
-                  >
-                    <p className="line-clamp-1 font-headline text-base italic text-on-surface">
-                      {getProductDisplayName(product)}
-                    </p>
-                    <p className="mt-1 text-[11px] font-medium text-primary">
-                      ${product.salePrice.toLocaleString("es-AR")}
-                    </p>
-                    <p className="mt-1 text-[10px] uppercase tracking-widest text-secondary">
-                      {product.stock > 0 ? `Stock ${product.stock}` : "Agotado"}
-                    </p>
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => onAddProductToOrder(product.id)}
-                        disabled={product.stock <= 0}
-                        className="flex-1 rounded-sm bg-primary px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-white disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Agregar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onOpenProductDetail(product.id)}
-                        className="rounded-sm border border-line px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-primary"
-                      >
-                        Ver
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {renderPager(mobileProductsPage, mobileProductsTotalPages, setMobileProductsPage)}
-            </div>
-
-            <div className="space-y-3">
-              {selectedRows.length === 0 ? (
-                <div className="rounded-sm border border-dashed border-outline-variant/20 px-4 py-5 text-center text-sm text-secondary">
-                  Seleccioná productos para el pedido.
-                </div>
-              ) : (
-                selectedRows.map((row) => (
-                  <div key={`mobile-row-${row.index}`} className="flex items-center justify-between rounded-sm bg-surface-container-low p-3">
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => onOpenProductDetail(row.product.id)}
-                        className="font-headline text-left text-base italic text-on-surface transition-colors hover:text-primary"
-                      >
-                        {getProductDisplayName(row.product)}
-                      </button>
-                      <p className="text-[11px] text-secondary">${row.product.salePrice.toLocaleString("es-AR")} c/u</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        min={1}
-                        max={row.product.stock}
-                        value={row.item.quantity}
-                        onChange={(event) => onUpdateOrderItemRow(row.index, "quantity", event.target.value)}
-                        className="w-16 rounded-sm bg-white px-2 py-1 text-center text-sm font-bold outline-none focus:ring-1 focus:ring-primary"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => onRemoveOrderItemRow(row.index)}
-                        className="text-secondary transition-colors hover:text-error"
-                      >
-                        <span className="material-symbols-outlined">delete</span>
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="flex-1 rounded-sm border border-outline-variant/20 px-4 py-3 text-xs font-bold uppercase tracking-widest text-secondary"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={selectedRows.length === 0}
-                className="flex-1 rounded-sm bg-primary px-4 py-3 text-xs font-bold uppercase tracking-widest text-white disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Guardar
-              </button>
-            </div>
-          </form>
-        )}
-
-        <div className="space-y-3">
-          {filteredOrders.map((order) => {
-            const clientName = order.clientId ? getClientName(order.clientId) : order.guestName || "Invitado";
-            const needsRestock = order.status === "PENDIENTE" && hasInsufficientStock(order.items);
-            const isExpanded = expandedOrderIds.includes(order.id);
-            const itemsDetail = getOrderItemsDetail(order);
-            return (
-              <div key={`mobile-editorial-${order.id}`} className="rounded-xl border border-line bg-white p-4 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Pedido</p>
-                    <p className="mt-1 text-sm font-bold text-slate-900">#{String(order.id).padStart(5, "0")}</p>
-                  </div>
-                  <span
-                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
-                      order.status === "REALIZADO" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
-                    }`}
-                  >
-                    <span className={`h-1.5 w-1.5 rounded-full ${order.status === "REALIZADO" ? "bg-green-500" : "bg-yellow-500"}`}></span>
-                    {order.status}
-                  </span>
-                </div>
-                <div className="mt-4 space-y-2 text-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-slate-500">Cliente</span>
-                    <span className="font-medium text-slate-700">{clientName}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-slate-500">Fecha</span>
-                    <span className="font-medium text-slate-700">
-                      {new Date(order.date).toLocaleDateString("es-AR", { year: "numeric", month: "short", day: "numeric" })}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-slate-500">Total</span>
-                    <span className="font-bold text-slate-900">${getOrderTotal(order).toLocaleString("es-AR")}</span>
-                  </div>
-                </div>
-                {needsRestock ? (
-                  <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-warning/25 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#9a6d48]">
-                    <span className="material-symbols-outlined text-[14px]">inventory</span>
-                    Requiere reposicion
-                  </div>
-                ) : null}
-                {isExpanded ? (
-                  <div className="mt-4 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-2">
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Detalle del pedido</p>
-                      <span className="text-xs font-bold text-slate-700">${getOrderTotal(order).toLocaleString("es-AR")}</span>
-                    </div>
-                    {itemsDetail.map((item, itemIndex) => (
-                      <button
-                        key={`${order.id}-mobile-editorial-item-${itemIndex}`}
-                        type="button"
-                        onClick={() => onOpenProductDetail(item.productId)}
-                        className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/5"
-                      >
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
-                          {item.productImage ? (
-                            <img src={item.productImage} alt={item.productName} className="h-full w-full object-cover" />
-                          ) : (
-                            <span className="material-symbols-outlined text-slate-300">image</span>
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-bold text-slate-900">{item.productName}</p>
-                          <p className="text-xs text-slate-500">
-                            {item.quantity} x ${item.unitSalePrice.toLocaleString("es-AR")}
-                          </p>
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <p className="text-sm font-bold text-primary">${item.subtotal.toLocaleString("es-AR")}</p>
-                          <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Ver producto</p>
-                        </div>
-                      </button>
-                    ))}
-                    {itemsDetail.length === 0 ? <p className="text-sm text-slate-500">Este pedido no tiene productos cargados.</p> : null}
-                  </div>
-                ) : null}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => toggleOrderExpanded(order.id)}
-                    className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line px-3 py-2 text-xs font-bold text-slate-600"
-                  >
-                    {isExpanded ? "Ocultar" : "Ver detalle"}
-                  </button>
-                  {order.status === "PENDIENTE" ? (
-                    <button
-                      type="button"
-                      onClick={() => onMarkOrderAsRealized(order.id)}
-                      className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-lg bg-primary/10 px-3 py-2 text-xs font-bold text-primary"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                      Marcar envio
-                    </button>
-                  ) : (
-                    <span className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-400">
-                      <span className="material-symbols-outlined text-[16px]">done_all</span>
-                      Completado
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => onDeleteOrder(order.id)}
-                    className="inline-flex min-h-10 items-center justify-center gap-1 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600"
-                    title="Eliminar pedido"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">delete</span>
-                    Eliminar
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-
-          {filteredOrders.length === 0 ? (
-            <div className="rounded-xl border border-line bg-white px-5 py-10 text-center shadow-sm">
-              <p className="text-lg font-bold text-slate-900">No hay pedidos</p>
-              <p className="mt-2 text-sm text-slate-500">Prueba con otro filtro o crea uno nuevo.</p>
-            </div>
-          ) : null}
-        </div>
       </div>
 
-      <div className="hidden space-y-8 md:block">
-      {/* Header Actions */}
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div>
-          <h2 className="font-serif text-3xl font-bold text-slate-900 dark:text-white">Admin Pedidos</h2>
-          <p className="text-slate-500 mt-1">Gestiona los pedidos de tus clientes y estados de envio.</p>
+      {/* ── SUMMARY METRICS CARDS ── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
+          <div className="flex size-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shrink-0">
+            <span className="material-symbols-outlined text-2xl">shopping_bag</span>
+          </div>
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Total Pedidos</span>
+            <p className="font-headline text-2xl font-extrabold text-slate-900 leading-none mt-1">{orders.length}</p>
+          </div>
         </div>
-        <button 
-          type="button"
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg shadow-primary/20"
-        >
-          <span className="material-symbols-outlined text-xl">{showForm ? 'close' : 'add'}</span>
-          {showForm ? 'Cerrar Formulario' : 'Nuevo Pedido'}
-        </button>
-      </div>
 
-      {/* Summary KPIs */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-neutral-soft dark:border-slate-800 flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
-            <span className="material-symbols-outlined text-3xl">shopping_bag</span>
+        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
+          <div className="flex size-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600 shrink-0">
+            <span className="material-symbols-outlined text-2xl">pending_actions</span>
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Total Pedidos</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white">{orders.length}</p>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Pendientes</span>
+            <p className="font-headline text-2xl font-extrabold text-amber-600 leading-none mt-1">{pendingOrdersCount}</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-neutral-soft dark:border-slate-800 flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 rounded-lg">
-            <span className="material-symbols-outlined text-3xl">pending_actions</span>
+
+        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
+          <div className="flex size-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 shrink-0">
+            <span className="material-symbols-outlined text-2xl">check_circle</span>
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Pendientes</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white">{pendingOrdersCount}</p>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-neutral-soft dark:border-slate-800 flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-lg">
-            <span className="material-symbols-outlined text-3xl">check_circle</span>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">Realizados</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white">{completedOrdersCount}</p>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Realizados</span>
+            <p className="font-headline text-2xl font-extrabold text-emerald-600 leading-none mt-1">{completedOrdersCount}</p>
           </div>
         </div>
       </div>
 
-      {/* New Order Form */}
+      {/* ── NEW ORDER FORM ── */}
       {showForm && (
-        <form className="animate-fade-in rounded-xl border border-neutral-soft bg-white p-5 shadow-sm md:p-8 dark:border-slate-800 dark:bg-slate-900" onSubmit={(e) => { onAddOrder(e); setShowForm(false); }}>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 border-b border-neutral-soft dark:border-slate-800 pb-4">Crear Nuevo Pedido</h3>
+        <form className="space-y-6 rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm" onSubmit={(e) => { onAddOrder(e); setShowForm(false); }}>
+          <div className="pb-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 className="font-headline text-lg font-bold text-slate-900">Crear Nuevo Pedido</h2>
+            <button type="button" onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Cliente</label>
-              <select required className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none" value={orderForm.clientId} onChange={(e) => onOrderFormChange({ ...orderForm, clientId: e.target.value })}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400">Cliente</label>
+              <select required className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs text-slate-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm" value={orderForm.clientId} onChange={(e) => onOrderFormChange({ ...orderForm, clientId: e.target.value })}>
                 <option value="">Seleccionar Cliente</option>
                 {clients.map((client) => (
                   <option key={client.id} value={client.id}>{client.name}</option>
                 ))}
               </select>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Fecha</label>
-              <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none" value={orderForm.date} onChange={(e) => onOrderFormChange({ ...orderForm, date: e.target.value })} />
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400">Fecha</label>
+              <input required type="date" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs text-slate-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm" value={orderForm.date} onChange={(e) => onOrderFormChange({ ...orderForm, date: e.target.value })} />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Estado</label>
-              <select required className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none" value={orderForm.status} onChange={(e) => onOrderFormChange({ ...orderForm, status: e.target.value as OrderStatus })}>
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400">Estado</label>
+              <select required className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs text-slate-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm" value={orderForm.status} onChange={(e) => onOrderFormChange({ ...orderForm, status: e.target.value as OrderStatus })}>
                 <option value="PENDIENTE">Pendiente</option>
                 <option value="REALIZADO">Realizado</option>
               </select>
             </div>
           </div>
 
-          <div className="mb-6">
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <label className="text-sm font-bold text-slate-700">Agregar Productos</label>
+          <div className="space-y-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Seleccionar Productos</label>
               <div className="relative w-full sm:w-64">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
                 <input 
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none" 
-                  placeholder="Buscar..." 
+                  className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-xs outline-none focus:border-primary" 
+                  placeholder="Buscar producto..." 
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
               </div>
             </div>
             
-            <div ref={desktopProductsRef} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 max-h-64 overflow-y-auto p-2 border border-slate-100 rounded-lg bg-slate-50/50">
+            <div ref={desktopProductsRef} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 max-h-60 overflow-y-auto p-3 border border-slate-200/60 rounded-xl bg-slate-50/50">
               {desktopVisibleProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="flex flex-col items-center rounded-lg border border-slate-200 bg-white p-3 text-center shadow-sm transition-all hover:border-primary/50 hover:shadow-md"
+                  className="flex flex-col items-center rounded-xl border border-slate-200/80 bg-white p-2.5 text-center shadow-2xs transition-all hover:border-primary/50"
                 >
-                  <div className="h-16 w-16 mb-2 rounded bg-slate-100 flex items-center justify-center overflow-hidden">
+                  <div className="size-14 mb-2 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
                     {product.image ? (
                       <ProductImage product={product} alt={getProductDisplayName(product)} className="h-full w-full object-cover" />
                     ) : (
-                      <span className="material-symbols-outlined text-slate-300">image</span>
+                      <span className="material-symbols-outlined text-slate-300 text-lg">image</span>
                     )}
                   </div>
-                  <span className="text-xs font-bold text-slate-900 line-clamp-1 w-full" title={getProductDisplayName(product)}>{getProductDisplayName(product)}</span>
+                  <span className="text-[11px] font-bold text-slate-900 truncate w-full">{getProductDisplayName(product)}</span>
                   <div className="flex justify-between w-full mt-1 items-center">
                     <span className="text-xs font-bold text-primary">${product.salePrice.toLocaleString("es-AR")}</span>
-                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${product.stock > 0 ? 'bg-slate-100 text-slate-600' : 'bg-red-100 text-red-600'}`}>
-                      {product.stock > 0 ? `Stock: ${product.stock}` : "Por encargo"}
+                    <span className={`text-[9px] font-bold px-1 rounded ${product.stock > 0 ? 'bg-slate-100 text-slate-600' : 'bg-red-50 text-red-600'}`}>
+                      {product.stock > 0 ? `${product.stock} stk` : "Sin stock"}
                     </span>
                   </div>
-                  <div className="mt-3 flex w-full gap-2">
-                    <button
-                      type="button"
-                      onClick={() => onAddProductToOrder(product.id)}
-                      className="flex-1 rounded-lg bg-primary px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-white"
-                    >
-                      Agregar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onOpenProductDetail(product.id)}
-                      className="rounded-lg border border-line px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-primary"
-                    >
-                      Ver
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onAddProductToOrder(product.id)}
+                    className="mt-2.5 w-full rounded-lg bg-primary py-1.5 text-[10px] font-bold uppercase tracking-wider text-white hover:bg-primary/90"
+                  >
+                    + Agregar
+                  </button>
                 </div>
               ))}
             </div>
             {renderPager(desktopProductsPage, desktopProductsTotalPages, setDesktopProductsPage)}
           </div>
 
-          <div className="mb-8">
-            <h4 className="text-sm font-bold text-slate-700 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-200 flex justify-between">
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex justify-between">
               <span>Productos Seleccionados</span>
-              <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full">{selectedRows.length} items</span>
+              <span className="text-primary font-bold">{selectedRows.length} ítem{selectedRows.length === 1 ? "" : "s"}</span>
             </h4>
             
             {selectedRows.length === 0 ? (
-              <div className="text-center p-8 border-2 border-dashed border-slate-200 rounded-xl text-slate-500 font-medium">
-                <span className="material-symbols-outlined text-4xl mb-2 text-slate-300 block">shopping_cart</span>
-                Selecciona productos desde la grilla de arriba para agregarlos al pedido.
+              <div className="text-center p-6 border border-dashed border-slate-200 rounded-xl text-xs font-semibold text-slate-400">
+                Seleccioná productos de la lista superior para agregarlos al pedido.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {selectedRows.map((row) => (
-                  <div key={`row-${row.index}`} className="flex items-center gap-4 p-3 bg-white border border-slate-200 rounded-lg shadow-sm">
-                    <div className="h-12 w-12 rounded bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
+                  <div key={`row-${row.index}`} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200/60 rounded-xl">
+                    <div className="size-10 rounded-lg bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
                       {row.product.image ? (
                         <ProductImage product={row.product} alt={getProductDisplayName(row.product)} className="h-full w-full object-cover" />
                       ) : (
                         <span className="material-symbols-outlined text-slate-300">image</span>
                       )}
                     </div>
-                    <div className="flex-1">
-                      <button
-                        type="button"
-                        onClick={() => onOpenProductDetail(row.product.id)}
-                        className="text-left text-sm font-bold text-slate-900 transition-colors hover:text-primary"
-                      >
-                        {getProductDisplayName(row.product)}
-                      </button>
-                      <p className="text-xs text-slate-500">${row.product.salePrice.toLocaleString("es-AR")} c/u</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-slate-900 truncate">{getProductDisplayName(row.product)}</p>
+                      <p className="text-[11px] text-slate-500">${row.product.salePrice.toLocaleString("es-AR")} c/u</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex flex-col items-end">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">CANTIDAD</label>
-                        <input
-                          type="number"
-                          min={1}
-                          value={row.item.quantity}
-                          onChange={(e) => onUpdateOrderItemRow(row.index, "quantity", e.target.value)}
-                          className="w-20 bg-slate-50 border border-slate-200 rounded px-2 py-1 text-center font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none"
-                        />
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={1}
+                        value={row.item.quantity}
+                        onChange={(e) => onUpdateOrderItemRow(row.index, "quantity", e.target.value)}
+                        className="w-16 rounded-lg border border-slate-200 bg-white px-2 py-1 text-center font-bold text-xs outline-none"
+                      />
                       <button 
                         type="button" 
                         onClick={() => onRemoveOrderItemRow(row.index)}
-                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors mt-4"
-                        title="Quitar producto"
+                        className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg transition-colors"
                       >
-                        <span className="material-symbols-outlined">delete</span>
+                        <span className="material-symbols-outlined text-lg">delete</span>
                       </button>
                     </div>
                   </div>
@@ -699,12 +359,12 @@ function OrdersPanel({
             )}
           </div>
 
-          <div className="flex justify-end gap-4 pt-6 border-t border-neutral-soft dark:border-slate-800">
-            <button type="button" onClick={() => setShowForm(false)} className="px-6 py-3 font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <button type="button" onClick={() => setShowForm(false)} className="px-5 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl">Cancelar</button>
             <button 
               type="submit" 
               disabled={selectedRows.length === 0}
-              className={`px-8 py-3 rounded-lg font-bold shadow-lg transition-all ${selectedRows.length === 0 ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' : 'bg-primary hover:bg-primary/90 text-white shadow-primary/20'}`}
+              className="rounded-xl bg-slate-900 px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all hover:bg-slate-800 disabled:opacity-50"
             >
               Guardar Pedido
             </button>
@@ -712,139 +372,55 @@ function OrdersPanel({
         </form>
       )}
 
-      {/* Orders Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-neutral-soft dark:border-slate-800 overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-neutral-soft dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-lg text-slate-900 dark:text-white">Listado de Pedidos</h3>
+      {/* ── ORDERS LIST & SEARCH ── */}
+      <div className="rounded-2xl bg-white border border-slate-200/80 shadow-sm overflow-hidden space-y-4 p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100">
+          <div>
+            <h2 className="font-headline text-lg font-bold text-slate-900">Listado de Pedidos</h2>
+            <p className="text-xs text-slate-400">Filtrá y gestioná las compras registradas.</p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-full sm:w-60">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
+              <input
+                className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-xs text-slate-800 outline-none focus:border-primary shadow-2xs"
+                placeholder="Buscar pedido..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200/60">
+              {statusTabs.map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  onClick={() => setStatusFilter(tab.value)}
+                  className={`rounded-lg px-3 py-1 text-xs font-bold transition-all ${
+                    statusFilter === tab.value ? "bg-white text-slate-900 shadow-2xs" : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-3 p-4 lg:hidden">
-          {filteredOrders.map((order) => {
-            const clientName = order.clientId ? getClientName(order.clientId) : order.guestName || "Invitado";
-            const needsRestock = order.status === "PENDIENTE" && hasInsufficientStock(order.items);
-            const isExpanded = expandedOrderIds.includes(order.id);
-            const itemsDetail = getOrderItemsDetail(order);
-            return (
-              <div key={`mobile-${order.id}`} className="rounded-xl border border-line bg-white p-4 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Pedido</p>
-                    <p className="mt-1 text-sm font-bold text-slate-900">#{String(order.id).padStart(5, "0")}</p>
-                  </div>
-                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
-                    order.status === "REALIZADO" ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${order.status === "REALIZADO" ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
-                    {order.status}
-                  </span>
-                </div>
-                <div className="mt-4 space-y-2 text-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-slate-500">Cliente</span>
-                    <span className="font-medium text-slate-700">{clientName}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-slate-500">Fecha</span>
-                    <span className="font-medium text-slate-700">{new Date(order.date).toLocaleDateString("es-AR", { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-slate-500">Total</span>
-                    <span className="font-bold text-slate-900">${getOrderTotal(order).toLocaleString("es-AR")}</span>
-                  </div>
-                </div>
-                {needsRestock ? (
-                  <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-warning/25 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#9a6d48]">
-                    <span className="material-symbols-outlined text-[14px]">inventory</span>
-                    Requiere reposicion
-                  </div>
-                ) : null}
-                {isExpanded ? (
-                  <div className="mt-4 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-2">
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Detalle del pedido</p>
-                      <span className="text-xs font-bold text-slate-700">${getOrderTotal(order).toLocaleString("es-AR")}</span>
-                    </div>
-                    {itemsDetail.map((item, itemIndex) => (
-                      <button
-                        key={`${order.id}-mobile-item-${itemIndex}`}
-                        type="button"
-                        onClick={() => onOpenProductDetail(item.productId)}
-                        className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/5"
-                      >
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
-                          {item.productImage ? (
-                            <img src={item.productImage} alt={item.productName} className="h-full w-full object-cover" />
-                          ) : (
-                            <span className="material-symbols-outlined text-slate-300">image</span>
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-bold text-slate-900">{item.productName}</p>
-                          <p className="text-xs text-slate-500">
-                            {item.quantity} x ${item.unitSalePrice.toLocaleString("es-AR")}
-                          </p>
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <p className="text-sm font-bold text-primary">${item.subtotal.toLocaleString("es-AR")}</p>
-                          <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Ver producto</p>
-                        </div>
-                      </button>
-                    ))}
-                    {itemsDetail.length === 0 ? <p className="text-sm text-slate-500">Este pedido no tiene productos cargados.</p> : null}
-                  </div>
-                ) : null}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => toggleOrderExpanded(order.id)}
-                    className="inline-flex min-h-10 items-center justify-center rounded-lg border border-line px-3 py-2 text-xs font-bold text-slate-600"
-                  >
-                    {isExpanded ? "Ocultar" : "Ver detalle"}
-                  </button>
-                  {order.status === "PENDIENTE" ? (
-                    <button 
-                      type="button" 
-                      onClick={() => onMarkOrderAsRealized(order.id)}
-                      className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-lg bg-primary/10 px-3 py-2 text-xs font-bold text-primary"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                      Marcar envio
-                    </button>
-                  ) : (
-                    <span className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-400">
-                      <span className="material-symbols-outlined text-[16px]">done_all</span>
-                      Completado
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => onDeleteOrder(order.id)}
-                    className="inline-flex min-h-10 items-center justify-center gap-1 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600"
-                    title="Eliminar pedido"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">delete</span>
-                    Eliminar
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-          {filteredOrders.length === 0 ? <div className="p-8 text-center text-sm text-slate-500">No se encontraron pedidos registrados.</div> : null}
-        </div>
-
-        <div className="hidden overflow-x-auto lg:block">
+        {/* Table View */}
+        <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/50">
-                <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">ID Pedido</th>
-                <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Cliente</th>
-                <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Fecha</th>
-                <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Estado</th>
-                <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Total</th>
-                <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Acciones</th>
+              <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <th className="px-4 py-3">ID Pedido</th>
+                <th className="px-4 py-3">Cliente</th>
+                <th className="px-4 py-3">Fecha</th>
+                <th className="px-4 py-3">Estado</th>
+                <th className="px-4 py-3 font-right">Total</th>
+                <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-soft dark:divide-slate-800">
+            <tbody className="divide-y divide-slate-100 text-xs">
               {filteredOrders.map((order) => {
                 const clientName = order.clientId ? getClientName(order.clientId) : order.guestName || "Invitado";
                 const needsRestock = order.status === "PENDIENTE" && hasInsufficientStock(order.items);
@@ -852,132 +428,133 @@ function OrdersPanel({
                 const itemsDetail = isExpanded ? getOrderItemsDetail(order) : [];
                 return (
                   <React.Fragment key={order.id}>
-                <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                  <td className="p-4 font-bold text-slate-900 dark:text-white">#{String(order.id).padStart(5, '0')}</td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase">
-                        {clientName.substring(0, 2)}
-                      </div>
-                      <span className="font-medium text-slate-700 dark:text-slate-300">{clientName}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-sm text-slate-600 dark:text-slate-400 font-medium">
-                    {new Date(order.date).toLocaleDateString("es-AR", { year: 'numeric', month: 'short', day: 'numeric' })}
-                  </td>
-                  <td className="p-4">
-                    <div className="flex flex-col items-start gap-2">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                      order.status === "REALIZADO" 
-                        ? 'bg-green-100 text-green-700' 
-                        : 'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${order.status === "REALIZADO" ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
-                      {order.status}
-                    </span>
-                    {needsRestock ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/25 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#9a6d48]">
-                        <span className="material-symbols-outlined text-[14px]">inventory</span>
-                        Requiere reposicion
-                      </span>
-                    ) : null}
-                    </div>
-                  </td>
-                  <td className="p-4 font-bold text-slate-900 dark:text-white">
-                    ${getOrderTotal(order).toLocaleString("es-AR")}
-                  </td>
-                  <td className="p-4 text-right">
-                    <button
-                      type="button"
-                      onClick={() => toggleOrderExpanded(order.id)}
-                      className={`inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${isExpanded ? 'text-primary bg-primary/10 hover:bg-primary/20' : 'text-slate-600 bg-slate-100 hover:bg-slate-200'}`}
-                    >
-                      <span className="material-symbols-outlined text-[16px]">{isExpanded ? 'expand_less' : 'receipt_long'}</span>
-                      {isExpanded ? "Ocultar" : "Ver detalle"}
-                    </button>
-                    {order.status === "PENDIENTE" ? (
-                      <button 
-                        type="button" 
-                        onClick={() => onMarkOrderAsRealized(order.id)}
-                        className="ml-2 inline-flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                        Marcar Envío
-                      </button>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-lg cursor-not-allowed">
-                        <span className="material-symbols-outlined text-[16px]">done_all</span>
-                        Completado
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => onDeleteOrder(order.id)}
-                      className="ml-2 inline-flex items-center justify-center rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100"
-                      title="Eliminar pedido"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">delete</span>
-                    </button>
-                  </td>
-                </tr>
-                {isExpanded && (
-                  <tr>
-                    <td colSpan={6} className="p-0">
-                      <div className="border-t border-slate-100 bg-slate-50/80 px-6 py-4 animate-fade-in">
-                        <div className="flex items-center justify-between gap-3 mb-3">
-                          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                            Detalle del pedido #{String(order.id).padStart(5, "0")} · {clientName}
-                          </p>
-                          <span className="text-xs font-bold text-slate-700">${getOrderTotal(order).toLocaleString("es-AR")}</span>
+                    <tr className="hover:bg-slate-50/80 transition-colors">
+                      <td className="px-4 py-3.5 font-bold text-slate-900 font-mono">
+                        #{String(order.id).padStart(5, '0')}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-2">
+                          <div className="size-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                            {clientName.substring(0, 2)}
+                          </div>
+                          <span className="font-bold text-slate-900">{clientName}</span>
                         </div>
-                        <div className="grid gap-2">
-                          {itemsDetail.map((item, itemIndex) => (
-                            <button
-                              key={`${order.id}-inline-item-${itemIndex}`}
-                              type="button"
-                              onClick={() => onOpenProductDetail(item.productId)}
-                              className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm transition-colors hover:border-primary/40 hover:bg-primary/5"
+                      </td>
+                      <td className="px-4 py-3.5 text-slate-500 font-medium">
+                        {new Date(order.date).toLocaleDateString("es-AR", { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex flex-col items-start gap-1">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            order.status === "REALIZADO" 
+                              ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                              : 'bg-amber-50 text-amber-600 border border-amber-100'
+                          }`}>
+                            <span className={`size-1.5 rounded-full ${order.status === "REALIZADO" ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                            {order.status}
+                          </span>
+                          {needsRestock && (
+                            <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                              <span className="material-symbols-outlined text-[12px]">inventory</span>
+                              Stock bajo
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 font-mono font-bold text-slate-900">
+                        ${getOrderTotal(order).toLocaleString("es-AR")}
+                      </td>
+                      <td className="px-4 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => toggleOrderExpanded(order.id)}
+                            className={`inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-all ${
+                              isExpanded ? 'text-primary bg-primary/10' : 'text-slate-600 bg-slate-100 hover:bg-slate-200'
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-[16px]">{isExpanded ? 'expand_less' : 'receipt_long'}</span>
+                            {isExpanded ? "Ocultar" : "Detalle"}
+                          </button>
+
+                          {order.status === "PENDIENTE" ? (
+                            <button 
+                              type="button" 
+                              onClick={() => onMarkOrderAsRealized(order.id)}
+                              className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-100 transition-colors"
                             >
-                              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
-                                {item.productImage ? (
-                                  <img src={item.productImage} alt={item.productName} className="h-full w-full object-cover" />
-                                ) : (
-                                  <span className="material-symbols-outlined text-slate-300">image</span>
-                                )}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="font-bold text-sm text-slate-900">{item.productName}</p>
-                                <p className="text-xs text-slate-500">
-                                  {item.quantity} x ${item.unitSalePrice.toLocaleString("es-AR")}
-                                </p>
-                              </div>
-                              <p className="text-sm font-bold text-primary shrink-0">${item.subtotal.toLocaleString("es-AR")}</p>
+                              <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                              Marcar Envío
                             </button>
-                          ))}
-                          {itemsDetail.length === 0 ? (
-                            <p className="text-sm text-slate-500 py-2">Este pedido no tiene productos cargados.</p>
-                          ) : null}
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-xl">
+                              <span className="material-symbols-outlined text-[16px]">done_all</span>
+                              Completado
+                            </span>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => onDeleteOrder(order.id)}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                            title="Eliminar pedido"
+                          >
+                            <span className="material-symbols-outlined text-lg">delete</span>
+                          </button>
                         </div>
-                      </div>
-                    </td>
-                  </tr>
-                )}
+                      </td>
+                    </tr>
+
+                    {/* Inline Expanded Detail */}
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan={6} className="p-0">
+                          <div className="border-t border-slate-100 bg-slate-50/70 p-4 space-y-3">
+                            <div className="flex items-center justify-between text-xs font-bold text-slate-500">
+                              <span>Detalle de productos en pedido #{String(order.id).padStart(5, "0")}</span>
+                              <span>Total: ${getOrderTotal(order).toLocaleString("es-AR")}</span>
+                            </div>
+                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                              {itemsDetail.map((item, itemIndex) => (
+                                <button
+                                  key={`${order.id}-inline-item-${itemIndex}`}
+                                  type="button"
+                                  onClick={() => onOpenProductDetail(item.productId)}
+                                  className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left shadow-2xs hover:border-primary/40"
+                                >
+                                  <div className="size-10 rounded-lg bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
+                                    {item.productImage ? (
+                                      <img src={item.productImage} alt={item.productName} className="h-full w-full object-cover" />
+                                    ) : (
+                                      <span className="material-symbols-outlined text-slate-300">image</span>
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-bold text-xs text-slate-900 truncate">{item.productName}</p>
+                                    <p className="text-[11px] text-slate-500">{item.quantity} x ${item.unitSalePrice.toLocaleString("es-AR")}</p>
+                                  </div>
+                                  <span className="font-mono text-xs font-bold text-emerald-600">${item.subtotal.toLocaleString("es-AR")}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                   </React.Fragment>
                 );
               })}
               {filteredOrders.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-500 font-medium">No se encontraron pedidos registrados.</td>
+                  <td colSpan={6} className="p-8 text-center text-slate-400 font-semibold">No se encontraron pedidos registrados.</td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
-      </div>
     </div>
   );
 }
 
 export default OrdersPanel;
-
