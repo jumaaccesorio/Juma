@@ -105,6 +105,28 @@ export default function StoreHeader({
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [showCatalogMenu]);
 
+  const logoClickCountRef = useRef(0);
+  const logoClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleLogoClick = () => {
+    onOpenCatalogHome();
+    logoClickCountRef.current += 1;
+
+    if (logoClickTimerRef.current) {
+      clearTimeout(logoClickTimerRef.current);
+    }
+
+    if (logoClickCountRef.current >= 5) {
+      logoClickCountRef.current = 0;
+      onOpenAdminLogin();
+      return;
+    }
+
+    logoClickTimerRef.current = setTimeout(() => {
+      logoClickCountRef.current = 0;
+    }, 2000);
+  };
+
   return (
     <>
       <div className="w-full bg-primary px-4 py-2 text-center">
@@ -124,7 +146,7 @@ export default function StoreHeader({
 
       <header className="sticky top-0 z-50 flex flex-col items-center gap-4 border-b border-primary/10 bg-background/80 px-6 py-4 shadow-sm backdrop-blur-md md:px-20">
         <div className="flex w-full flex-col items-center justify-between gap-4 md:flex-row">
-          <div className="group flex cursor-pointer flex-col items-start" onClick={onOpenCatalogHome}>
+          <div className="group flex cursor-pointer flex-col items-start select-none" onClick={handleLogoClick}>
             <h2 className="font-serif text-3xl font-black uppercase leading-tight tracking-tight text-primary transition-colors group-hover:text-primary/80">
               Juma Accessory
             </h2>

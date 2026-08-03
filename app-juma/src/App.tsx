@@ -539,6 +539,17 @@ function App() {
   }, [activeTab, isAdminLogged]);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey && e.altKey && e.key.toLowerCase() === "a") || (e.shiftKey && e.altKey && e.key.toLowerCase() === "a")) {
+        e.preventDefault();
+        openAdminAccess();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isAdminLogged, adminLockedUntil]);
+
+  useEffect(() => {
     if (!cartSuccessToast) return;
     const timeoutId = window.setTimeout(() => setCartSuccessToast(null), 3200);
     return () => window.clearTimeout(timeoutId);
@@ -2287,15 +2298,7 @@ function App() {
             <h3 className="text-white text-xl font-black uppercase mb-4">Juma Accessory</h3>
             <p className="text-sm leading-relaxed mb-6">Tu destino premium para accesorios de plata 925 y joyería de diseño. Elegancia y calidad en cada pieza.</p>
             <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={openAdminAccess}
-                className="size-8 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all"
-                title={isAdminLogged ? "Ir al panel admin" : "Acceso admin"}
-              >
-                <span className="material-symbols-outlined text-lg">public</span>
-              </button>
-              <a href="mailto:hola@jumaaccessory.com" className="size-8 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all">
+              <a href="mailto:hola@jumaaccessory.com" className="size-8 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all" title="Contacto">
                 <span className="material-symbols-outlined text-lg">alternate_email</span>
               </a>
             </div>
