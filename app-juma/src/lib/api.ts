@@ -1,4 +1,4 @@
-import type { Category, Client, CommunitySubscriber, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, Order, OrderItem, Product, ProductSize, RestockCartItem } from "../types";
+import type { Category, Client, CommunitySubscriber, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, Order, OrderItem, PackagingCost, Product, ProductSize, RestockCartItem } from "../types";
 import { supabase } from "./supabase";
 import { dataUrlToOptimizedFile, optimizeImageFile, type UploadImageVariant } from "./imageUpload";
 
@@ -794,6 +794,41 @@ export const api = {
     const query = await supabase.from("community_subscribers").delete().eq("id", id);
     if (query.error) throw query.error;
   },
+
+  // ── Packaging Costs ─────────────────────────────────────────
+
+  async getPackagingCosts(): Promise<PackagingCost[]> {
+    const query = await supabase
+      .from("packaging_costs")
+      .select("id, name, unit_cost, quantity, created_at")
+      .order("created_at", { ascending: true });
+    if (query.error) throw query.error;
+    return (query.data ?? []).map(mapPackagingCost);
+  },
+
+  async addPackagingCost(item: { name: string; unitCost: number; quantity: number }): Promise<PackagingCost> {
+    const query = await supabase
+      .from("packaging_costs")
+      .insert({ name: item.name, unit_cost: item.unitCost, quantity: item.quantity })
+      .select("*")
+      .single();
+    if (query.error) throw query.error;
+    return mapPackagingCost(query.data);
+  },
+
+  async updatePackagingCost(id: number, updates: { name?: string; unitCost?: number; quantity?: number }): Promise<void> {
+    const payload: Record<string, unknown> = {};
+    if (updates.name !== undefined) payload.name = updates.name;
+    if (updates.unitCost !== undefined) payload.unit_cost = updates.unitCost;
+    if (updates.quantity !== undefined) payload.quantity = updates.quantity;
+    const query = await supabase.from("packaging_costs").update(payload).eq("id", id);
+    if (query.error) throw query.error;
+  },
+
+  async deletePackagingCost(id: number): Promise<void> {
+    const query = await supabase.from("packaging_costs").delete().eq("id", id);
+    if (query.error) throw query.error;
+  },
 };
 
 function mapClient(row: any): Client {
@@ -990,6 +1025,16 @@ function mapCommunitySubscriber(row: any): CommunitySubscriber {
   return {
     id: row.id,
     email: row.email ?? "",
+    createdAt: row.created_at ?? "",
+  };
+}
+
+function mapPackagingCost(row: any): PackagingCost {
+  return {
+    id: row.id,
+    name: row.name ?? "",
+    unitCost: Number(row.unit_cost ?? 0),
+    quantity: Number(row.quantity ?? 1),
     createdAt: row.created_at ?? "",
   };
 }

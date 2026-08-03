@@ -124,3 +124,11 @@ export type CommunitySubscriber = {
   email: string;
   createdAt: string;
 };
+
+export type PackagingCost = {
+  id: number;
+  name: string;
+  unitCost: number;
+  quantity: number;
+  createdAt: string;
+};

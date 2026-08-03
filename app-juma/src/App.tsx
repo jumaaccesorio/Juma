@@ -26,7 +26,7 @@ import ClientProfilePanel from "./features/users/ClientProfilePanel";
 import CustomerAuthModal from "./features/users/CustomerAuthModal";
 import AuthConfirmPanel from "./features/users/AuthConfirmPanel";
 import ResetPasswordPanel from "./features/users/ResetPasswordPanel";
-import type { CartItem, Client, CommunitySubscriber, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, Product, Tab, Category } from "./types";
+import type { CartItem, Client, CommunitySubscriber, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, PackagingCost, Product, Tab, Category } from "./types";
 import { api } from "./lib/api";
 import { getProductDisplayName } from "./lib/productLabel";
 import { optimizeFileForPreview } from "./lib/imageUpload";
@@ -247,6 +247,7 @@ function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [financeExpenses, setFinanceExpenses] = useState<FinanceExpense[]>([]);
+  const [packagingCosts, setPackagingCosts] = useState<PackagingCost[]>([]);
   const [communitySubscribers, setCommunitySubscribers] = useState<CommunitySubscriber[]>([]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
@@ -421,7 +422,7 @@ function App() {
 
     const needsClients = ["dashboard", "venta_rapida", "clientes", "pedidos"].includes(activeTab);
     const needsOrders = ["dashboard", "pedidos", "reposicion", "clientes", "finanzas"].includes(activeTab);
-    const needsFinance = activeTab === "finanzas";
+    const needsFinance = ["finanzas", "pedidos"].includes(activeTab);
 
     let cancelled = false;
 
@@ -463,9 +464,13 @@ function App() {
       if (!needsFinance || loadedAdminSlices.finance || loadingAdminSlices.finance) return;
       setLoadingAdminSlices((prev) => ({ ...prev, finance: true }));
       try {
-        const nextExpenses = await api.getFinanceExpenses();
+        const [nextExpenses, nextPackaging] = await Promise.all([
+          api.getFinanceExpenses(),
+          api.getPackagingCosts().catch(() => [] as PackagingCost[]),
+        ]);
         if (cancelled) return;
         setFinanceExpenses(nextExpenses);
+        setPackagingCosts(nextPackaging);
         setLoadedAdminSlices((prev) => ({ ...prev, finance: true }));
       } catch (error) {
         if (!cancelled) console.warn("No se pudieron cargar las finanzas.", error);
@@ -1370,7 +1375,48 @@ function App() {
     }
   };
 
+  const addPackagingCost = async (item: { name: string; unitCost: number; quantity: number }) => {
+    try {
+      setError("");
+      const created = await api.addPackagingCost(item);
+      setPackagingCosts((prev) => [...prev, created]);
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo guardar el costo de packaging.");
+    }
+  };
+
+  const updatePackagingCost = async (id: number, updates: { name?: string; unitCost?: number; quantity?: number }) => {
+    try {
+      setError("");
+      await api.updatePackagingCost(id, updates);
+      setPackagingCosts((prev) => prev.map((item) => item.id === id ? { ...item, ...updates } : item));
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo actualizar el costo de packaging.");
+    }
+  };
+
+  const deletePackagingCost = async (id: number) => {
+    try {
+      setError("");
+      await api.deletePackagingCost(id);
+      setPackagingCosts((prev) => prev.filter((item) => item.id !== id));
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo eliminar el costo de packaging.");
+    }
+  };
+
+  const totalPackagingCost = useMemo(() => packagingCosts.reduce((acc, item) => acc + item.unitCost * item.quantity, 0), [packagingCosts]);
+  const packagingCostPerOrder = useMemo(() => {
+    const realizedCount = completedOrders.length;
+    return realizedCount > 0 ? totalPackagingCost / realizedCount : 0;
+  }, [totalPackagingCost, completedOrders.length]);
+
   const orderTotal = (order: Order) => order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0);
+  const orderCost = (order: Order) => order.items.reduce((acc, item) => acc + item.quantity * item.unitPurchasePrice, 0);
+  const orderProfit = (order: Order) => orderTotal(order) - orderCost(order) - packagingCostPerOrder;
 
   const openProductDetail = (productId: number) => {
     requestProductImages([productId]);
@@ -1754,7 +1800,7 @@ function App() {
 
   if (isAdminTab) {
     return (
-      <div className="flex min-h-screen bg-background font-body text-ink">
+      <div className="flex min-h-screen bg-background font-body text-ink overflow-x-hidden">
         <AdminSidebar
           activeTab={activeTab}
           onSetActiveTab={setActiveTab}
@@ -1920,6 +1966,9 @@ function App() {
                   onOpenProductDetail={openAdminProductDetail}
                   getClientName={(clientId) => clientMap.get(clientId)?.name ?? "-"}
                   getOrderTotal={orderTotal}
+                  getOrderCost={orderCost}
+                  getOrderProfit={orderProfit}
+                  packagingCostPerOrder={packagingCostPerOrder}
                 />
               </div>
             )}
@@ -1940,6 +1989,13 @@ function App() {
                   finance={finance}
                   onAddExpense={addFinanceExpense}
                   onDeleteExpense={deleteFinanceExpense}
+                  packagingCosts={packagingCosts}
+                  totalPackagingCost={totalPackagingCost}
+                  packagingCostPerOrder={packagingCostPerOrder}
+                  completedOrdersCount={completedOrders.length}
+                  onAddPackagingCost={addPackagingCost}
+                  onUpdatePackagingCost={updatePackagingCost}
+                  onDeletePackagingCost={deletePackagingCost}
                 />
               </div>
             )}
