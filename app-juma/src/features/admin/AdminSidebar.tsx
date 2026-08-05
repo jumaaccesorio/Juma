@@ -60,7 +60,7 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
             onClick={onClose}
             className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/60 md:hidden"
           >
-            <span className="material-symbols-outlined text-lg">close</span>
+            <span translate="no" className="material-symbols-outlined text-lg">close</span>
           </button>
         </div>
 
@@ -78,7 +78,7 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
                 }
               `}
             >
-              <span className={`material-symbols-outlined text-[20px] ${activeTab === item.id ? "text-primary" : ""}`}>
+              <span translate="no" className={`material-symbols-outlined text-[20px] ${activeTab === item.id ? "text-primary" : ""}`}>
                 {item.icon}
               </span>
               <span className="font-body text-xs uppercase tracking-[0.14em] md:text-sm md:normal-case md:tracking-wide">{item.label}</span>
@@ -95,7 +95,7 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
             onClick={() => { onClose(); onLogout(); }}
             className="flex w-full items-center gap-3 rounded-lg bg-red-500/10 px-3 py-2.5 text-left text-sm font-semibold text-red-400 transition-colors hover:bg-red-500/20 md:hidden"
           >
-            <span className="material-symbols-outlined text-lg">logout</span>
+            <span translate="no" className="material-symbols-outlined text-lg">logout</span>
             Cerrar sesión
           </button>
 
@@ -103,7 +103,7 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
           <div className="p-3 bg-white/[0.04] rounded-xl border border-white/[0.06]">
             <div className="flex items-center gap-3">
               <div className="size-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <span className="material-symbols-outlined text-white text-[18px]">person</span>
+                <span translate="no" className="material-symbols-outlined text-white text-[18px]">person</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-white/80 truncate">Administrador</p>

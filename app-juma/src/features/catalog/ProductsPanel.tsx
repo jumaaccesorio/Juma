@@ -269,7 +269,7 @@ function ProductsPanel({
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              <span className="material-symbols-outlined text-[16px]">inventory_2</span>
+              <span translate="no" className="material-symbols-outlined text-[16px]">inventory_2</span>
               Productos
             </button>
             <button
@@ -281,7 +281,7 @@ function ProductsPanel({
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              <span className="material-symbols-outlined text-[16px]">category</span>
+              <span translate="no" className="material-symbols-outlined text-[16px]">category</span>
               Categorías
             </button>
           </div>
@@ -291,7 +291,7 @@ function ProductsPanel({
               onClick={() => setShowForm(!showForm)}
               className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition-all hover:bg-slate-800 active:scale-95"
             >
-              <span className="material-symbols-outlined text-[18px]">{showForm ? "close" : "add"}</span>
+              <span translate="no" className="material-symbols-outlined text-[18px]">{showForm ? "close" : "add"}</span>
               {showForm ? "Cerrar" : "Nuevo Producto"}
             </button>
           )}
@@ -303,7 +303,7 @@ function ProductsPanel({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
           <div className="flex size-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shrink-0">
-            <span className="material-symbols-outlined text-xl">inventory_2</span>
+            <span translate="no" className="material-symbols-outlined text-xl">inventory_2</span>
           </div>
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Total Productos</span>
@@ -313,7 +313,7 @@ function ProductsPanel({
 
         <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
           <div className="flex size-11 items-center justify-center rounded-xl bg-red-50 text-red-600 shrink-0">
-            <span className="material-symbols-outlined text-xl">warning</span>
+            <span translate="no" className="material-symbols-outlined text-xl">warning</span>
           </div>
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Sin Stock</span>
@@ -323,7 +323,7 @@ function ProductsPanel({
 
         <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
           <div className="flex size-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 shrink-0">
-            <span className="material-symbols-outlined text-xl">payments</span>
+            <span translate="no" className="material-symbols-outlined text-xl">payments</span>
           </div>
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Valor Venta Stock</span>
@@ -333,7 +333,7 @@ function ProductsPanel({
 
         <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
           <div className="flex size-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600 shrink-0">
-            <span className="material-symbols-outlined text-xl">trending_up</span>
+            <span translate="no" className="material-symbols-outlined text-xl">trending_up</span>
           </div>
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Ganancia Estimada</span>
@@ -349,7 +349,7 @@ function ProductsPanel({
           <p className="text-xs text-slate-500 mt-0.5">Subí un archivo CSV con las columnas: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-mono text-slate-700">Nombre, subnombre, precio_compra, precio_venta, stock, categoria</code>.</p>
         </div>
         <label className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 cursor-pointer shrink-0">
-          <span className="material-symbols-outlined text-slate-500 text-lg">upload_file</span>
+          <span translate="no" className="material-symbols-outlined text-slate-500 text-lg">upload_file</span>
           Importar CSV
           <input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => onImportProducts(e.target.files?.[0] ?? null)} />
         </label>
@@ -474,7 +474,7 @@ function ProductsPanel({
               {productImageData ? (
                 <img className="h-full w-full object-cover" src={productImageData} alt="Vista previa producto" />
               ) : (
-                <span className="material-symbols-outlined text-slate-400 text-3xl">image</span>
+                <span translate="no" className="material-symbols-outlined text-slate-400 text-3xl">image</span>
               )}
             </div>
             <div className="flex-1">
@@ -540,7 +540,7 @@ function ProductsPanel({
 
           <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
             <div className="relative w-full sm:w-60">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
+              <span translate="no" className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
               <input
                 className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-xs text-slate-800 outline-none focus:border-primary shadow-2xs"
                 placeholder="Buscar producto..."
@@ -585,7 +585,7 @@ function ProductsPanel({
                     {product.image ? (
                       <ProductImage product={product} className="h-full w-full object-cover" alt={displayName} />
                     ) : (
-                      <span className="material-symbols-outlined text-slate-400">image</span>
+                      <span translate="no" className="material-symbols-outlined text-slate-400">image</span>
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -618,7 +618,7 @@ function ProductsPanel({
                     onClick={() => openEditor(product)}
                     className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-tertiary/14 px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[#4f6780]"
                   >
-                    <span className="material-symbols-outlined text-sm">edit</span>
+                    <span translate="no" className="material-symbols-outlined text-sm">edit</span>
                     Editar
                   </button>
                   <button
@@ -626,11 +626,11 @@ function ProductsPanel({
                     onClick={() => onToggleProductEnabled(product.id)}
                     className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-background px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-muted border border-line"
                   >
-                    <span className="material-symbols-outlined text-sm">{product.enabled ? "visibility_off" : "visibility"}</span>
+                    <span translate="no" className="material-symbols-outlined text-sm">{product.enabled ? "visibility_off" : "visibility"}</span>
                     {product.enabled ? "Ocultar" : "Mostrar"}
                   </button>
                   <label className="inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-line bg-quaternary px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-primary">
-                    <span className="material-symbols-outlined text-sm">add_a_photo</span>
+                    <span translate="no" className="material-symbols-outlined text-sm">add_a_photo</span>
                     Imagen
                     <input
                       type="file"
@@ -683,7 +683,7 @@ function ProductsPanel({
                           {product.image ? (
                             <ProductImage product={product} className="h-full w-full object-cover" alt={displayName} />
                           ) : (
-                            <span className="material-symbols-outlined text-slate-400 text-xl">image</span>
+                            <span translate="no" className="material-symbols-outlined text-slate-400 text-xl">image</span>
                           )}
                         </div>
                         <div className="min-w-0 max-w-full">
@@ -718,7 +718,7 @@ function ProductsPanel({
                             onClick={(e) => { e.stopPropagation(); onUpdateStock(product.id, Math.max(0, product.stock - 1)); }}
                             className="w-7 h-7 flex items-center justify-center rounded text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors"
                           >
-                            <span className="material-symbols-outlined text-xs">remove</span>
+                            <span translate="no" className="material-symbols-outlined text-xs">remove</span>
                           </button>
                           <span className="w-8 text-center text-xs font-bold text-slate-900">{product.stock}</span>
                           <button
@@ -726,7 +726,7 @@ function ProductsPanel({
                             onClick={(e) => { e.stopPropagation(); onUpdateStock(product.id, product.stock + 1); }}
                             className="w-7 h-7 flex items-center justify-center rounded text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors"
                           >
-                            <span className="material-symbols-outlined text-xs">add</span>
+                            <span translate="no" className="material-symbols-outlined text-xs">add</span>
                           </button>
                         </div>
                       </div>
@@ -750,10 +750,10 @@ function ProductsPanel({
                           className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-tertiary/14 text-[#4f6780] transition-colors hover:bg-tertiary hover:text-white"
                           title="Editar producto"
                         >
-                          <span className="material-symbols-outlined text-sm">edit</span>
+                          <span translate="no" className="material-symbols-outlined text-sm">edit</span>
                         </button>
                         <label className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-line bg-quaternary text-primary transition-colors hover:bg-primary hover:text-white">
-                          <span className="material-symbols-outlined">add_a_photo</span>
+                          <span translate="no" className="material-symbols-outlined">add_a_photo</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -795,7 +795,7 @@ function ProductsPanel({
                 }}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-muted transition-colors hover:bg-secondary hover:text-ink"
               >
-                <span className="material-symbols-outlined">close</span>
+                <span translate="no" className="material-symbols-outlined">close</span>
               </button>
             </div>
 
@@ -811,7 +811,7 @@ function ProductsPanel({
                         fullResolution
                       />
                     ) : (
-                      <span className="material-symbols-outlined text-5xl text-muted">image</span>
+                      <span translate="no" className="material-symbols-outlined text-5xl text-muted">image</span>
                     )}
                   </div>
                 </div>
@@ -824,7 +824,7 @@ function ProductsPanel({
                   </span>
                 </div>
                 <label className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 py-3 text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-white">
-                  <span className="material-symbols-outlined text-base">add_a_photo</span>
+                  <span translate="no" className="material-symbols-outlined text-base">add_a_photo</span>
                   Cambiar imagen
                   <input
                     type="file"
@@ -962,7 +962,7 @@ function ProductsPanel({
                         className="ml-1 text-red-400 hover:text-red-600 transition-colors"
                         title="Eliminar talle"
                       >
-                        <span className="material-symbols-outlined text-base">close</span>
+                        <span translate="no" className="material-symbols-outlined text-base">close</span>
                       </button>
                     </div>
                   ))
@@ -990,7 +990,7 @@ function ProductsPanel({
                   onClick={() => addSizeToDraft(editingProduct.id)}
                   className="flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-primary/90"
                 >
-                  <span className="material-symbols-outlined text-base">add</span>
+                  <span translate="no" className="material-symbols-outlined text-base">add</span>
                   Agregar
                 </button>
               </div>
@@ -1135,7 +1135,7 @@ function CategoriesSubPanel({ categories, products, onAddCategory, onUpdateCateg
         }`}
       >
         <div className="flex items-center gap-3">
-          <span className={`material-symbols-outlined ${isSubcategory ? "text-slate-400" : "text-primary"} text-xl`}>
+          <span translate="no" className={`material-symbols-outlined ${isSubcategory ? "text-slate-400" : "text-primary"} text-xl`}>
             {isSubcategory ? "subdirectory_arrow_right" : "folder"}
           </span>
           {isEditing ? (
@@ -1159,11 +1159,11 @@ function CategoriesSubPanel({ categories, products, onAddCategory, onUpdateCateg
             </>
           ) : (
             <button type="button" onClick={() => startEdit(category)} className="rounded-lg bg-tertiary/18 p-2 text-[#4f6780] transition-colors hover:bg-tertiary hover:text-white" title="Editar categoria">
-              <span className="material-symbols-outlined text-lg">edit</span>
+              <span translate="no" className="material-symbols-outlined text-lg">edit</span>
             </button>
           )}
           <button type="button" onClick={() => onDeleteCategory(category.id)} className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500" title="Eliminar categoria">
-            <span className="material-symbols-outlined text-lg">delete</span>
+            <span translate="no" className="material-symbols-outlined text-lg">delete</span>
           </button>
         </div>
       </div>
@@ -1197,7 +1197,7 @@ function CategoriesSubPanel({ categories, products, onAddCategory, onUpdateCateg
           </select>
         </div>
         <button type="submit" className="flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 sm:self-auto">
-          <span className="material-symbols-outlined">add</span>
+          <span translate="no" className="material-symbols-outlined">add</span>
           Agregar
         </button>
       </form>
@@ -1208,7 +1208,7 @@ function CategoriesSubPanel({ categories, products, onAddCategory, onUpdateCateg
         </div>
         {categories.length === 0 ? (
           <div className="p-12 text-center text-slate-400">
-            <span className="material-symbols-outlined mb-3 block text-5xl">category</span>
+            <span translate="no" className="material-symbols-outlined mb-3 block text-5xl">category</span>
             No hay categorías creadas todavía.
           </div>
         ) : (

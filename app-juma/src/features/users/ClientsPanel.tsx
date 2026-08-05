@@ -44,7 +44,7 @@ function ClientsPanel({
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-3 bg-blue-50 px-4 py-2.5 rounded-xl border border-blue-100">
-            <span className="material-symbols-outlined text-blue-600 text-xl">groups</span>
+            <span translate="no" className="material-symbols-outlined text-blue-600 text-xl">groups</span>
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Usuarios</span>
               <span className="font-headline text-lg font-extrabold text-slate-900 leading-none">{clientStats.length}</span>
@@ -77,7 +77,7 @@ function ClientsPanel({
               onClick={onCancelEdit}
               className="text-amber-700 text-xs font-bold flex items-center gap-1 hover:underline bg-white px-3 py-1.5 rounded-lg border border-amber-200 shadow-2xs"
             >
-              <span className="material-symbols-outlined text-[16px]">close</span>
+              <span translate="no" className="material-symbols-outlined text-[16px]">close</span>
               Cancelar Edición
             </button>
           )}
@@ -168,7 +168,7 @@ function ClientsPanel({
                 <div className="flex items-center gap-1.5">
                   {row.client.email && (
                     <button onClick={() => onResetPassword(row.client)} className="rounded-lg bg-white border border-slate-200 p-2 text-amber-600 shadow-2xs hover:bg-amber-50" title="Restablecer acceso">
-                      <span className="material-symbols-outlined text-base">lock_reset</span>
+                      <span translate="no" className="material-symbols-outlined text-base">lock_reset</span>
                     </button>
                   )}
                   <button
@@ -176,10 +176,10 @@ function ClientsPanel({
                     className={`rounded-lg p-2 ${row.client.isActive ? "bg-amber-50 text-amber-600 border border-amber-200" : "bg-emerald-50 text-emerald-600 border border-emerald-200"}`}
                     title={row.client.isActive ? "Desactivar" : "Activar"}
                   >
-                    <span className="material-symbols-outlined text-base">{row.client.isActive ? "person_off" : "person_check"}</span>
+                    <span translate="no" className="material-symbols-outlined text-base">{row.client.isActive ? "person_off" : "person_check"}</span>
                   </button>
                   <button onClick={() => onEditClick(row.client)} className="rounded-lg bg-white border border-slate-200 p-2 text-slate-600 hover:bg-slate-50">
-                    <span className="material-symbols-outlined text-base">edit</span>
+                    <span translate="no" className="material-symbols-outlined text-base">edit</span>
                   </button>
                 </div>
               </div>
@@ -241,7 +241,7 @@ function ClientsPanel({
                   </td>
                   <td className="px-4 py-3.5 text-slate-600">
                     {row.client.phone ? (
-                      <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px] text-slate-400">call</span> {row.client.phone}</span>
+                      <span className="flex items-center gap-1"><span translate="no" className="material-symbols-outlined text-[14px] text-slate-400">call</span> {row.client.phone}</span>
                     ) : (
                       <span className="text-slate-400 italic">Sin teléfono</span>
                     )}
@@ -266,7 +266,7 @@ function ClientsPanel({
                           className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                           title="Restablecer contraseña"
                         >
-                          <span className="material-symbols-outlined text-lg">lock_reset</span>
+                          <span translate="no" className="material-symbols-outlined text-lg">lock_reset</span>
                         </button>
                       )}
                       <button 
@@ -275,7 +275,7 @@ function ClientsPanel({
                         className={`p-1.5 rounded-lg transition-colors ${row.client.isActive ? "text-amber-600 hover:bg-amber-50" : "text-emerald-600 hover:bg-emerald-50"}`}
                         title={row.client.isActive ? "Marcar como inactivo" : "Reactivar usuario"}
                       >
-                        <span className="material-symbols-outlined text-lg">{row.client.isActive ? "person_off" : "person_check"}</span>
+                        <span translate="no" className="material-symbols-outlined text-lg">{row.client.isActive ? "person_off" : "person_check"}</span>
                       </button>
                       <button 
                         type="button"
@@ -283,7 +283,7 @@ function ClientsPanel({
                         className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                         title="Editar usuario"
                       >
-                        <span className="material-symbols-outlined text-lg">edit</span>
+                        <span translate="no" className="material-symbols-outlined text-lg">edit</span>
                       </button>
                     </div>
                   </td>

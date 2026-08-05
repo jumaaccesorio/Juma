@@ -307,13 +307,13 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         {/* Success message */}
         {successMsg && (
           <div className="mb-5 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm font-semibold text-emerald-700 flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px]">check_circle</span>
+            <span translate="no" className="material-symbols-outlined text-[18px]">check_circle</span>
             {successMsg}
           </div>
         )}
         {errorMsg && (
           <div className="mb-5 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-semibold text-red-600 flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px]">error</span>
+            <span translate="no" className="material-symbols-outlined text-[18px]">error</span>
             {errorMsg}
           </div>
         )}
@@ -342,10 +342,10 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                 onClick={() => setSelectedClientId("")}
                 className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center rounded p-1 text-red-400 hover:text-red-500 hover:bg-red-50"
               >
-                <span className="material-symbols-outlined text-[14px]">close</span>
+                <span translate="no" className="material-symbols-outlined text-[14px]">close</span>
               </button>
             ) : (
-              <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-muted pointer-events-none">expand_more</span>
+              <span translate="no" className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-muted pointer-events-none">expand_more</span>
             )}
           </div>
         </section>
@@ -354,7 +354,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         <section className="mb-8">
           {/* Search */}
           <div className="relative mb-3">
-            <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-muted/60">
+            <span translate="no" className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-muted/60">
               search
             </span>
             <input
@@ -448,7 +448,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           {/* Product grid */}
           {filteredProducts.length === 0 ? (
             <div className="rounded-xl bg-white px-5 py-10 text-center border border-line/50">
-              <span className="material-symbols-outlined text-3xl text-muted/30 mb-2 block">inventory_2</span>
+              <span translate="no" className="material-symbols-outlined text-3xl text-muted/30 mb-2 block">inventory_2</span>
               <p className="text-sm text-muted">No encontramos productos para ese filtro.</p>
             </div>
           ) : (
@@ -471,7 +471,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">
-                          <span className="material-symbols-outlined text-3xl text-muted/20">image</span>
+                          <span translate="no" className="material-symbols-outlined text-3xl text-muted/20">image</span>
                         </div>
                       )}
 
@@ -501,7 +501,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                           ${product.salePrice.toLocaleString("es-AR")}
                         </span>
                         <div className={`size-5 rounded flex items-center justify-center transition-colors ${inCart > 0 ? "bg-primary text-white" : "bg-primary/10 text-primary"}`}>
-                          <span className="material-symbols-outlined text-[10px] font-black">add</span>
+                          <span translate="no" className="material-symbols-outlined text-[10px] font-black">add</span>
                         </div>
                       </div>
                     </div>
@@ -523,7 +523,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
             >
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <span className="material-symbols-outlined text-white/90">shopping_bag</span>
+                  <span translate="no" className="material-symbols-outlined text-white/90">shopping_bag</span>
                   <span className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full bg-white text-[10px] font-black text-primary border border-primary/20">
                     {cartItemCount}
                   </span>
@@ -535,7 +535,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
               </div>
               <div className="flex items-center gap-2 bg-black/10 px-3 py-1.5 rounded-lg border border-white/10">
                 <span className="font-headline font-bold text-[17px]">${total.toLocaleString("es-AR")}</span>
-                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                <span translate="no" className="material-symbols-outlined text-[18px]">chevron_right</span>
               </div>
             </button>
           </div>
@@ -550,7 +550,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
               <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-line/50 bg-white">
                 <div>
                   <h3 className="font-headline text-lg text-ink font-bold flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary text-[20px]">shopping_cart_checkout</span>
+                    <span translate="no" className="material-symbols-outlined text-primary text-[20px]">shopping_cart_checkout</span>
                     Resumen de Orden
                   </h3>
                   <p className="text-[11px] font-medium text-muted mt-0.5">{cartItemCount} productos seleccionados</p>
@@ -560,7 +560,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                   onClick={() => setIsMobileCartOpen(false)}
                   className="flex size-8 items-center justify-center rounded-full bg-secondary/60 text-ink/60 hover:bg-line transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[20px]">close</span>
+                  <span translate="no" className="material-symbols-outlined text-[20px]">close</span>
                 </button>
               </div>
 
@@ -581,7 +581,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                           <ProductImage product={item.product} className="h-full w-full object-cover" alt={getProductDisplayName(item.product)} />
                         ) : (
                           <div className="flex h-full items-center justify-center text-muted/30">
-                            <span className="material-symbols-outlined">image</span>
+                            <span translate="no" className="material-symbols-outlined">image</span>
                           </div>
                         )}
                       </div>
@@ -595,7 +595,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                             onClick={() => updateQty(item.product.id, -1)}
                             className="flex size-7 items-center justify-center rounded-md bg-white text-ink shadow-sm border border-line/50 hover:border-primary/40"
                           >
-                            <span className="material-symbols-outlined text-[16px]">remove</span>
+                            <span translate="no" className="material-symbols-outlined text-[16px]">remove</span>
                           </button>
                           <span className="text-sm font-bold text-ink w-4 text-center">{item.quantity}</span>
                           <button
@@ -603,7 +603,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                             onClick={() => updateQty(item.product.id, 1)}
                             className="flex size-7 items-center justify-center rounded-md bg-white text-ink shadow-sm border border-line/50 hover:border-primary/40"
                           >
-                            <span className="material-symbols-outlined text-[16px]">add</span>
+                            <span translate="no" className="material-symbols-outlined text-[16px]">add</span>
                           </button>
                         </div>
                       </div>
@@ -617,7 +617,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                           }}
                           className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-red-500 bg-red-50 px-2 py-1 rounded-md"
                         >
-                          <span className="material-symbols-outlined text-[12px]">delete</span>
+                          <span translate="no" className="material-symbols-outlined text-[12px]">delete</span>
                         </button>
                       </div>
                     </div>
@@ -721,7 +721,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                             : "bg-transparent text-ink/60 hover:bg-secondary"
                         }`}
                       >
-                        <span className="material-symbols-outlined text-[16px]">
+                        <span translate="no" className="material-symbols-outlined text-[16px]">
                           {method === "efectivo" ? "payments" : method === "tarjeta" ? "credit_card" : "account_balance"}
                         </span>
                         <span className="capitalize">{method === "transferencia" ? "Transf." : method}</span>
@@ -738,12 +738,12 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                 >
                   {isSubmitting ? (
                     <>
-                      <span className="material-symbols-outlined animate-spin text-[18px]">autorenew</span>
+                      <span translate="no" className="material-symbols-outlined animate-spin text-[18px]">autorenew</span>
                       Procesando...
                     </>
                   ) : (
                     <>
-                      <span className="material-symbols-outlined text-[18px]">point_of_sale</span>
+                      <span translate="no" className="material-symbols-outlined text-[18px]">point_of_sale</span>
                       Confirmar Venta
                     </>
                   )}
@@ -763,19 +763,19 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
       <section ref={desktopCatalogRef} className="flex flex-1 flex-col space-y-5 overflow-hidden p-4 md:p-6">
         {successMsg && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-sm px-5 py-3 rounded-xl flex items-center gap-2">
-            <span className="material-symbols-outlined">check_circle</span>{successMsg}
+            <span translate="no" className="material-symbols-outlined">check_circle</span>{successMsg}
           </div>
         )}
         {errorMsg && (
           <div className="bg-red-50 border border-red-200 text-red-600 font-bold text-sm px-5 py-3 rounded-xl flex items-center gap-2">
-            <span className="material-symbols-outlined">error</span>{errorMsg}
+            <span translate="no" className="material-symbols-outlined">error</span>{errorMsg}
           </div>
         )}
 
         {/* Search + Client row */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary pointer-events-none">person_search</span>
+            <span translate="no" className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary pointer-events-none">person_search</span>
             <select
               className="w-full pl-12 pr-4 h-14 bg-white border border-line rounded-xl appearance-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-ink font-medium"
               value={selectedClientId}
@@ -788,7 +788,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
             </select>
           </div>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary pointer-events-none">search</span>
+            <span translate="no" className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary pointer-events-none">search</span>
             <input
               className="w-full pl-12 pr-4 h-14 bg-white border border-line rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-ink"
               placeholder="Buscar producto por nombre..."
@@ -866,7 +866,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         <div className="flex-1 overflow-y-auto pr-1 admin-scrollbar">
           {filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-muted/40 gap-3">
-              <span className="material-symbols-outlined text-5xl">inventory_2</span>
+              <span translate="no" className="material-symbols-outlined text-5xl">inventory_2</span>
               <p className="font-medium text-muted">No hay productos en esta categoría</p>
             </div>
           ) : (
@@ -885,7 +885,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                         <ProductImage product={product} alt={getProductDisplayName(product)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <span className="material-symbols-outlined text-4xl text-muted/25">image</span>
+                          <span translate="no" className="material-symbols-outlined text-4xl text-muted/25">image</span>
                         </div>
                       )}
                       <div className={`absolute top-2 right-2 backdrop-blur-sm px-2 py-1 rounded-lg text-[10px] font-bold ${lowStock ? "bg-red-100 text-red-600" : "bg-white/90 text-ink/70"}`}>
@@ -905,7 +905,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                         className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
                         onClick={e => { e.stopPropagation(); addToCart(product); }}
                       >
-                        <span className="material-symbols-outlined text-sm">add</span>
+                        <span translate="no" className="material-symbols-outlined text-sm">add</span>
                       </button>
                     </div>
                   </div>
@@ -921,7 +921,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
       <aside className="flex w-full flex-col border-t border-line bg-white shadow-xl xl:w-96 xl:border-l xl:border-t-0">
         <div className="border-b border-line p-4 md:p-6">
           <h3 className="font-headline text-xl font-bold text-ink flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">point_of_sale</span>
+            <span translate="no" className="material-symbols-outlined text-primary">point_of_sale</span>
             Resumen del Pedido
           </h3>
         </div>
@@ -930,7 +930,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         <div className="flex-1 overflow-y-auto space-y-4 p-4 md:p-6 admin-scrollbar">
           {cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 text-muted/30 gap-3">
-              <span className="material-symbols-outlined text-5xl">shopping_cart</span>
+              <span translate="no" className="material-symbols-outlined text-5xl">shopping_cart</span>
               <p className="text-sm font-medium text-muted">Hacé clic en un producto para agregarlo</p>
             </div>
           ) : cart.map(item => (
@@ -940,7 +940,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                   <ProductImage product={item.product} alt={getProductDisplayName(item.product)} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <span className="material-symbols-outlined text-muted/30">image</span>
+                    <span translate="no" className="material-symbols-outlined text-muted/30">image</span>
                   </div>
                 )}
               </div>
@@ -952,19 +952,19 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                     onClick={() => updateQty(item.product.id, -1)}
                     className="size-6 rounded-lg bg-secondary flex items-center justify-center text-ink/60 hover:bg-primary hover:text-white transition-colors"
                   >
-                    <span className="material-symbols-outlined text-xs">remove</span>
+                    <span translate="no" className="material-symbols-outlined text-xs">remove</span>
                   </button>
                   <span className="text-sm font-bold w-5 text-center text-ink">{item.quantity}</span>
                   <button
                     onClick={() => updateQty(item.product.id, 1)}
                     className="size-6 rounded-lg bg-secondary flex items-center justify-center text-ink/60 hover:bg-primary hover:text-white transition-colors"
                   >
-                    <span className="material-symbols-outlined text-xs">add</span>
+                    <span translate="no" className="material-symbols-outlined text-xs">add</span>
                   </button>
                 </div>
               </div>
               <button onClick={() => removeFromCart(item.product.id)} className="text-muted/40 hover:text-red-500 transition-colors">
-                <span className="material-symbols-outlined">delete</span>
+                <span translate="no" className="material-symbols-outlined">delete</span>
               </button>
             </div>
           ))}
@@ -1059,7 +1059,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                   onClick={() => setPaymentMethod(method)}
                   className={`flex min-h-[84px] flex-col items-center justify-center gap-2 rounded-xl border-2 bg-white p-2 text-center transition-all sm:p-3 ${paymentMethod === method ? "border-primary text-primary shadow-md" : "border-line/50 text-muted hover:border-primary/30 hover:text-primary"}`}
                 >
-                  <span className="material-symbols-outlined">
+                  <span translate="no" className="material-symbols-outlined">
                     {method === "efectivo" ? "payments" : method === "tarjeta" ? "credit_card" : "account_balance"}
                   </span>
                   <span className="text-[10px] font-bold capitalize">{method === "transferencia" ? "Transfer" : method.charAt(0).toUpperCase() + method.slice(1)}</span>
@@ -1074,7 +1074,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
             className="w-full bg-gradient-to-r from-primary to-accent hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 shadow-lg shadow-primary/20 transition-all active:scale-95"
           >
             <span>{isSubmitting ? "Procesando..." : "Finalizar Venta"}</span>
-            <span className="material-symbols-outlined">{isSubmitting ? "autorenew" : "arrow_forward"}</span>
+            <span translate="no" className="material-symbols-outlined">{isSubmitting ? "autorenew" : "arrow_forward"}</span>
           </button>
         </div>
       </aside>

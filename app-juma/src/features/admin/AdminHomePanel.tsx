@@ -52,7 +52,7 @@ function AdminHomePanel({
               : "bg-slate-900 hover:bg-slate-800"
           }`}
         >
-          <span className="material-symbols-outlined text-[18px]">{isSaving ? "progress_activity" : "save"}</span>
+          <span translate="no" className="material-symbols-outlined text-[18px]">{isSaving ? "progress_activity" : "save"}</span>
           {isSaving ? "Guardando..." : "Guardar Cambios"}
         </button>
       </div>
@@ -63,7 +63,7 @@ function AdminHomePanel({
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <div className="flex size-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
-                <span className="material-symbols-outlined text-lg">view_carousel</span>
+                <span translate="no" className="material-symbols-outlined text-lg">view_carousel</span>
               </div>
               <div>
                 <h2 className="font-headline text-lg font-bold text-slate-900">Banner Principal (Hero)</h2>
@@ -111,14 +111,14 @@ function AdminHomePanel({
                     <img className="h-full w-full object-cover" src={heroBanner.image} alt="Banner Preview" />
                     <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <span className="text-white font-bold text-xs flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[18px]">edit</span>
+                        <span translate="no" className="material-symbols-outlined text-[18px]">edit</span>
                         Cambiar Imagen
                       </span>
                     </div>
                   </>
                 ) : (
                   <div className="text-center text-slate-400">
-                    <span className="material-symbols-outlined text-3xl mb-1 block">add_photo_alternate</span>
+                    <span translate="no" className="material-symbols-outlined text-3xl mb-1 block">add_photo_alternate</span>
                     <span className="text-xs font-semibold">Subir imagen de banner</span>
                   </div>
                 )}
@@ -134,7 +134,7 @@ function AdminHomePanel({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <div className="flex size-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                <span className="material-symbols-outlined text-lg">grid_view</span>
+                <span translate="no" className="material-symbols-outlined text-lg">grid_view</span>
               </div>
               <div>
                 <h2 className="font-headline text-lg font-bold text-slate-900">Carteles Destacados de Categoría</h2>
@@ -154,7 +154,7 @@ function AdminHomePanel({
                 disabled={!canAddMorePanels}
                 className="flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-all disabled:opacity-40"
               >
-                <span className="material-symbols-outlined text-[16px]">add</span>
+                <span translate="no" className="material-symbols-outlined text-[16px]">add</span>
                 Agregar Cartel
               </button>
             </div>
@@ -175,7 +175,7 @@ function AdminHomePanel({
                       className="flex size-7 items-center justify-center rounded-full bg-white/90 text-red-500 shadow-2xs hover:bg-red-50 hover:text-red-600 transition-colors"
                       title="Eliminar cartel"
                     >
-                      <span className="material-symbols-outlined text-[16px]">close</span>
+                      <span translate="no" className="material-symbols-outlined text-[16px]">close</span>
                     </button>
                   </div>
 
@@ -188,7 +188,7 @@ function AdminHomePanel({
                       <img className="h-full w-full object-cover" src={panel.image} alt={panel.title} />
                     ) : (
                       <div className="flex h-full items-center justify-center text-slate-400">
-                        <span className="material-symbols-outlined text-2xl">add_photo_alternate</span>
+                        <span translate="no" className="material-symbols-outlined text-2xl">add_photo_alternate</span>
                       </div>
                     )}
                     <input type="file" accept="image/*" className="absolute inset-0 cursor-pointer opacity-0" onChange={(e) => onUpdateFeaturedPanelImage(panel.id, e.target.files?.[0] ?? null)} />

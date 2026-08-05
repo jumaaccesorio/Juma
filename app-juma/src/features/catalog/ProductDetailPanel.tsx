@@ -62,7 +62,7 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
         onClick={onBack}
         className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white px-4 py-2.5 text-sm font-bold uppercase tracking-[0.18em] text-primary shadow-subtle transition-all hover:-translate-x-0.5 hover:border-primary/40 hover:bg-primary/5"
       >
-        <span className="material-symbols-outlined text-base">arrow_back</span>
+        <span translate="no" className="material-symbols-outlined text-base">arrow_back</span>
         Volver al catalogo
       </button>
 
@@ -82,7 +82,7 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
               />
             ) : (
               <div className="flex h-full items-center justify-center">
-                <span className="material-symbols-outlined text-7xl text-slate-300">image</span>
+                <span translate="no" className="material-symbols-outlined text-7xl text-slate-300">image</span>
               </div>
             )}
             </div>
@@ -148,7 +148,7 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
                 onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
                 className="flex h-10 w-10 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-primary/10"
               >
-                <span className="material-symbols-outlined text-lg">remove</span>
+                <span translate="no" className="material-symbols-outlined text-lg">remove</span>
               </button>
               <span className="w-12 text-center text-lg font-bold text-ink">{quantity}</span>
               <button
@@ -156,7 +156,7 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
                 onClick={() => setQuantity((prev) => prev + 1)}
                 className="flex h-10 w-10 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-primary/10"
               >
-                <span className="material-symbols-outlined text-lg">add</span>
+                <span translate="no" className="material-symbols-outlined text-lg">add</span>
               </button>
             </div>
 
@@ -170,7 +170,7 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
                   : "cursor-not-allowed bg-slate-300"
               }`}
             >
-              <span className="material-symbols-outlined text-sm">{isOutOfStock ? "inventory_2" : "add_shopping_cart"}</span>
+              <span translate="no" className="material-symbols-outlined text-sm">{isOutOfStock ? "inventory_2" : "add_shopping_cart"}</span>
               {!canAddToCart ? "Seleccioná un talle" : isOutOfStock ? "Pedir por encargo" : "Agregar al carrito"}
             </button>
 
@@ -179,7 +179,7 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
               onClick={onBack}
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded border border-line bg-white px-6 py-3 text-sm font-bold uppercase tracking-[0.18em] text-ink transition-all hover:border-primary/35 hover:text-primary"
             >
-              <span className="material-symbols-outlined text-sm">arrow_back</span>
+              <span translate="no" className="material-symbols-outlined text-sm">arrow_back</span>
               Volver
             </button>
           </div>
@@ -194,7 +194,7 @@ function ProductDetailPanel({ product, onBack, onAddToCart }: ProductDetailPanel
             </span>
             {product.size?.trim() && !hasSizes ? (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
-                <span className="material-symbols-outlined text-sm">straighten</span>
+                <span translate="no" className="material-symbols-outlined text-sm">straighten</span>
                 Talle {product.size}
               </span>
             ) : null}

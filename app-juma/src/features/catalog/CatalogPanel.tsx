@@ -219,7 +219,7 @@ function CatalogPanel({
                 className="group flex items-center gap-2 rounded border border-primary bg-background/85 px-5 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-primary shadow-subtle backdrop-blur transition-all hover:bg-primary hover:text-white"
               >
                 <span>{heroBanner.tag || "Ver Coleccion"}</span>
-                <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
+                <span translate="no" className="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
               </button>
             </div>
           </>
@@ -253,7 +253,7 @@ function CatalogPanel({
                 <div className="absolute inset-0 flex flex-col justify-end p-6">
                   <h3 className="font-headline text-xl font-medium tracking-tight text-white">{panel.title}</h3>
                   <span className="mt-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-white/80 group-hover:text-white">
-                    {panel.cta} <span className="material-symbols-outlined text-sm">trending_flat</span>
+                    {panel.cta} <span translate="no" className="material-symbols-outlined text-sm">trending_flat</span>
                   </span>
                 </div>
               </button>
@@ -291,7 +291,7 @@ function CatalogPanel({
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center">
-                      <span className="material-symbols-outlined text-6xl text-slate-300">image</span>
+                      <span translate="no" className="material-symbols-outlined text-6xl text-slate-300">image</span>
                     </div>
                   )}
                 </div>
@@ -313,7 +313,7 @@ function CatalogPanel({
                   }}
                   className="mt-5 flex w-full items-center justify-center gap-2 rounded bg-primary py-3 text-sm font-bold uppercase tracking-[0.18em] text-white transition-all hover:opacity-90"
                 >
-                  <span className="material-symbols-outlined text-sm">{product.stock <= 0 ? "inventory_2" : "add_shopping_cart"}</span>
+                  <span translate="no" className="material-symbols-outlined text-sm">{product.stock <= 0 ? "inventory_2" : "add_shopping_cart"}</span>
                   {product.stock <= 0 ? "Pedir por encargo" : "Agregar al carrito"}
                 </button>
               </div>
@@ -327,7 +327,7 @@ function CatalogPanel({
             className="inline-flex items-center gap-2 rounded border border-primary bg-background px-5 py-3 text-xs font-bold uppercase tracking-[0.18em] text-primary transition-all hover:bg-primary hover:text-white"
           >
             Ver todo el catalogo
-            <span className="material-symbols-outlined text-sm">south</span>
+            <span translate="no" className="material-symbols-outlined text-sm">south</span>
           </button>
         </div>
       </section>
@@ -348,13 +348,13 @@ function CatalogPanel({
             onClick={() => handleCategoryChange(null)}
             className={`text-sm font-bold uppercase tracking-[0.18em] flex items-center gap-2 border-b pb-1 transition-colors ${selectedRootCategory || selectedSubcategory || searchQuery ? "text-primary border-primary/30 hover:border-primary" : "text-muted border-transparent cursor-default"}`}
           >
-            Ver todo el catalogo <span className="material-symbols-outlined text-sm">{selectedRootCategory || selectedSubcategory || searchQuery ? "close" : "open_in_new"}</span>
+            Ver todo el catalogo <span translate="no" className="material-symbols-outlined text-sm">{selectedRootCategory || selectedSubcategory || searchQuery ? "close" : "open_in_new"}</span>
           </button>
         </div>
         <div className="mb-8">
           <label className="flex max-w-xl flex-col">
             <div className="flex items-center rounded-full border border-primary/15 bg-white shadow-subtle">
-              <span className="material-symbols-outlined pl-4 text-primary">search</span>
+              <span translate="no" className="material-symbols-outlined pl-4 text-primary">search</span>
               <input
                 className="w-full border-none bg-transparent px-3 py-3 text-sm text-ink placeholder:text-primary/40 focus:ring-0"
                 placeholder="Buscar por nombre, subnombre o categoría..."
@@ -367,7 +367,7 @@ function CatalogPanel({
                   onClick={() => onSearchChange("")}
                   className="pr-4 text-muted transition-colors hover:text-primary"
                 >
-                  <span className="material-symbols-outlined text-lg">close</span>
+                  <span translate="no" className="material-symbols-outlined text-lg">close</span>
                 </button>
               ) : null}
             </div>
@@ -442,7 +442,7 @@ function CatalogPanel({
                       decoding="async"
                     />
                   ) : (
-                    <span className="material-symbols-outlined text-6xl text-slate-300">image</span>
+                    <span translate="no" className="material-symbols-outlined text-6xl text-slate-300">image</span>
                   )}
                   <button
                     className={`absolute top-3 right-3 backdrop-blur rounded-full p-2 transition-all ${
@@ -454,7 +454,7 @@ function CatalogPanel({
                     }}
                     title={favoriteProductIds.has(product.id) ? "Quitar de favoritos" : "Guardar en favoritos"}
                   >
-                    <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: favoriteProductIds.has(product.id) ? "'FILL' 1" : "'FILL' 0" }}>
+                    <span translate="no" className="material-symbols-outlined text-xl" style={{ fontVariationSettings: favoriteProductIds.has(product.id) ? "'FILL' 1" : "'FILL' 0" }}>
                       favorite
                     </span>
                   </button>
@@ -495,7 +495,7 @@ function CatalogPanel({
                   }}
                   className="mt-5 flex w-full items-center justify-center gap-2 rounded bg-primary py-3 text-sm font-bold uppercase tracking-[0.18em] text-white transition-all hover:opacity-90"
                 >
-                  <span className="material-symbols-outlined text-sm">{product.stock <= 0 ? "inventory_2" : Array.isArray(product.sizes) && product.sizes.length > 0 ? "straighten" : "add_shopping_cart"}</span>
+                  <span translate="no" className="material-symbols-outlined text-sm">{product.stock <= 0 ? "inventory_2" : Array.isArray(product.sizes) && product.sizes.length > 0 ? "straighten" : "add_shopping_cart"}</span>
                   {product.stock <= 0 ? "Pedir por encargo" : Array.isArray(product.sizes) && product.sizes.length > 0 ? "Elegir talle" : "Agregar al carrito"}
                 </button>
               </div>
@@ -534,12 +534,12 @@ function CommunitySubscribeSection({ onSubscribe }: { onSubscribe: (email: strin
   return (
     <section className="px-6 md:px-40 py-20 bg-background">
       <div className="rounded bg-secondary/45 border border-line p-8 md:p-16 flex flex-col items-center text-center gap-6 shadow-subtle">
-        <span className="material-symbols-outlined text-5xl text-primary/50">mail</span>
+        <span translate="no" className="material-symbols-outlined text-5xl text-primary/50">mail</span>
         <h2 className="font-headline text-3xl font-light text-carbon">Unite a nuestra comunidad</h2>
         <p className="text-muted max-w-lg">Suscribite para recibir novedades, promociones exclusivas y un 10% OFF en tu primera compra.</p>
         {status === "success" ? (
           <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 px-6 py-3 rounded text-sm font-medium">
-            <span className="material-symbols-outlined text-lg">check_circle</span>
+            <span translate="no" className="material-symbols-outlined text-lg">check_circle</span>
             {message}
           </div>
         ) : (

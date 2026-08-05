@@ -289,7 +289,7 @@ function FinancePanel({
           <div className="flex items-start justify-between">
             <span className="text-[9px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">Ingreso del mes</span>
             <div className="flex size-8 sm:size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-              <span className="material-symbols-outlined text-base sm:text-xl">payments</span>
+              <span translate="no" className="material-symbols-outlined text-base sm:text-xl">payments</span>
             </div>
           </div>
           <div className="mt-3 sm:mt-4">
@@ -305,7 +305,7 @@ function FinancePanel({
           <div className="flex items-start justify-between">
             <span className="text-[9px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">Egreso del mes</span>
             <div className="flex size-8 sm:size-10 items-center justify-center rounded-xl bg-red-50 text-red-600">
-              <span className="material-symbols-outlined text-base sm:text-xl">trending_down</span>
+              <span translate="no" className="material-symbols-outlined text-base sm:text-xl">trending_down</span>
             </div>
           </div>
           <div className="mt-3 sm:mt-4">
@@ -321,7 +321,7 @@ function FinancePanel({
           <div className="flex items-start justify-between">
             <span className="text-[9px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">Ventas</span>
             <div className="flex size-8 sm:size-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-              <span className="material-symbols-outlined text-base sm:text-xl">receipt_long</span>
+              <span translate="no" className="material-symbols-outlined text-base sm:text-xl">receipt_long</span>
             </div>
           </div>
           <div className="mt-3 sm:mt-4">
@@ -337,7 +337,7 @@ function FinancePanel({
           <div className="flex items-start justify-between">
             <span className="text-[9px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">Balance neto</span>
             <div className="flex size-8 sm:size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-              <span className="material-symbols-outlined text-base sm:text-xl">account_balance</span>
+              <span translate="no" className="material-symbols-outlined text-base sm:text-xl">account_balance</span>
             </div>
           </div>
           <div className="mt-3 sm:mt-4">
@@ -579,7 +579,7 @@ function FinancePanel({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
-                      <span className="material-symbols-outlined text-xl">payments</span>
+                      <span translate="no" className="material-symbols-outlined text-xl">payments</span>
                     </div>
                     <div>
                       <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">Ingresos por ventas</span>
@@ -597,7 +597,7 @@ function FinancePanel({
                 <div className="rounded-xl border border-red-100 bg-red-50/50 p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex size-9 items-center justify-center rounded-lg bg-red-100 text-red-600">
-                      <span className="material-symbols-outlined text-lg">inventory</span>
+                      <span translate="no" className="material-symbols-outlined text-lg">inventory</span>
                     </div>
                     <span className="text-xs font-bold text-red-700">Costo de reposición</span>
                   </div>
@@ -607,7 +607,7 @@ function FinancePanel({
                 <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex size-9 items-center justify-center rounded-lg bg-purple-100 text-purple-600">
-                      <span className="material-symbols-outlined text-lg">deployed_code</span>
+                      <span translate="no" className="material-symbols-outlined text-lg">deployed_code</span>
                     </div>
                     <div>
                       <span className="text-xs font-bold text-purple-700">Costo de packaging</span>
@@ -620,7 +620,7 @@ function FinancePanel({
                 <div className="rounded-xl border border-orange-100 bg-orange-50/50 p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex size-9 items-center justify-center rounded-lg bg-orange-100 text-orange-600">
-                      <span className="material-symbols-outlined text-lg">receipt</span>
+                      <span translate="no" className="material-symbols-outlined text-lg">receipt</span>
                     </div>
                     <span className="text-xs font-bold text-orange-700">Egresos manuales</span>
                   </div>
@@ -636,7 +636,7 @@ function FinancePanel({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`flex size-12 items-center justify-center rounded-xl ${reportData.netProfit >= 0 ? 'bg-emerald-200 text-emerald-700' : 'bg-red-200 text-red-700'}`}>
-                      <span className="material-symbols-outlined text-2xl">{reportData.netProfit >= 0 ? 'trending_up' : 'trending_down'}</span>
+                      <span translate="no" className="material-symbols-outlined text-2xl">{reportData.netProfit >= 0 ? 'trending_up' : 'trending_down'}</span>
                     </div>
                     <div>
                       <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Ganancia Neta del Mes</span>
@@ -781,7 +781,7 @@ function FinancePanel({
               packagingCosts.map((item) => (
                 <div key={item.id} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3.5 transition-all hover:bg-slate-100/60">
                   <div className="flex size-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 shrink-0">
-                    <span className="material-symbols-outlined text-lg">deployed_code</span>
+                    <span translate="no" className="material-symbols-outlined text-lg">deployed_code</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm text-slate-900">{item.name}</p>
@@ -795,14 +795,14 @@ function FinancePanel({
                       onClick={() => startEditPackaging(item)}
                       className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-500"
                     >
-                      <span className="material-symbols-outlined text-lg">edit</span>
+                      <span translate="no" className="material-symbols-outlined text-lg">edit</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => onDeletePackagingCost(item.id)}
                       className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
                     >
-                      <span className="material-symbols-outlined text-lg">delete</span>
+                      <span translate="no" className="material-symbols-outlined text-lg">delete</span>
                     </button>
                   </div>
                 </div>
@@ -859,7 +859,7 @@ function FinancePanel({
                           onClick={() => onDeleteExpense(expenseId)}
                           className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
                         >
-                          <span className="material-symbols-outlined text-lg">delete</span>
+                          <span translate="no" className="material-symbols-outlined text-lg">delete</span>
                         </button>
                       ) : null}
                     </div>

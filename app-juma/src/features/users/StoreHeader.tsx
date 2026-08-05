@@ -117,7 +117,7 @@ export default function StoreHeader({
             target="_blank"
             rel="noreferrer"
           >
-            <span className="material-symbols-outlined text-sm">brand_awareness</span>
+            <span translate="no" className="material-symbols-outlined text-sm">brand_awareness</span>
             Instagram
           </a>
         </p>
@@ -138,7 +138,7 @@ export default function StoreHeader({
             <label className="hidden h-10 min-w-40 max-w-64 flex-col md:flex">
               <div className="flex h-full w-full items-stretch rounded-full border border-primary/10 bg-primary/5">
                 <div className="flex items-center justify-center pl-4 text-primary">
-                  <span className="material-symbols-outlined">search</span>
+                  <span translate="no" className="material-symbols-outlined">search</span>
                 </div>
                 <input
                   className="form-input min-w-0 flex-1 border-none bg-transparent px-3 text-sm placeholder:text-primary/40 focus:ring-0"
@@ -171,10 +171,10 @@ export default function StoreHeader({
                     title="Mi Cuenta"
                   >
                     <div className="flex size-6 items-center justify-center rounded-full bg-primary text-white">
-                      <span className="material-symbols-outlined text-[14px]">person</span>
+                      <span translate="no" className="material-symbols-outlined text-[14px]">person</span>
                     </div>
                     {currentClient.name.split(" ")[0]}
-                    <span className={`material-symbols-outlined text-[16px] transition-transform ${showClientMenu ? "rotate-180" : ""}`}>
+                    <span translate="no" className={`material-symbols-outlined text-[16px] transition-transform ${showClientMenu ? "rotate-180" : ""}`}>
                       expand_more
                     </span>
                   </button>
@@ -189,7 +189,7 @@ export default function StoreHeader({
                         }}
                         className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-ink transition-colors hover:bg-secondary/40 hover:text-primary"
                       >
-                        <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+                        <span translate="no" className="material-symbols-outlined text-[18px]">receipt_long</span>
                         Ver historial
                       </button>
                       <button
@@ -200,7 +200,7 @@ export default function StoreHeader({
                         }}
                         className="flex w-full items-center gap-3 border-t border-slate-100 px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
                       >
-                        <span className="material-symbols-outlined text-[18px]">logout</span>
+                        <span translate="no" className="material-symbols-outlined text-[18px]">logout</span>
                         Cerrar sesion
                       </button>
                     </div>
@@ -211,7 +211,7 @@ export default function StoreHeader({
                   className="flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-500 transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary"
                   onClick={onLoginClientClick}
                 >
-                  <span className="material-symbols-outlined text-[16px]">login</span>
+                  <span translate="no" className="material-symbols-outlined text-[16px]">login</span>
                   Ingresar
                 </button>
               )}
@@ -223,7 +223,7 @@ export default function StoreHeader({
                 onClick={() => onSetActiveTab("carrito")}
                 title={`Carrito ($${cartTotal.toLocaleString("es-AR")})`}
               >
-                <span className="material-symbols-outlined">shopping_cart</span>
+                <span translate="no" className="material-symbols-outlined">shopping_cart</span>
                 {cartItemsCount > 0 ? (
                   <span
                     className={`absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full border-2 text-[10px] font-bold ${
@@ -257,7 +257,7 @@ export default function StoreHeader({
               }}
             >
               Catalogo
-              <span className={`material-symbols-outlined text-sm transition-transform ${showCatalogMenu ? "rotate-180" : ""}`}>
+              <span translate="no" className={`material-symbols-outlined text-sm transition-transform ${showCatalogMenu ? "rotate-180" : ""}`}>
                 expand_more
               </span>
             </button>
@@ -301,11 +301,11 @@ export default function StoreHeader({
               className="absolute right-4 top-4 text-slate-400 transition-colors hover:text-primary"
               onClick={onCloseAdminLogin}
             >
-              <span className="material-symbols-outlined">close</span>
+              <span translate="no" className="material-symbols-outlined">close</span>
             </button>
             <div className="mb-6 flex justify-center">
               <div className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <span className="material-symbols-outlined text-3xl">admin_panel_settings</span>
+                <span translate="no" className="material-symbols-outlined text-3xl">admin_panel_settings</span>
               </div>
             </div>
             <h3 className="mb-8 text-center font-serif text-3xl font-light text-slate-800">Acceso Administrador</h3>
@@ -331,13 +331,13 @@ export default function StoreHeader({
               </button>
               {adminLockedUntil && adminLockedUntil > Date.now() ? (
                 <div className="flex items-center justify-center gap-2 rounded-xl border border-amber-100 bg-amber-50 p-4 text-center text-sm font-medium text-amber-700">
-                  <span className="material-symbols-outlined text-sm">timer</span>
+                  <span translate="no" className="material-symbols-outlined text-sm">timer</span>
                   Acceso bloqueado temporalmente. Intenta nuevamente en unos minutos.
                 </div>
               ) : null}
               {adminError ? (
                 <div className="flex items-center justify-center gap-2 rounded-xl border border-red-100 bg-red-50 p-4 text-center text-sm font-medium text-red-500">
-                  <span className="material-symbols-outlined text-sm">error</span>
+                  <span translate="no" className="material-symbols-outlined text-sm">error</span>
                   {adminError}
                 </div>
               ) : null}

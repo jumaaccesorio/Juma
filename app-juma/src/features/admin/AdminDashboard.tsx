@@ -140,7 +140,7 @@ export default function AdminDashboard({
             onClick={handleRefresh}
             className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-95"
           >
-            <span className="material-symbols-outlined text-[18px] text-slate-500">refresh</span>
+            <span translate="no" className="material-symbols-outlined text-[18px] text-slate-500">refresh</span>
             Actualizar
           </button>
           <button
@@ -148,7 +148,7 @@ export default function AdminDashboard({
             onClick={() => onSetActiveTab("venta_rapida")}
             className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/20 transition-all hover:bg-primary/90 active:scale-95"
           >
-            <span className="material-symbols-outlined text-[18px]">bolt</span>
+            <span translate="no" className="material-symbols-outlined text-[18px]">bolt</span>
             Venta Rápida
           </button>
           <button
@@ -156,7 +156,7 @@ export default function AdminDashboard({
             onClick={() => onSetActiveTab("productos")}
             className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-slate-800 active:scale-95"
           >
-            <span className="material-symbols-outlined text-[18px]">add</span>
+            <span translate="no" className="material-symbols-outlined text-[18px]">add</span>
             Nuevo Producto
           </button>
         </div>
@@ -169,7 +169,7 @@ export default function AdminDashboard({
           <div className="flex items-start justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Ventas realizadas</span>
             <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-              <span className="material-symbols-outlined text-xl">shopping_cart</span>
+              <span translate="no" className="material-symbols-outlined text-xl">shopping_cart</span>
             </div>
           </div>
           <div className="mt-4">
@@ -185,7 +185,7 @@ export default function AdminDashboard({
           <div className="flex items-start justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total facturado</span>
             <div className="flex size-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-              <span className="material-symbols-outlined text-xl">trending_up</span>
+              <span translate="no" className="material-symbols-outlined text-xl">trending_up</span>
             </div>
           </div>
           <div className="mt-4">
@@ -201,7 +201,7 @@ export default function AdminDashboard({
           <div className="flex items-start justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Ventas mensuales</span>
             <div className="flex size-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
-              <span className="material-symbols-outlined text-xl">calendar_month</span>
+              <span translate="no" className="material-symbols-outlined text-xl">calendar_month</span>
             </div>
           </div>
           <div className="mt-4">
@@ -217,7 +217,7 @@ export default function AdminDashboard({
           <div className="flex items-start justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Producto más vendido</span>
             <div className="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-              <span className="material-symbols-outlined text-xl">star</span>
+              <span translate="no" className="material-symbols-outlined text-xl">star</span>
             </div>
           </div>
           <div className="mt-4 min-w-0">
@@ -251,7 +251,7 @@ export default function AdminDashboard({
                 <p className="text-xs text-slate-400">Desglose de cobranzas</p>
               </div>
               <div className="flex size-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                <span className="material-symbols-outlined text-lg">credit_card</span>
+                <span translate="no" className="material-symbols-outlined text-lg">credit_card</span>
               </div>
             </div>
 
@@ -260,7 +260,7 @@ export default function AdminDashboard({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-semibold">
                   <div className="flex items-center gap-2 text-slate-700">
-                    <span className="material-symbols-outlined text-emerald-500 text-base">payments</span>
+                    <span translate="no" className="material-symbols-outlined text-emerald-500 text-base">payments</span>
                     <span>Efectivo</span>
                   </div>
                   <span className="font-mono font-bold text-slate-900">
@@ -276,7 +276,7 @@ export default function AdminDashboard({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-semibold">
                   <div className="flex items-center gap-2 text-slate-700">
-                    <span className="material-symbols-outlined text-blue-500 text-base">account_balance</span>
+                    <span translate="no" className="material-symbols-outlined text-blue-500 text-base">account_balance</span>
                     <span>Transferencia</span>
                   </div>
                   <span className="font-mono font-bold text-slate-900">
@@ -292,7 +292,7 @@ export default function AdminDashboard({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-semibold">
                   <div className="flex items-center gap-2 text-slate-700">
-                    <span className="material-symbols-outlined text-purple-500 text-base">credit_card</span>
+                    <span translate="no" className="material-symbols-outlined text-purple-500 text-base">credit_card</span>
                     <span>Tarjeta</span>
                   </div>
                   <span className="font-mono font-bold text-slate-900">
@@ -335,7 +335,7 @@ export default function AdminDashboard({
               </p>
             </div>
             <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-              <span className="material-symbols-outlined text-lg">show_chart</span>
+              <span translate="no" className="material-symbols-outlined text-lg">show_chart</span>
             </div>
           </div>
 
@@ -343,7 +343,7 @@ export default function AdminDashboard({
           <div className="mt-6 flex flex-1 flex-col justify-end">
             {todayCompletedOrders.length === 0 ? (
               <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 text-center">
-                <span className="material-symbols-outlined text-3xl text-slate-300 mb-2">query_stats</span>
+                <span translate="no" className="material-symbols-outlined text-3xl text-slate-300 mb-2">query_stats</span>
                 <p className="text-xs font-semibold text-slate-500">Todavía no hay ventas registradas hoy.</p>
                 <p className="text-[11px] text-slate-400 mt-1">Las ventas de hoy aparecerán aquí desglosadas por hora.</p>
               </div>
@@ -392,13 +392,13 @@ export default function AdminDashboard({
             <p className="text-xs text-slate-400">Referencia rápida de lo que más salió.</p>
           </div>
           <div className="flex size-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-            <span className="material-symbols-outlined text-lg">inventory_2</span>
+            <span translate="no" className="material-symbols-outlined text-lg">inventory_2</span>
           </div>
         </div>
 
         {soldProductsToday.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">inventory_2</span>
+            <span translate="no" className="material-symbols-outlined text-4xl text-slate-300 mb-2">inventory_2</span>
             <p className="text-xs font-semibold text-slate-500">Todavía no hay productos vendidos hoy.</p>
           </div>
         ) : (
@@ -428,7 +428,7 @@ export default function AdminDashboard({
                               />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center text-slate-300">
-                                <span className="material-symbols-outlined text-base">image</span>
+                                <span translate="no" className="material-symbols-outlined text-base">image</span>
                               </div>
                             )}
                           </div>
@@ -460,7 +460,7 @@ export default function AdminDashboard({
         <div className="rounded-2xl bg-amber-50/80 p-5 border border-amber-200/70 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700 shrink-0">
-              <span className="material-symbols-outlined text-xl">warning</span>
+              <span translate="no" className="material-symbols-outlined text-xl">warning</span>
             </div>
             <div>
               <p className="text-xs font-bold text-amber-900">

@@ -51,7 +51,7 @@ export default function CommunityPanel({ subscribers, onDeleteSubscriber }: Comm
             disabled={filtered.length === 0}
             className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-slate-800 disabled:opacity-40"
           >
-            <span className="material-symbols-outlined text-[18px]">content_copy</span>
+            <span translate="no" className="material-symbols-outlined text-[18px]">content_copy</span>
             {copiedId === -1 ? "¡Copiados!" : "Copiar todos los emails"}
           </button>
         </div>
@@ -61,7 +61,7 @@ export default function CommunityPanel({ subscribers, onDeleteSubscriber }: Comm
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
           <div className="flex size-11 items-center justify-center rounded-xl bg-purple-50 text-purple-600 shrink-0">
-            <span className="material-symbols-outlined text-xl">group</span>
+            <span translate="no" className="material-symbols-outlined text-xl">group</span>
           </div>
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Total Suscriptores</span>
@@ -71,7 +71,7 @@ export default function CommunityPanel({ subscribers, onDeleteSubscriber }: Comm
 
         <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
           <div className="flex size-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shrink-0">
-            <span className="material-symbols-outlined text-xl">calendar_today</span>
+            <span translate="no" className="material-symbols-outlined text-xl">calendar_today</span>
           </div>
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Últimos 7 días</span>
@@ -86,7 +86,7 @@ export default function CommunityPanel({ subscribers, onDeleteSubscriber }: Comm
 
         <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
           <div className="flex size-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 shrink-0">
-            <span className="material-symbols-outlined text-xl">mail</span>
+            <span translate="no" className="material-symbols-outlined text-xl">mail</span>
           </div>
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Filtrados</span>
@@ -104,7 +104,7 @@ export default function CommunityPanel({ subscribers, onDeleteSubscriber }: Comm
           </div>
 
           <div className="relative w-full sm:w-72">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
+            <span translate="no" className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
             <input
               className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2 text-xs text-slate-800 outline-none focus:border-primary shadow-2xs"
               placeholder="Buscar por email..."
@@ -145,7 +145,7 @@ export default function CommunityPanel({ subscribers, onDeleteSubscriber }: Comm
                         onClick={() => copyEmail(sub.email, sub.id)}
                         className="inline-flex items-center gap-1 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-all"
                       >
-                        <span className="material-symbols-outlined text-[16px]">{copiedId === sub.id ? "check" : "content_copy"}</span>
+                        <span translate="no" className="material-symbols-outlined text-[16px]">{copiedId === sub.id ? "check" : "content_copy"}</span>
                         {copiedId === sub.id ? "Copiado" : "Copiar"}
                       </button>
                       <button
@@ -154,7 +154,7 @@ export default function CommunityPanel({ subscribers, onDeleteSubscriber }: Comm
                         className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                         title="Eliminar suscriptor"
                       >
-                        <span className="material-symbols-outlined text-lg">delete</span>
+                        <span translate="no" className="material-symbols-outlined text-lg">delete</span>
                       </button>
                     </div>
                   </td>

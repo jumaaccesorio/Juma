@@ -1841,7 +1841,7 @@ function App() {
             {error ? (
               <div className="px-4 pt-20 sm:px-6 lg:px-10">
                 <div className="bg-red-50 text-red-500 p-4 rounded-xl text-center text-sm font-bold tracking-widest uppercase flex items-center justify-center gap-2 border border-red-100">
-                  <span className="material-symbols-outlined text-lg">error</span>
+                  <span translate="no" className="material-symbols-outlined text-lg">error</span>
                   {error}
                 </div>
               </div>
@@ -2055,8 +2055,7 @@ function App() {
                         : "text-muted hover:text-primary"
                     }`}
                   >
-                    <span
-                      className="material-symbols-outlined"
+                    <span translate="no" className="material-symbols-outlined"
                       style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
                     >
                       {item.icon}
@@ -2070,7 +2069,7 @@ function App() {
                 onClick={() => setIsAdminSidebarOpen(true)}
                 className="flex flex-col items-center justify-center px-3 py-1 text-muted transition-opacity hover:text-primary"
               >
-                <span className="material-symbols-outlined">more_horiz</span>
+                <span translate="no" className="material-symbols-outlined">more_horiz</span>
                 <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.1em]">Más</span>
               </button>
             </nav>
@@ -2126,7 +2125,7 @@ function App() {
               onClick={() => setCartSuccessToast(null)}
               className="rounded-full p-1 text-muted transition-colors hover:bg-secondary hover:text-ink"
             >
-              <span className="material-symbols-outlined text-lg">close</span>
+              <span translate="no" className="material-symbols-outlined text-lg">close</span>
             </button>
           </div>
           <div className="flex gap-3 px-4 py-3">
@@ -2134,7 +2133,7 @@ function App() {
               {cartSuccessToast.image ? (
                 <img src={cartSuccessToast.image} alt={cartSuccessToast.name} className="h-full w-full object-cover" />
               ) : (
-                <span className="material-symbols-outlined text-4xl text-muted">image</span>
+                <span translate="no" className="material-symbols-outlined text-4xl text-muted">image</span>
               )}
             </div>
             <div className="min-w-0 flex-1">
@@ -2169,7 +2168,7 @@ function App() {
 
       {error ? (
         <div className="bg-red-50 text-red-500 p-4 text-center text-sm font-bold tracking-widest uppercase flex items-center justify-center gap-2">
-          <span className="material-symbols-outlined text-lg">error</span>
+          <span translate="no" className="material-symbols-outlined text-lg">error</span>
           {error}
         </div>
       ) : null}
@@ -2307,7 +2306,7 @@ function App() {
             <p className="text-sm leading-relaxed mb-6">Tu destino premium para accesorios de plata 925 y joyería de diseño. Elegancia y calidad en cada pieza.</p>
             <div className="flex gap-4">
               <a href="mailto:hola@jumaaccessory.com" className="size-8 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all" title="Contacto">
-                <span className="material-symbols-outlined text-lg">alternate_email</span>
+                <span translate="no" className="material-symbols-outlined text-lg">alternate_email</span>
               </a>
             </div>
           </div>
@@ -2329,11 +2328,11 @@ function App() {
             <h4 className="text-white font-bold uppercase text-xs tracking-widest mb-6">Contacto</h4>
             <ul className="space-y-4 text-sm">
               <li className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-primary text-sm">location_on</span>
+                <span translate="no" className="material-symbols-outlined text-primary text-sm">location_on</span>
                 Buenos Aires, Argentina
               </li>
               <li className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-primary text-sm">mail</span>
+                <span translate="no" className="material-symbols-outlined text-primary text-sm">mail</span>
                 hola@jumaaccessory.com
               </li>
             </ul>
@@ -2342,9 +2341,9 @@ function App() {
         <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] uppercase tracking-[0.2em] font-medium">
           <p>© 2024 Juma Accessory. Todos los derechos reservados.</p>
           <div className="flex gap-4 opacity-50 grayscale hover:grayscale-0 transition-all">
-            <span className="material-symbols-outlined">payments</span>
-            <span className="material-symbols-outlined">credit_card</span>
-            <span className="material-symbols-outlined">account_balance</span>
+            <span translate="no" className="material-symbols-outlined">payments</span>
+            <span translate="no" className="material-symbols-outlined">credit_card</span>
+            <span translate="no" className="material-symbols-outlined">account_balance</span>
           </div>
         </div>
       </footer>

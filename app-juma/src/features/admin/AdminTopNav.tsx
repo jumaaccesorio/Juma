@@ -163,7 +163,7 @@ export default function AdminTopNav({ onOpenMenu, onPreview, onLogout, orders, c
           onClick={onOpenMenu}
           className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-sidebar text-white md:hidden"
         >
-          <span className="material-symbols-outlined">menu</span>
+          <span translate="no" className="material-symbols-outlined">menu</span>
         </button>
         <div className="min-w-0 md:hidden">
           <p className="truncate font-headline text-xl text-primary">Juma Accessory</p>
@@ -179,7 +179,7 @@ export default function AdminTopNav({ onOpenMenu, onPreview, onLogout, orders, c
           className="inline-flex items-center gap-2 rounded-lg border border-line bg-quaternary px-2.5 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white md:px-4"
           onClick={onPreview}
         >
-          <span className="material-symbols-outlined text-[18px]">preview</span>
+          <span translate="no" className="material-symbols-outlined text-[18px]">preview</span>
           <span className="hidden font-body tracking-tight sm:inline">Preview</span>
         </button>
 
@@ -190,7 +190,7 @@ export default function AdminTopNav({ onOpenMenu, onPreview, onLogout, orders, c
             onClick={handleToggle}
             className={`relative size-9 flex items-center justify-center rounded-lg transition-colors ${isOpen ? "text-primary bg-primary/10" : "text-ink/50 hover:text-primary hover:bg-primary/10"}`}
           >
-            <span className="material-symbols-outlined text-[20px]">notifications</span>
+            <span translate="no" className="material-symbols-outlined text-[20px]">notifications</span>
             {unseenCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[9px] font-bold rounded-full ring-2 ring-white">
                 {unseenCount > 99 ? "99+" : unseenCount}
@@ -224,7 +224,7 @@ export default function AdminTopNav({ onOpenMenu, onPreview, onLogout, orders, c
               <div className="max-h-[400px] overflow-y-auto divide-y divide-line/30">
                 {alerts.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 px-4">
-                    <span className="material-symbols-outlined text-4xl text-slate-200 mb-2">notifications_off</span>
+                    <span translate="no" className="material-symbols-outlined text-4xl text-slate-200 mb-2">notifications_off</span>
                     <p className="text-sm font-medium text-slate-400">No hay notificaciones</p>
                   </div>
                 ) : (
@@ -236,7 +236,7 @@ export default function AdminTopNav({ onOpenMenu, onPreview, onLogout, orders, c
                         className={`flex items-start gap-3 px-4 py-3 transition-colors ${isSeen ? "bg-white" : "bg-primary/[0.03]"}`}
                       >
                         <div className={`flex-shrink-0 size-9 rounded-lg ${alert.iconBg} flex items-center justify-center mt-0.5`}>
-                          <span className="material-symbols-outlined text-[16px]">{alert.icon}</span>
+                          <span translate="no" className="material-symbols-outlined text-[16px]">{alert.icon}</span>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
@@ -264,7 +264,7 @@ export default function AdminTopNav({ onOpenMenu, onPreview, onLogout, orders, c
           className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-ink/60 hover:text-red-500 hover:bg-red-50 transition-colors"
           onClick={onLogout}
         >
-          <span className="material-symbols-outlined text-[20px]">logout</span>
+          <span translate="no" className="material-symbols-outlined text-[20px]">logout</span>
           <span className="hidden font-body text-sm font-medium lg:inline">Salir</span>
         </button>
       </div>

@@ -15,7 +15,7 @@ export default function AuthConfirmPanel({ status, message, onContinue }: AuthCo
               ? "bg-red-50 text-red-600"
               : "bg-secondary text-primary"
         }`}>
-          <span className="material-symbols-outlined text-3xl">
+          <span translate="no" className="material-symbols-outlined text-3xl">
             {status === "success" ? "verified" : status === "error" ? "error" : "mail"}
           </span>
         </div>

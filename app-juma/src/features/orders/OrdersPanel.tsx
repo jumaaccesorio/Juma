@@ -199,7 +199,7 @@ function OrdersPanel({
             onClick={() => setShowForm(!showForm)}
             className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-slate-800 active:scale-95"
           >
-            <span className="material-symbols-outlined text-[18px]">{showForm ? 'close' : 'add'}</span>
+            <span translate="no" className="material-symbols-outlined text-[18px]">{showForm ? 'close' : 'add'}</span>
             {showForm ? 'Cerrar Formulario' : 'Nuevo Pedido'}
           </button>
         </div>
@@ -209,7 +209,7 @@ function OrdersPanel({
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <div className="flex items-center gap-2 sm:gap-4 rounded-2xl bg-white p-3 sm:p-5 border border-slate-200/80 shadow-sm">
           <div className="flex size-9 sm:size-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shrink-0">
-            <span className="material-symbols-outlined text-lg sm:text-2xl">shopping_bag</span>
+            <span translate="no" className="material-symbols-outlined text-lg sm:text-2xl">shopping_bag</span>
           </div>
           <div className="min-w-0">
             <span className="text-[9px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 block">Total</span>
@@ -219,7 +219,7 @@ function OrdersPanel({
 
         <div className="flex items-center gap-2 sm:gap-4 rounded-2xl bg-white p-3 sm:p-5 border border-slate-200/80 shadow-sm">
           <div className="flex size-9 sm:size-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600 shrink-0">
-            <span className="material-symbols-outlined text-lg sm:text-2xl">pending_actions</span>
+            <span translate="no" className="material-symbols-outlined text-lg sm:text-2xl">pending_actions</span>
           </div>
           <div className="min-w-0">
             <span className="text-[9px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 block">Pendientes</span>
@@ -229,7 +229,7 @@ function OrdersPanel({
 
         <div className="flex items-center gap-2 sm:gap-4 rounded-2xl bg-white p-3 sm:p-5 border border-slate-200/80 shadow-sm">
           <div className="flex size-9 sm:size-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 shrink-0">
-            <span className="material-symbols-outlined text-lg sm:text-2xl">check_circle</span>
+            <span translate="no" className="material-symbols-outlined text-lg sm:text-2xl">check_circle</span>
           </div>
           <div className="min-w-0">
             <span className="text-[9px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 block">Realizados</span>
@@ -244,7 +244,7 @@ function OrdersPanel({
           <div className="pb-4 border-b border-slate-100 flex items-center justify-between">
             <h2 className="font-headline text-base sm:text-lg font-bold text-slate-900">Crear Nuevo Pedido</h2>
             <button type="button" onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600">
-              <span className="material-symbols-outlined">close</span>
+              <span translate="no" className="material-symbols-outlined">close</span>
             </button>
           </div>
           
@@ -275,7 +275,7 @@ function OrdersPanel({
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Seleccionar Productos</label>
               <div className="relative w-full sm:w-64">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
+                <span translate="no" className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
                 <input 
                   className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-xs outline-none focus:border-primary" 
                   placeholder="Buscar producto..." 
@@ -295,7 +295,7 @@ function OrdersPanel({
                     {product.image ? (
                       <ProductImage product={product} alt={getProductDisplayName(product)} className="h-full w-full object-cover" />
                     ) : (
-                      <span className="material-symbols-outlined text-slate-300 text-base sm:text-lg">image</span>
+                      <span translate="no" className="material-symbols-outlined text-slate-300 text-base sm:text-lg">image</span>
                     )}
                   </div>
                   <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 truncate w-full">{getProductDisplayName(product)}</span>
@@ -336,7 +336,7 @@ function OrdersPanel({
                       {row.product.image ? (
                         <ProductImage product={row.product} alt={getProductDisplayName(row.product)} className="h-full w-full object-cover" />
                       ) : (
-                        <span className="material-symbols-outlined text-slate-300">image</span>
+                        <span translate="no" className="material-symbols-outlined text-slate-300">image</span>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -356,7 +356,7 @@ function OrdersPanel({
                         onClick={() => onRemoveOrderItemRow(row.index)}
                         className="p-1 sm:p-1.5 text-slate-400 hover:text-red-500 rounded-lg transition-colors"
                       >
-                        <span className="material-symbols-outlined text-base sm:text-lg">delete</span>
+                        <span translate="no" className="material-symbols-outlined text-base sm:text-lg">delete</span>
                       </button>
                     </div>
                   </div>
@@ -388,7 +388,7 @@ function OrdersPanel({
 
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="relative w-full sm:w-60">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
+              <span translate="no" className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
               <input
                 className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-xs text-slate-800 outline-none focus:border-primary shadow-2xs"
                 placeholder="Buscar pedido..."
@@ -456,7 +456,7 @@ function OrdersPanel({
 
                     {needsRestock && (
                       <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                        <span className="material-symbols-outlined text-[12px]">inventory</span>
+                        <span translate="no" className="material-symbols-outlined text-[12px]">inventory</span>
                         Stock bajo
                       </span>
                     )}
@@ -487,7 +487,7 @@ function OrdersPanel({
                         isExpanded ? 'text-primary bg-primary/5' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
                       }`}
                     >
-                      <span className="material-symbols-outlined text-[14px]">{isExpanded ? 'expand_less' : 'receipt_long'}</span>
+                      <span translate="no" className="material-symbols-outlined text-[14px]">{isExpanded ? 'expand_less' : 'receipt_long'}</span>
                       {isExpanded ? "Ocultar" : "Detalle"}
                     </button>
 
@@ -497,12 +497,12 @@ function OrdersPanel({
                         onClick={() => onMarkOrderAsRealized(order.id)}
                         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[10px] font-bold text-emerald-600 hover:bg-emerald-50 transition-colors"
                       >
-                        <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                        <span translate="no" className="material-symbols-outlined text-[14px]">check_circle</span>
                         Envío
                       </button>
                     ) : (
                       <span className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[10px] font-bold text-slate-400">
-                        <span className="material-symbols-outlined text-[14px]">done_all</span>
+                        <span translate="no" className="material-symbols-outlined text-[14px]">done_all</span>
                         Listo
                       </span>
                     )}
@@ -513,7 +513,7 @@ function OrdersPanel({
                       className="px-4 py-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                       title="Eliminar pedido"
                     >
-                      <span className="material-symbols-outlined text-base">delete</span>
+                      <span translate="no" className="material-symbols-outlined text-base">delete</span>
                     </button>
                   </div>
 
@@ -532,7 +532,7 @@ function OrdersPanel({
                             {item.productImage ? (
                               <img src={item.productImage} alt={item.productName} className="h-full w-full object-cover" />
                             ) : (
-                              <span className="material-symbols-outlined text-slate-300 text-sm">image</span>
+                              <span translate="no" className="material-symbols-outlined text-slate-300 text-sm">image</span>
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
@@ -620,7 +620,7 @@ function OrdersPanel({
                           </span>
                           {needsRestock && (
                             <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                              <span className="material-symbols-outlined text-[12px]">inventory</span>
+                              <span translate="no" className="material-symbols-outlined text-[12px]">inventory</span>
                               Stock bajo
                             </span>
                           )}
@@ -647,7 +647,7 @@ function OrdersPanel({
                               isExpanded ? 'text-primary bg-primary/10' : 'text-slate-600 bg-slate-100 hover:bg-slate-200'
                             }`}
                           >
-                            <span className="material-symbols-outlined text-[16px]">{isExpanded ? 'expand_less' : 'receipt_long'}</span>
+                            <span translate="no" className="material-symbols-outlined text-[16px]">{isExpanded ? 'expand_less' : 'receipt_long'}</span>
                             {isExpanded ? "Ocultar" : "Detalle"}
                           </button>
 
@@ -657,12 +657,12 @@ function OrdersPanel({
                               onClick={() => onMarkOrderAsRealized(order.id)}
                               className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-100 transition-colors"
                             >
-                              <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                              <span translate="no" className="material-symbols-outlined text-[16px]">check_circle</span>
                               Marcar Envío
                             </button>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-xl">
-                              <span className="material-symbols-outlined text-[16px]">done_all</span>
+                              <span translate="no" className="material-symbols-outlined text-[16px]">done_all</span>
                               Completado
                             </span>
                           )}
@@ -673,7 +673,7 @@ function OrdersPanel({
                             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                             title="Eliminar pedido"
                           >
-                            <span className="material-symbols-outlined text-lg">delete</span>
+                            <span translate="no" className="material-symbols-outlined text-lg">delete</span>
                           </button>
                         </div>
                       </td>
@@ -700,7 +700,7 @@ function OrdersPanel({
                                     {item.productImage ? (
                                       <img src={item.productImage} alt={item.productName} className="h-full w-full object-cover" />
                                     ) : (
-                                      <span className="material-symbols-outlined text-slate-300">image</span>
+                                      <span translate="no" className="material-symbols-outlined text-slate-300">image</span>
                                     )}
                                   </div>
                                   <div className="min-w-0 flex-1">

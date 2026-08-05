@@ -63,7 +63,7 @@ export default function CustomerAuthModal({ onClose, onSuccess, allowGuest, onGu
           className="absolute top-4 right-4 text-slate-400 hover:text-primary transition-colors"
           onClick={onClose}
         >
-          <span className="material-symbols-outlined">close</span>
+          <span translate="no" className="material-symbols-outlined">close</span>
         </button>
 
         <h3 className="font-serif text-3xl font-light text-slate-800 mb-6 text-center">

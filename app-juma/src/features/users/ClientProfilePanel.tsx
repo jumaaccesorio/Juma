@@ -26,7 +26,7 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
           onClick={onLogout}
           className="bg-red-50 text-red-600 hover:bg-red-100 px-6 py-2 rounded-md font-bold text-sm transition-colors flex items-center gap-2"
         >
-          <span className="material-symbols-outlined">logout</span>
+          <span translate="no" className="material-symbols-outlined">logout</span>
           Cerrar Sesión
         </button>
       </div>
@@ -36,7 +36,7 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
         
         {myOrders.length === 0 ? (
           <div className="text-center py-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200">
-            <span className="material-symbols-outlined text-4xl text-slate-300 mb-4 block">receipt_long</span>
+            <span translate="no" className="material-symbols-outlined text-4xl text-slate-300 mb-4 block">receipt_long</span>
             <p className="text-slate-500 font-medium">Aún no tienes pedidos registrados en tu cuenta.</p>
           </div>
         ) : (
@@ -55,7 +55,7 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
                       </span>
                     </div>
                     <p className="text-slate-500 text-sm flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[16px]">calendar_month</span>
+                      <span translate="no" className="material-symbols-outlined text-[16px]">calendar_month</span>
                       {new Date(order.date).toLocaleDateString("es-AR", { year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                   </div>
@@ -66,7 +66,7 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
                       <span className="text-xl font-black text-primary">${order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0).toLocaleString("es-AR")}</span>
                     </div>
                     <button className="text-slate-400 group-hover:text-primary transition-colors flex items-center justify-center p-2 rounded-full group-hover:bg-primary/5">
-                      <span className="material-symbols-outlined" style={{ transform: expandedOrderId === order.id ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s ease' }}>expand_more</span>
+                      <span translate="no" className="material-symbols-outlined" style={{ transform: expandedOrderId === order.id ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s ease' }}>expand_more</span>
                     </button>
                   </div>
                 </div>
@@ -74,7 +74,7 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
                 {expandedOrderId === order.id && (
                   <div className="bg-slate-50 dark:bg-slate-800/80 p-6 border-t border-slate-100 dark:border-slate-700 animate-fade-in">
                     <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-primary">shopping_bag</span>
+                      <span translate="no" className="material-symbols-outlined text-[18px] text-primary">shopping_bag</span>
                       Detalle de productos
                     </h4>
                     <div className="space-y-3">
@@ -87,7 +87,7 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
                                  {product?.image ? (
                                     <ProductImage product={product} className="h-full w-full object-cover" alt="Producto" />
                                  ) : (
-                                    <span className="material-symbols-outlined text-slate-300">image</span>
+                                    <span translate="no" className="material-symbols-outlined text-slate-300">image</span>
                                  )}
                                </div>
                                <div className="min-w-0">
@@ -117,12 +117,12 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
       {/* Favorites */}
       <section className="space-y-6">
         <h2 className="font-serif text-2xl font-black text-slate-900 dark:text-slate-100 border-b border-primary/5 pb-4 flex items-center gap-2">
-          <span className="material-symbols-outlined text-red-400" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
+          <span translate="no" className="material-symbols-outlined text-red-400" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
           Mis Favoritos
         </h2>
         {myFavorites.length === 0 ? (
           <div className="text-center py-12 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200">
-            <span className="material-symbols-outlined text-4xl text-slate-300 mb-4 block">favorite_border</span>
+            <span translate="no" className="material-symbols-outlined text-4xl text-slate-300 mb-4 block">favorite_border</span>
             <p className="text-slate-500 font-medium">Aún no guardaste ningún accesorio en favoritos.</p>
           </div>
         ) : (
@@ -137,7 +137,7 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
                       alt={getProductDisplayName(product)}
                     />
                   ) : (
-                    <span className="material-symbols-outlined text-5xl text-slate-300 flex items-center justify-center h-full">image</span>
+                    <span translate="no" className="material-symbols-outlined text-5xl text-slate-300 flex items-center justify-center h-full">image</span>
                   )}
                 </div>
                 <p className="text-xs font-bold text-primary/60 uppercase tracking-widest mb-0.5">{product.categoryName || ""}</p>

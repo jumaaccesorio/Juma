@@ -34,7 +34,7 @@ function CartPanel({
         <div className="overflow-hidden rounded-xl border border-line bg-white shadow-subtle">
           <div className="border-b border-line bg-secondary/65 px-8 py-8 text-center">
             <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-success/25 text-[#647554]">
-              <span className="material-symbols-outlined text-3xl">check</span>
+              <span translate="no" className="material-symbols-outlined text-3xl">check</span>
             </span>
             <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.28em] text-muted">Pedido confirmado</p>
             <h1 className="mt-3 font-serif text-4xl text-ink">Gracias por tu compra</h1>
@@ -64,7 +64,7 @@ function CartPanel({
                 className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90"
               >
                 Seguir viendo productos
-                <span className="material-symbols-outlined text-base">arrow_forward</span>
+                <span translate="no" className="material-symbols-outlined text-base">arrow_forward</span>
               </button>
             </div>
           </div>
@@ -84,7 +84,7 @@ function CartPanel({
         <div className="space-y-6 lg:col-span-2">
           {cartRows.length === 0 ? (
             <div className="rounded-xl border border-primary/5 bg-white p-12 text-center shadow-sm dark:bg-slate-900/50">
-              <span className="material-symbols-outlined mb-4 text-6xl text-slate-300">production_quantity_limits</span>
+              <span translate="no" className="material-symbols-outlined mb-4 text-6xl text-slate-300">production_quantity_limits</span>
               <p className="font-medium text-slate-500">No hay productos en el carrito.</p>
             </div>
           ) : (
@@ -104,7 +104,7 @@ function CartPanel({
                           decoding="async"
                         />
                       ) : (
-                        <span className="material-symbols-outlined text-4xl text-slate-300">image</span>
+                        <span translate="no" className="material-symbols-outlined text-4xl text-slate-300">image</span>
                       )}
                     </div>
                     <div className="flex flex-1 flex-col justify-between self-stretch">
@@ -116,7 +116,7 @@ function CartPanel({
                           </p>
                           {row.size ? (
                             <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
-                              <span className="material-symbols-outlined text-[10px]">straighten</span>
+                              <span translate="no" className="material-symbols-outlined text-[10px]">straighten</span>
                               Talle {row.size}
                             </p>
                           ) : null}
@@ -134,21 +134,21 @@ function CartPanel({
                             onClick={() => onUpdateCartQuantity(row.product.id, row.quantity - 1, row.size)}
                             className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-primary/10"
                           >
-                            <span className="material-symbols-outlined text-lg">remove</span>
+                            <span translate="no" className="material-symbols-outlined text-lg">remove</span>
                           </button>
                           <span className="w-8 text-center font-bold text-slate-900 dark:text-slate-100">{row.quantity}</span>
                           <button
                             onClick={() => onUpdateCartQuantity(row.product.id, row.quantity + 1, row.size)}
                             className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-primary/10"
                           >
-                            <span className="material-symbols-outlined text-lg">add</span>
+                            <span translate="no" className="material-symbols-outlined text-lg">add</span>
                           </button>
                         </div>
                         <button
                           onClick={() => onRemoveFromCart(row.product.id, row.size)}
                           className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-slate-400 transition-colors hover:text-red-500"
                         >
-                          <span className="material-symbols-outlined text-sm">delete</span> Eliminar
+                          <span translate="no" className="material-symbols-outlined text-sm">delete</span> Eliminar
                         </button>
                       </div>
                     </div>
@@ -158,7 +158,7 @@ function CartPanel({
 
               <div className="flex justify-end pt-4">
                 <button onClick={onClearCart} className="flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-primary">
-                  <span className="material-symbols-outlined text-lg">delete_sweep</span> Vaciar Carrito
+                  <span translate="no" className="material-symbols-outlined text-lg">delete_sweep</span> Vaciar Carrito
                 </button>
               </div>
             </>
@@ -178,7 +178,7 @@ function CartPanel({
                 <span className="text-sm">Envio Estandar</span>
                 {cartTotal >= 50000 ? (
                   <span className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-green-600">
-                    <span className="material-symbols-outlined text-sm">local_shipping</span> Gratis
+                    <span translate="no" className="material-symbols-outlined text-sm">local_shipping</span> Gratis
                   </span>
                 ) : (
                   <span className="cursor-help font-medium text-slate-900 dark:text-slate-100" title="Envio gratis desde $50.000">A calcular</span>
@@ -202,14 +202,14 @@ function CartPanel({
                 className={`group flex w-full items-center justify-center gap-2 rounded-md px-6 py-4 font-bold transition-all ${cartRows.length === 0 ? "cursor-not-allowed bg-slate-200 text-slate-400" : "bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90"}`}
               >
                 Finalizar Compra
-                <span className={`material-symbols-outlined transition-transform ${cartRows.length > 0 ? "group-hover:translate-x-1" : ""}`}>arrow_forward</span>
+                <span translate="no" className={`material-symbols-outlined transition-transform ${cartRows.length > 0 ? "group-hover:translate-x-1" : ""}`}>arrow_forward</span>
               </button>
             </div>
 
             <div className="mt-8 flex flex-wrap justify-center gap-4 grayscale opacity-50">
-              <span className="material-symbols-outlined">payments</span>
-              <span className="material-symbols-outlined">credit_card</span>
-              <span className="material-symbols-outlined">account_balance_wallet</span>
+              <span translate="no" className="material-symbols-outlined">payments</span>
+              <span translate="no" className="material-symbols-outlined">credit_card</span>
+              <span translate="no" className="material-symbols-outlined">account_balance_wallet</span>
             </div>
           </div>
         </div>

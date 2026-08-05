@@ -236,7 +236,7 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
           onClick={resetHiddenRows}
           className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 active:scale-95"
         >
-          <span className="material-symbols-outlined text-[18px] text-slate-500">restore</span>
+          <span translate="no" className="material-symbols-outlined text-[18px] text-slate-500">restore</span>
           Recuperar eliminados
         </button>
       </div>
@@ -257,7 +257,7 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
           <div className="flex size-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shrink-0">
-            <span className="material-symbols-outlined text-xl">inventory_2</span>
+            <span translate="no" className="material-symbols-outlined text-xl">inventory_2</span>
           </div>
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Productos</span>
@@ -267,7 +267,7 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
 
         <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
           <div className="flex size-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600 shrink-0">
-            <span className="material-symbols-outlined text-xl">production_quantity_limits</span>
+            <span translate="no" className="material-symbols-outlined text-xl">production_quantity_limits</span>
           </div>
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Unidades sugeridas</span>
@@ -277,7 +277,7 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
 
         <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
           <div className="flex size-11 items-center justify-center rounded-xl bg-purple-50 text-purple-600 shrink-0">
-            <span className="material-symbols-outlined text-xl">shopping_cart_checkout</span>
+            <span translate="no" className="material-symbols-outlined text-xl">shopping_cart_checkout</span>
           </div>
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">En carrito</span>
@@ -287,7 +287,7 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
 
         <div className="flex items-center gap-4 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm">
           <div className="flex size-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 shrink-0">
-            <span className="material-symbols-outlined text-xl">check_circle</span>
+            <span translate="no" className="material-symbols-outlined text-xl">check_circle</span>
           </div>
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Pedido</span>
@@ -299,7 +299,7 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
       {/* ── SEARCH & MANUAL ADD ROW ── */}
       <div className="grid gap-3 rounded-2xl bg-white p-5 border border-slate-200/80 shadow-sm lg:grid-cols-[1fr_220px_100px_auto]">
         <div className="relative">
-          <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
+          <span translate="no" className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -332,7 +332,7 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
           disabled={!addProductId}
           className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition-all hover:bg-slate-800 disabled:opacity-40"
         >
-          <span className="material-symbols-outlined text-[16px]">add</span>
+          <span translate="no" className="material-symbols-outlined text-[16px]">add</span>
           Agregar
         </button>
       </div>
@@ -383,7 +383,7 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
                           <ProductImage product={row.product} alt={row.name} className="h-full w-full object-cover" />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center text-slate-300">
-                            <span className="material-symbols-outlined text-base">image</span>
+                            <span translate="no" className="material-symbols-outlined text-base">image</span>
                           </div>
                         )}
                       </div>
@@ -421,7 +421,7 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
                           row.requested ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-slate-100 text-slate-500"
                         }`}
                       >
-                        <span className="material-symbols-outlined text-[16px]">{row.requested ? "check_circle" : "radio_button_unchecked"}</span>
+                        <span translate="no" className="material-symbols-outlined text-[16px]">{row.requested ? "check_circle" : "radio_button_unchecked"}</span>
                         Pedido
                       </button>
                       <button
@@ -431,7 +431,7 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
                           row.inCart ? "bg-purple-50 text-purple-600 border border-purple-100" : "bg-slate-100 text-slate-500"
                         }`}
                       >
-                        <span className="material-symbols-outlined text-[16px]">{row.inCart ? "shopping_cart_checkout" : "add_shopping_cart"}</span>
+                        <span translate="no" className="material-symbols-outlined text-[16px]">{row.inCart ? "shopping_cart_checkout" : "add_shopping_cart"}</span>
                         En carrito
                       </button>
                     </div>
@@ -447,7 +447,7 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
                         }`}
                         title="Ver URL original"
                       >
-                        <span className="material-symbols-outlined text-lg">open_in_new</span>
+                        <span translate="no" className="material-symbols-outlined text-lg">open_in_new</span>
                       </a>
                       <button
                         type="button"
@@ -455,7 +455,7 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
                         className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Quitar ítem"
                       >
-                        <span className="material-symbols-outlined text-lg">delete</span>
+                        <span translate="no" className="material-symbols-outlined text-lg">delete</span>
                       </button>
                     </div>
                   </td>
