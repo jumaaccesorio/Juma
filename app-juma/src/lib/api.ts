@@ -1,4 +1,4 @@
-import type { Category, Client, CommunitySubscriber, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, Order, OrderItem, PackagingCost, Product, ProductSize, RestockCartItem } from "../types";
+import type { Category, Client, CommunitySubscriber, Favorite, FeaturedPanel, FeaturedPeriod, FinanceExpense, HeroBanner, Order, OrderItem, PackagingCost, Product, ProductReview, ProductSize, RestockCartItem } from "../types";
 import { supabase } from "./supabase";
 import { dataUrlToOptimizedFile, optimizeImageFile, type UploadImageVariant } from "./imageUpload";
 
@@ -829,6 +829,67 @@ export const api = {
     const query = await supabase.from("packaging_costs").delete().eq("id", id);
     if (query.error) throw query.error;
   },
+
+  // ── Product Reviews ──────────────────────────────────────────
+
+  async getProductReviews(productId: number): Promise<ProductReview[]> {
+    const query = await supabase
+      .from("product_reviews")
+      .select("id, product_id, client_id, rating, comment, created_at, clients(name)")
+      .eq("product_id", productId)
+      .order("created_at", { ascending: false });
+    if (query.error) throw query.error;
+    return (query.data ?? []).map(mapProductReview);
+  },
+
+  async addProductReview(productId: number, clientId: number, rating: number, comment: string): Promise<ProductReview> {
+    const query = await supabase
+      .from("product_reviews")
+      .upsert(
+        { product_id: productId, client_id: clientId, rating, comment },
+        { onConflict: "product_id,client_id" },
+      )
+      .select("id, product_id, client_id, rating, comment, created_at, clients(name)")
+      .single();
+    if (query.error) throw query.error;
+    return mapProductReview(query.data);
+  },
+
+  async deleteProductReview(reviewId: number): Promise<void> {
+    const query = await supabase.from("product_reviews").delete().eq("id", reviewId);
+    if (query.error) throw query.error;
+  },
+
+  // ── App Settings ────────────────────────────────────────────
+
+  async getSetting(key: string): Promise<string | null> {
+    const query = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", key)
+      .maybeSingle();
+    if (query.error) throw query.error;
+    return query.data?.value ?? null;
+  },
+
+  async setSetting(key: string, value: string): Promise<void> {
+    const query = await supabase
+      .from("app_settings")
+      .upsert({ key, value }, { onConflict: "key" });
+    if (query.error) throw query.error;
+  },
+
+  // ── Best Sellers ────────────────────────────────────────────
+
+  async getBestSellingProductIds(period: FeaturedPeriod = "1", limit = 8): Promise<number[]> {
+    const monthsBack = Number(period) || 1;
+    const { data, error } = await supabase.rpc("get_best_selling_products", {
+      months_back: monthsBack,
+      max_results: limit,
+    });
+    if (error) throw error;
+    return (data ?? []).map((row: any) => Number(row.product_id));
+  },
 };
 
 function mapClient(row: any): Client {
@@ -1035,6 +1096,19 @@ function mapPackagingCost(row: any): PackagingCost {
     name: row.name ?? "",
     unitCost: Number(row.unit_cost ?? 0),
     quantity: Number(row.quantity ?? 1),
+    createdAt: row.created_at ?? "",
+  };
+}
+
+function mapProductReview(row: any): ProductReview {
+  const clientData = row.clients;
+  return {
+    id: row.id,
+    productId: row.product_id,
+    clientId: row.client_id,
+    clientName: typeof clientData === "object" && clientData !== null ? clientData.name ?? undefined : undefined,
+    rating: Number(row.rating ?? 0),
+    comment: row.comment ?? "",
     createdAt: row.created_at ?? "",
   };
 }

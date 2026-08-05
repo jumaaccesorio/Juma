@@ -22,6 +22,7 @@ type CatalogPanelProps = {
   onPanelCategoryClick: (categoryId: number | null) => void;
   onOpenFullCatalog: () => void;
   onSubscribeCommunity: (email: string) => Promise<void>;
+  bestSellerProducts: Product[];
 };
 
 function CatalogPanel({
@@ -43,6 +44,7 @@ function CatalogPanel({
   onPanelCategoryClick,
   onOpenFullCatalog,
   onSubscribeCommunity,
+  bestSellerProducts,
 }: CatalogPanelProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [selectedRootCategory, setSelectedRootCategory] = useState<number | null>(null);
@@ -58,7 +60,7 @@ function CatalogPanel({
     () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
     [categories],
   );
-  const featuredProducts = useMemo(() => products.filter((product) => product.isFeatured).slice(0, 8), [products]);
+  const featuredProducts = useMemo(() => bestSellerProducts.length > 0 ? bestSellerProducts : products.filter((product) => product.isFeatured).slice(0, 8), [bestSellerProducts, products]);
   const subcategories = useMemo(
     () =>
       categories
@@ -263,9 +265,9 @@ function CatalogPanel({
       ) : null}
       <section className="bg-background px-6 py-20 md:px-40">
         <div className="mb-12 flex flex-col items-center text-center">
-          <span className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-primary">Piezas elegidas</span>
-          <h2 className="font-headline text-3xl font-light text-carbon">Destacados del inicio</h2>
-          <p className="mt-3 max-w-2xl text-sm text-muted">Piezas que enamoran a primera vista, elegidas para resaltar lo mas lindo, delicado y deseado de Juma.</p>
+          <span className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-primary">Los más elegidos</span>
+          <h2 className="font-headline text-3xl font-light text-carbon">Piezas destacadas</h2>
+          <p className="mt-3 max-w-2xl text-sm text-muted">Las piezas preferidas por nuestros clientes. Lo más vendido y deseado de Juma.</p>
         </div>
         {featuredProducts.length === 0 ? (
           <div className="rounded border border-dashed border-line bg-secondary/35 px-6 py-14 text-center text-sm text-muted">

@@ -132,3 +132,15 @@ export type PackagingCost = {
   quantity: number;
   createdAt: string;
 };
+
+export type ProductReview = {
+  id: number;
+  productId: number;
+  clientId: number;
+  clientName?: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+};
+
+export type FeaturedPeriod = "1" | "6" | "12";

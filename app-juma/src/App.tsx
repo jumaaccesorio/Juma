@@ -26,7 +26,7 @@ import ClientProfilePanel from "./features/users/ClientProfilePanel";
 import CustomerAuthModal from "./features/users/CustomerAuthModal";
 import AuthConfirmPanel from "./features/users/AuthConfirmPanel";
 import ResetPasswordPanel from "./features/users/ResetPasswordPanel";
-import type { CartItem, Client, CommunitySubscriber, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, PackagingCost, Product, Tab, Category } from "./types";
+import type { CartItem, Client, CommunitySubscriber, Favorite, FeaturedPanel, FeaturedPeriod, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, PackagingCost, Product, ProductReview, Tab, Category } from "./types";
 import { api } from "./lib/api";
 import { getProductDisplayName } from "./lib/productLabel";
 import { optimizeFileForPreview } from "./lib/imageUpload";
@@ -259,6 +259,9 @@ function App() {
   const [isHomeContentLoaded, setIsHomeContentLoaded] = useState(false);
   const [homeConfigDirty, setHomeConfigDirty] = useState(false);
   const [isSavingHomeConfig, setIsSavingHomeConfig] = useState(false);
+  const [featuredPeriod, setFeaturedPeriod] = useState<FeaturedPeriod>("1");
+  const [bestSellerProductIds, setBestSellerProductIds] = useState<number[]>([]);
+  const [productReviews, setProductReviews] = useState<ProductReview[]>([]);
   const [error, setError] = useState("");
   const [adminError, setAdminError] = useState("");
   const [isAdminLogged, setIsAdminLogged] = useState(() => localStorage.getItem(ADMIN_SESSION_KEY) === "1");
@@ -355,9 +358,10 @@ function App() {
         isAdmin ? api.getProducts() : api.getCatalogProducts(),
         api.getFeaturedPanels(),
         api.getHeroBanner(),
+        api.getSetting("featured_products_period"),
       ]);
 
-      const [categoriesResult, productsResult, panelsResult, heroResult] = results;
+      const [categoriesResult, productsResult, panelsResult, heroResult, periodResult] = results;
 
       if (categoriesResult.status === "fulfilled") {
         setCategories(categoriesResult.value);
@@ -386,6 +390,21 @@ function App() {
 
       setHomeConfigDirty(false);
       setIsHomeContentLoaded(true);
+
+      // Load featured period setting
+      if (periodResult.status === "fulfilled" && periodResult.value) {
+        const val = periodResult.value as FeaturedPeriod;
+        if (["1", "6", "12"].includes(val)) setFeaturedPeriod(val);
+      }
+
+      // Load best sellers based on period
+      try {
+        const period = (periodResult.status === "fulfilled" && periodResult.value && ["1", "6", "12"].includes(periodResult.value)) ? periodResult.value as FeaturedPeriod : "1";
+        const bestIds = await api.getBestSellingProductIds(period);
+        setBestSellerProductIds(bestIds);
+      } catch (e) {
+        console.warn("No se pudieron cargar los productos más vendidos.", e);
+      }
 
       const criticalErrors: string[] = [];
       if (categoriesResult.status === "rejected") criticalErrors.push("categorías");
@@ -702,6 +721,28 @@ function App() {
   const cartTotal = useMemo(() => cartRows.reduce((acc, row) => acc + row.subtotal, 0), [cartRows]);
   const cartItemsCount = useMemo(() => cartItems.reduce((acc, item) => acc + item.quantity, 0), [cartItems]);
   const catalogProducts = useMemo(() => products.filter((product) => product.enabled), [products]);
+  const bestSellerProducts = useMemo(() => {
+    if (bestSellerProductIds.length === 0) return [];
+    return bestSellerProductIds
+      .map(id => catalogProducts.find(p => p.id === id))
+      .filter((p): p is Product => p !== undefined);
+  }, [bestSellerProductIds, catalogProducts]);
+
+  // Load reviews when a product is opened
+  useEffect(() => {
+    if (!selectedCatalogProductId) {
+      setProductReviews([]);
+      return;
+    }
+    let cancelled = false;
+    api.getProductReviews(selectedCatalogProductId).then(reviews => {
+      if (!cancelled) setProductReviews(reviews);
+    }).catch(e => {
+      console.warn("Error cargando reseñas.", e);
+      if (!cancelled) setProductReviews([]);
+    });
+    return () => { cancelled = true; };
+  }, [selectedCatalogProductId]);
 
   const addCategory = async (name: string, parentId?: number | null) => {
     try {
@@ -1879,6 +1920,7 @@ function App() {
                   onPanelCategoryClick={navigateToCategoryInCatalog}
                   onOpenFullCatalog={openFullCatalog}
                   onSubscribeCommunity={async (email) => { await api.subscribeToCommunity(email); }}
+                  bestSellerProducts={bestSellerProducts}
                 />
               </div>
             )}
@@ -1905,6 +1947,17 @@ function App() {
                   canAddMorePanels={featuredPanels.length < PANEL_SLOTS.length}
                   hasUnsavedChanges={homeConfigDirty}
                   isSaving={isSavingHomeConfig}
+                  featuredPeriod={featuredPeriod}
+                  onChangeFeaturedPeriod={async (period) => {
+                    setFeaturedPeriod(period);
+                    try {
+                      await api.setSetting("featured_products_period", period);
+                      const bestIds = await api.getBestSellingProductIds(period);
+                      setBestSellerProductIds(bestIds);
+                    } catch (e) {
+                      console.warn("Error guardando periodo de destacados.", e);
+                    }
+                  }}
                   onUpdateHeroText={updateHeroText}
                   onUpdateHeroImage={updateHeroImage}
                   onUpdateFeaturedPanelText={updateFeaturedPanelText}
@@ -2230,6 +2283,22 @@ function App() {
                   navigate("/");
                 }}
                 onAddToCart={addToCart}
+                reviews={productReviews}
+                averageRating={productReviews.length > 0 ? productReviews.reduce((sum, r) => sum + r.rating, 0) / productReviews.length : 0}
+                currentClientId={currentClient?.id ?? null}
+                currentClientName={currentClient?.name ?? null}
+                onSubmitReview={async (productId, rating, comment) => {
+                  if (!currentClient) return;
+                  try {
+                    const review = await api.addProductReview(productId, currentClient.id, rating, comment);
+                    setProductReviews(prev => {
+                      const filtered = prev.filter(r => r.clientId !== currentClient.id);
+                      return [review, ...filtered];
+                    });
+                  } catch (e) {
+                    console.warn("Error al enviar reseña.", e);
+                  }
+                }}
               />
             );
           })()
@@ -2253,6 +2322,7 @@ function App() {
             onPanelCategoryClick={navigateToCategoryInCatalog}
             onOpenFullCatalog={openFullCatalog}
             onSubscribeCommunity={async (email) => { await api.subscribeToCommunity(email); }}
+            bestSellerProducts={bestSellerProducts}
           />
         )
       ) : null}

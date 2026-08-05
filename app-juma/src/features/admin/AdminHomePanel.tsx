@@ -1,4 +1,4 @@
-import type { Category, FeaturedPanel, HeroBanner } from "../../types";
+import type { Category, FeaturedPanel, FeaturedPeriod, HeroBanner } from "../../types";
 
 type AdminHomePanelProps = {
   heroBanner: HeroBanner;
@@ -7,6 +7,8 @@ type AdminHomePanelProps = {
   canAddMorePanels: boolean;
   hasUnsavedChanges: boolean;
   isSaving: boolean;
+  featuredPeriod: FeaturedPeriod;
+  onChangeFeaturedPeriod: (period: FeaturedPeriod) => void;
   onUpdateHeroText: (field: "tag" | "title" | "subtitle", value: string) => void;
   onUpdateHeroImage: (file: File | null) => void;
   onUpdateFeaturedPanelText: (id: string, field: "title" | "cta", value: string) => void;
@@ -24,6 +26,8 @@ function AdminHomePanel({
   canAddMorePanels,
   hasUnsavedChanges,
   isSaving,
+  featuredPeriod,
+  onChangeFeaturedPeriod,
   onUpdateHeroText,
   onUpdateHeroImage,
   onUpdateFeaturedPanelText,
@@ -55,6 +59,44 @@ function AdminHomePanel({
           <span translate="no" className="material-symbols-outlined text-[18px]">{isSaving ? "progress_activity" : "save"}</span>
           {isSaving ? "Guardando..." : "Guardar Cambios"}
         </button>
+      </div>
+
+      {/* ── FEATURED PERIOD SELECTOR ── */}
+      <div className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm">
+        <div className="flex items-center gap-2 pb-4 border-b border-slate-100">
+          <div className="flex size-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+            <span translate="no" className="material-symbols-outlined text-lg">trending_up</span>
+          </div>
+          <div>
+            <h2 className="font-headline text-lg font-bold text-slate-900">Productos Destacados</h2>
+            <p className="text-xs text-slate-400">Los productos más vendidos se muestran automáticamente en el inicio de la tienda.</p>
+          </div>
+        </div>
+        <div className="mt-4">
+          <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">Periodo de cálculo de más vendidos</label>
+          <div className="flex flex-wrap gap-3">
+            {(["1", "6", "12"] as const).map((p) => {
+              const labels: Record<string, string> = { "1": "Último mes", "6": "Últimos 6 meses", "12": "Último año" };
+              const isActive = featuredPeriod === p;
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => onChangeFeaturedPeriod(p)}
+                  className={`flex items-center gap-2 rounded-xl border-2 px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all ${
+                    isActive
+                      ? "border-primary bg-primary text-white shadow-lg shadow-primary/25"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-primary hover:text-primary"
+                  }`}
+                >
+                  <span translate="no" className="material-symbols-outlined text-sm">{isActive ? "radio_button_checked" : "radio_button_unchecked"}</span>
+                  {labels[p]}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-3 text-[11px] text-slate-400">Se mostrarán hasta 8 productos con más ventas en el periodo seleccionado.</p>
+        </div>
       </div>
 
       <div className="space-y-6">
