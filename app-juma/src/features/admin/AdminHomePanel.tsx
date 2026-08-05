@@ -1,4 +1,5 @@
-import type { Category, FeaturedPanel, FeaturedPeriod, HeroBanner } from "../../types";
+import { useState } from "react";
+import type { Category, FeaturedPanel, FeaturedPeriod, CatalogSortOrder, HeroBanner, ProductReview } from "../../types";
 
 type AdminHomePanelProps = {
   heroBanner: HeroBanner;
@@ -9,6 +10,10 @@ type AdminHomePanelProps = {
   isSaving: boolean;
   featuredPeriod: FeaturedPeriod;
   onChangeFeaturedPeriod: (period: FeaturedPeriod) => void;
+  catalogSortOrder: CatalogSortOrder;
+  onChangeCatalogSortOrder: (order: CatalogSortOrder) => void;
+  allReviews: ProductReview[];
+  onDeleteReview: (reviewId: number) => void;
   onUpdateHeroText: (field: "tag" | "title" | "subtitle", value: string) => void;
   onUpdateHeroImage: (file: File | null) => void;
   onUpdateFeaturedPanelText: (id: string, field: "title" | "cta", value: string) => void;
@@ -28,6 +33,10 @@ function AdminHomePanel({
   isSaving,
   featuredPeriod,
   onChangeFeaturedPeriod,
+  catalogSortOrder,
+  onChangeCatalogSortOrder,
+  allReviews,
+  onDeleteReview,
   onUpdateHeroText,
   onUpdateHeroImage,
   onUpdateFeaturedPanelText,
@@ -37,6 +46,17 @@ function AdminHomePanel({
   onUpdateFeaturedPanelCategory,
   onSaveConfiguration,
 }: AdminHomePanelProps) {
+  const [reviewSearch, setReviewSearch] = useState("");
+
+  const filteredReviews = allReviews.filter((rev) => {
+    if (!reviewSearch.trim()) return true;
+    const q = reviewSearch.toLowerCase().trim();
+    return (
+      (rev.clientName ?? "").toLowerCase().includes(q) ||
+      (rev.productName ?? "").toLowerCase().includes(q) ||
+      (rev.comment ?? "").toLowerCase().includes(q)
+    );
+  });
   return (
     <div className="min-h-screen bg-[#f4f6fa] text-slate-800 space-y-6 px-4 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-24">
       {/* ── TOP HEADER ── */}
@@ -61,42 +81,179 @@ function AdminHomePanel({
         </button>
       </div>
 
-      {/* ── FEATURED PERIOD SELECTOR ── */}
-      <div className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm">
+      {/* ── CATALOG SORTING & FEATURED PERIOD CONFIG ── */}
+      <div className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm space-y-6">
         <div className="flex items-center gap-2 pb-4 border-b border-slate-100">
           <div className="flex size-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-            <span translate="no" className="material-symbols-outlined text-lg">trending_up</span>
+            <span translate="no" className="material-symbols-outlined text-lg">sort</span>
           </div>
           <div>
-            <h2 className="font-headline text-lg font-bold text-slate-900">Productos Destacados</h2>
-            <p className="text-xs text-slate-400">Los productos más vendidos se muestran automáticamente en el inicio de la tienda.</p>
+            <h2 className="font-headline text-lg font-bold text-slate-900">Ordenamiento de Productos y Destacados</h2>
+            <p className="text-xs text-slate-400">Configurá cómo se muestran los productos en el catálogo principal y en el inicio.</p>
           </div>
         </div>
-        <div className="mt-4">
-          <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">Periodo de cálculo de más vendidos</label>
-          <div className="flex flex-wrap gap-3">
-            {(["1", "6", "12"] as const).map((p) => {
-              const labels: Record<string, string> = { "1": "Último mes", "6": "Últimos 6 meses", "12": "Último año" };
-              const isActive = featuredPeriod === p;
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => onChangeFeaturedPeriod(p)}
-                  className={`flex items-center gap-2 rounded-xl border-2 px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all ${
-                    isActive
-                      ? "border-primary bg-primary text-white shadow-lg shadow-primary/25"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-primary hover:text-primary"
-                  }`}
-                >
-                  <span translate="no" className="material-symbols-outlined text-sm">{isActive ? "radio_button_checked" : "radio_button_unchecked"}</span>
-                  {labels[p]}
-                </button>
-              );
-            })}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Criterio de ordenamiento global */}
+          <div>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+              Criterio de orden en el Catálogo / Menú
+            </label>
+            <div className="space-y-2">
+              {[
+                { id: "ventas", label: "Más vendidos", desc: "Prioriza los productos con mayores ventas registradas", icon: "trending_up" },
+                { id: "recientes", label: "Más recientes", desc: "Muestra primero los últimos cargados a la tienda", icon: "new_releases" },
+                { id: "precio_asc", label: "Menor a Mayor precio", desc: "Ordena de más económico a más costoso", icon: "arrow_upward" },
+                { id: "precio_desc", label: "Mayor a Menor precio", desc: "Ordena de más costoso a más económico", icon: "arrow_downward" },
+                { id: "nombre", label: "Alfabético (A - Z)", desc: "Ordena por nombre del producto", icon: "sort_by_alpha" },
+              ].map((opt) => {
+                const isActive = catalogSortOrder === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => onChangeCatalogSortOrder(opt.id as CatalogSortOrder)}
+                    className={`w-full flex items-center justify-between p-3 rounded-xl border-2 text-left transition-all ${
+                      isActive
+                        ? "border-primary bg-primary/5 text-slate-900 font-bold"
+                        : "border-slate-100 bg-slate-50/50 text-slate-600 hover:border-slate-300"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span translate="no" className={`material-symbols-outlined text-lg ${isActive ? "text-primary" : "text-slate-400"}`}>
+                        {opt.icon}
+                      </span>
+                      <div>
+                        <p className="text-xs font-bold">{opt.label}</p>
+                        <p className="text-[11px] text-slate-400 font-normal">{opt.desc}</p>
+                      </div>
+                    </div>
+                    <span translate="no" className={`material-symbols-outlined text-sm ${isActive ? "text-primary" : "text-slate-300"}`}>
+                      {isActive ? "radio_button_checked" : "radio_button_unchecked"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          <p className="mt-3 text-[11px] text-slate-400">Se mostrarán hasta 8 productos con más ventas en el periodo seleccionado.</p>
+
+          {/* Periodo de cálculo de ventas */}
+          <div>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+              Periodo de cálculo de Más Vendidos
+            </label>
+            <div className="space-y-3">
+              {(["1", "6", "12"] as const).map((p) => {
+                const labels: Record<string, string> = { "1": "Último mes (30 días)", "6": "Últimos 6 meses", "12": "Último año (12 meses)" };
+                const isActive = featuredPeriod === p;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => onChangeFeaturedPeriod(p)}
+                    className={`w-full flex items-center justify-between p-3.5 rounded-xl border-2 text-left transition-all ${
+                      isActive
+                        ? "border-amber-500 bg-amber-50/50 text-slate-900 font-bold shadow-sm"
+                        : "border-slate-100 bg-slate-50/50 text-slate-600 hover:border-slate-300"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span translate="no" className={`material-symbols-outlined text-lg ${isActive ? "text-amber-600" : "text-slate-400"}`}>
+                        calendar_today
+                      </span>
+                      <span className="text-xs font-bold">{labels[p]}</span>
+                    </div>
+                    <span translate="no" className={`material-symbols-outlined text-sm ${isActive ? "text-amber-600" : "text-slate-300"}`}>
+                      {isActive ? "radio_button_checked" : "radio_button_unchecked"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-4 text-[11px] text-slate-400 leading-relaxed">
+              Los datos se calculan automáticamente analizando los pedidos finalizados en el periodo seleccionado.
+            </p>
+          </div>
         </div>
+      </div>
+
+      {/* ── GESTIÓN DE RESEÑAS Y COMENTARIOS DE CLIENTES ── */}
+      <div className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm space-y-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+              <span translate="no" className="material-symbols-outlined text-lg">star</span>
+            </div>
+            <div>
+              <h2 className="font-headline text-lg font-bold text-slate-900">Gestión de Reseñas y Comentarios</h2>
+              <p className="text-xs text-slate-400">Moderá y revisá todas las valoraciones enviadas por los clientes.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 rounded-xl bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-700">
+              <span translate="no" className="material-symbols-outlined text-sm">rate_review</span>
+              {allReviews.length} reseña{allReviews.length === 1 ? "" : "s"} totales
+            </span>
+          </div>
+        </div>
+
+        {/* Buscador de reseñas */}
+        <div className="relative">
+          <span translate="no" className="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-lg">search</span>
+          <input
+            type="text"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-2 text-xs text-slate-800 outline-none focus:border-primary focus:bg-white"
+            placeholder="Buscar por cliente, producto o contenido del comentario..."
+            value={reviewSearch}
+            onChange={(e) => setReviewSearch(e.target.value)}
+          />
+        </div>
+
+        {/* Lista de reseñas */}
+        {filteredReviews.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center text-xs text-slate-400">
+            {reviewSearch ? "No se encontraron reseñas que coincidan con la búsqueda." : "Aún no hay reseñas cargadas por clientes."}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {filteredReviews.map((rev) => (
+              <div key={rev.id} className="flex flex-col justify-between rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs hover:shadow-xs transition-shadow">
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-bold text-slate-900">{rev.productName || `Producto #${rev.productId}`}</p>
+                      <p className="text-[11px] font-medium text-slate-500">Por: {rev.clientName || `Cliente #${rev.clientId}`}</p>
+                    </div>
+                    <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200/60">
+                      <span translate="no" className="material-symbols-outlined text-xs text-amber-500" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                      <span className="text-xs font-extrabold text-amber-700">{rev.rating}</span>
+                    </div>
+                  </div>
+                  {rev.comment.trim() && (
+                    <p className="mt-2.5 text-xs text-slate-600 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-100 italic">
+                      "{rev.comment}"
+                    </p>
+                  )}
+                </div>
+                <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5 text-[10px] text-slate-400">
+                  <span>{new Date(rev.createdAt).toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" })}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm("¿Seguro que deseas eliminar esta reseña?")) {
+                        onDeleteReview(rev.id);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <span translate="no" className="material-symbols-outlined text-xs">delete</span>
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="space-y-6">

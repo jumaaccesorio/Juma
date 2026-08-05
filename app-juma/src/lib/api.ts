@@ -835,8 +835,17 @@ export const api = {
   async getProductReviews(productId: number): Promise<ProductReview[]> {
     const query = await supabase
       .from("product_reviews")
-      .select("id, product_id, client_id, rating, comment, created_at, clients(name)")
+      .select("id, product_id, client_id, rating, comment, created_at, clients(name), products(name, sub_name)")
       .eq("product_id", productId)
+      .order("created_at", { ascending: false });
+    if (query.error) throw query.error;
+    return (query.data ?? []).map(mapProductReview);
+  },
+
+  async getAllReviews(): Promise<ProductReview[]> {
+    const query = await supabase
+      .from("product_reviews")
+      .select("id, product_id, client_id, rating, comment, created_at, clients(name), products(name, sub_name)")
       .order("created_at", { ascending: false });
     if (query.error) throw query.error;
     return (query.data ?? []).map(mapProductReview);
@@ -1102,11 +1111,16 @@ function mapPackagingCost(row: any): PackagingCost {
 
 function mapProductReview(row: any): ProductReview {
   const clientData = row.clients;
+  const productData = row.products;
+  const prodName = typeof productData === "object" && productData !== null
+    ? `${productData.name ?? ""} ${productData.sub_name ?? ""}`.trim()
+    : undefined;
   return {
     id: row.id,
     productId: row.product_id,
     clientId: row.client_id,
     clientName: typeof clientData === "object" && clientData !== null ? clientData.name ?? undefined : undefined,
+    productName: prodName,
     rating: Number(row.rating ?? 0),
     comment: row.comment ?? "",
     createdAt: row.created_at ?? "",

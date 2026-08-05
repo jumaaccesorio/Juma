@@ -138,9 +138,11 @@ export type ProductReview = {
   productId: number;
   clientId: number;
   clientName?: string;
+  productName?: string;
   rating: number;
   comment: string;
   createdAt: string;
 };
 
 export type FeaturedPeriod = "1" | "6" | "12";
+export type CatalogSortOrder = "ventas" | "recientes" | "nombre" | "precio_asc" | "precio_desc";

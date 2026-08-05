@@ -26,7 +26,7 @@ import ClientProfilePanel from "./features/users/ClientProfilePanel";
 import CustomerAuthModal from "./features/users/CustomerAuthModal";
 import AuthConfirmPanel from "./features/users/AuthConfirmPanel";
 import ResetPasswordPanel from "./features/users/ResetPasswordPanel";
-import type { CartItem, Client, CommunitySubscriber, Favorite, FeaturedPanel, FeaturedPeriod, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, PackagingCost, Product, ProductReview, Tab, Category } from "./types";
+import type { CartItem, Client, CommunitySubscriber, Favorite, FeaturedPanel, FeaturedPeriod, CatalogSortOrder, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, PackagingCost, Product, ProductReview, Tab, Category } from "./types";
 import { api } from "./lib/api";
 import { getProductDisplayName } from "./lib/productLabel";
 import { optimizeFileForPreview } from "./lib/imageUpload";
@@ -260,8 +260,10 @@ function App() {
   const [homeConfigDirty, setHomeConfigDirty] = useState(false);
   const [isSavingHomeConfig, setIsSavingHomeConfig] = useState(false);
   const [featuredPeriod, setFeaturedPeriod] = useState<FeaturedPeriod>("1");
+  const [catalogSortOrder, setCatalogSortOrder] = useState<CatalogSortOrder>("ventas");
   const [bestSellerProductIds, setBestSellerProductIds] = useState<number[]>([]);
   const [productReviews, setProductReviews] = useState<ProductReview[]>([]);
+  const [allReviews, setAllReviews] = useState<ProductReview[]>([]);
   const [error, setError] = useState("");
   const [adminError, setAdminError] = useState("");
   const [isAdminLogged, setIsAdminLogged] = useState(() => localStorage.getItem(ADMIN_SESSION_KEY) === "1");
@@ -359,9 +361,10 @@ function App() {
         api.getFeaturedPanels(),
         api.getHeroBanner(),
         api.getSetting("featured_products_period"),
+        api.getSetting("catalog_sort_order"),
       ]);
 
-      const [categoriesResult, productsResult, panelsResult, heroResult, periodResult] = results;
+      const [categoriesResult, productsResult, panelsResult, heroResult, periodResult, sortOrderResult] = results;
 
       if (categoriesResult.status === "fulfilled") {
         setCategories(categoriesResult.value);
@@ -395,6 +398,14 @@ function App() {
       if (periodResult.status === "fulfilled" && periodResult.value) {
         const val = periodResult.value as FeaturedPeriod;
         if (["1", "6", "12"].includes(val)) setFeaturedPeriod(val);
+      }
+
+      // Load catalog sort order setting
+      if (sortOrderResult.status === "fulfilled" && sortOrderResult.value) {
+        const val = sortOrderResult.value as CatalogSortOrder;
+        if (["ventas", "recientes", "nombre", "precio_asc", "precio_desc"].includes(val)) {
+          setCatalogSortOrder(val);
+        }
       }
 
       // Load best sellers based on period
@@ -720,13 +731,61 @@ function App() {
   );
   const cartTotal = useMemo(() => cartRows.reduce((acc, row) => acc + row.subtotal, 0), [cartRows]);
   const cartItemsCount = useMemo(() => cartItems.reduce((acc, item) => acc + item.quantity, 0), [cartItems]);
-  const catalogProducts = useMemo(() => products.filter((product) => product.enabled), [products]);
+  const catalogProducts = useMemo(() => {
+    const enabled = products.filter((product) => product.enabled);
+    if (catalogSortOrder === "ventas") {
+      return [...enabled].sort((a, b) => {
+        const indexA = bestSellerProductIds.indexOf(a.id);
+        const indexB = bestSellerProductIds.indexOf(b.id);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return b.id - a.id;
+      });
+    }
+    if (catalogSortOrder === "recientes") {
+      return [...enabled].sort((a, b) => b.id - a.id);
+    }
+    if (catalogSortOrder === "precio_asc") {
+      return [...enabled].sort((a, b) => a.salePrice - b.salePrice);
+    }
+    if (catalogSortOrder === "precio_desc") {
+      return [...enabled].sort((a, b) => b.salePrice - a.salePrice);
+    }
+    if (catalogSortOrder === "nombre") {
+      return [...enabled].sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return enabled;
+  }, [products, catalogSortOrder, bestSellerProductIds]);
+
   const bestSellerProducts = useMemo(() => {
     if (bestSellerProductIds.length === 0) return [];
     return bestSellerProductIds
-      .map(id => catalogProducts.find(p => p.id === id))
+      .map(id => products.find(p => p.id === id && p.enabled))
       .filter((p): p is Product => p !== undefined);
-  }, [bestSellerProductIds, catalogProducts]);
+  }, [bestSellerProductIds, products]);
+
+  // Load all reviews for admin moderation
+  useEffect(() => {
+    if (!isAdminLogged) return;
+    let cancelled = false;
+    api.getAllReviews().then((reviews) => {
+      if (!cancelled) setAllReviews(reviews);
+    }).catch((e) => {
+      console.warn("Error cargando todas las reseñas para administración.", e);
+    });
+    return () => { cancelled = true; };
+  }, [isAdminLogged, activeTab]);
+
+  const handleDeleteReview = async (reviewId: number) => {
+    try {
+      await api.deleteProductReview(reviewId);
+      setAllReviews((prev) => prev.filter((r) => r.id !== reviewId));
+      setProductReviews((prev) => prev.filter((r) => r.id !== reviewId));
+    } catch (e) {
+      console.warn("Error al eliminar reseña.", e);
+    }
+  };
 
   // Load reviews when a product is opened
   useEffect(() => {
@@ -1958,6 +2017,17 @@ function App() {
                       console.warn("Error guardando periodo de destacados.", e);
                     }
                   }}
+                  catalogSortOrder={catalogSortOrder}
+                  onChangeCatalogSortOrder={async (order) => {
+                    setCatalogSortOrder(order);
+                    try {
+                      await api.setSetting("catalog_sort_order", order);
+                    } catch (e) {
+                      console.warn("Error guardando orden de catálogo.", e);
+                    }
+                  }}
+                  allReviews={allReviews}
+                  onDeleteReview={handleDeleteReview}
                   onUpdateHeroText={updateHeroText}
                   onUpdateHeroImage={updateHeroImage}
                   onUpdateFeaturedPanelText={updateFeaturedPanelText}
