@@ -102,10 +102,11 @@ function parseAppDate(value?: string | null) {
   return new Date(value);
 }
 
-function getAuthRoute(pathname: string): "confirm" | "reset" | null {
+function getAuthRoute(pathname: string): "confirm" | "reset" | "admin" | null {
   const normalized = pathname.replace(/\/+$/, "") || "/";
   if (normalized === "/auth/confirm") return "confirm";
   if (normalized === "/reset-password") return "reset";
+  if (normalized === "/ninalola") return "admin";
   return null;
 }
 
@@ -281,7 +282,7 @@ function App() {
     cartItemsCount: number;
     cartTotal: number;
   } | null>(null);
-  const [authRoute, setAuthRoute] = useState<"confirm" | "reset" | null>(() => getAuthRoute(window.location.pathname));
+  const [authRoute, setAuthRoute] = useState<"confirm" | "reset" | "admin" | null>(() => getAuthRoute(window.location.pathname));
   const [authConfirmState, setAuthConfirmState] = useState<{
     status: "loading" | "success" | "error";
     message: string;
@@ -565,6 +566,13 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (authRoute === "admin") {
+      setShowAdminLogin(true);
+      window.history.replaceState({}, "", "/");
+      setAuthRoute(null);
+      return;
+    }
+
     if (authRoute !== "confirm") {
       setAuthConfirmState(null);
       return;

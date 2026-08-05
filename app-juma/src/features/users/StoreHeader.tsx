@@ -363,17 +363,6 @@ export default function StoreHeader({
                 </div>
               ) : null}
             </form>
-            {!isAdminLogged ? (
-              <button
-                type="button"
-                onClick={onOpenAdminLogin}
-                className="sr-only"
-                aria-hidden="true"
-                tabIndex={-1}
-              >
-                Abrir acceso admin
-              </button>
-            ) : null}
           </div>
         </div>
       ) : null}
