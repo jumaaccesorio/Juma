@@ -9,12 +9,70 @@
 
   html {
     @apply bg-background;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    overscroll-behavior-x: none;
+    touch-action: manipulation;
   }
 }
 
 @layer base {
   body {
     @apply font-body bg-background text-carbon antialiased;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 100dvh;
+    margin: 0;
+    overflow-x: clip;
+    overscroll-behavior-x: none;
+  }
+
+  #root {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 100dvh;
+    overflow-x: clip;
+  }
+
+  *,
+  *::before,
+  *::after {
+    min-width: 0;
+  }
+
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
+
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  td,
+  th {
+    overflow-wrap: anywhere;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    max-width: 100%;
+  }
+
+  @media (max-width: 767px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
   }
 
   h1,
@@ -50,6 +108,15 @@
 
 /* Admin Panel Utilities */
 @layer utilities {
+  .mobile-safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .mobile-modal {
+    max-height: calc(100dvh - 1rem);
+    overscroll-behavior: contain;
+  }
+
   .admin-scrollbar::-webkit-scrollbar {
     width: 4px;
   }

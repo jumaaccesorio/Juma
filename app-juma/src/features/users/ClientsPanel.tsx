@@ -36,7 +36,7 @@ function ClientsPanel({
   return (
     <div className="min-h-screen bg-[#f4f6fa] text-slate-800 space-y-6 px-4 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-24">
       {/* ── TOP HEADER ── */}
-      <div className="flex flex-col gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="font-headline text-2xl font-extrabold text-slate-900 lg:text-3xl">Administración de Usuarios</h1>
           <p className="mt-1 text-sm font-medium text-slate-500">Directorio de usuarios registrados y comportamiento de compra.</p>
@@ -55,15 +55,15 @@ function ClientsPanel({
 
       {/* ── ADD / EDIT USER FORM ── */}
       <form 
-        className={`rounded-2xl border p-6 shadow-sm transition-all space-y-5 ${
+        className={`rounded-2xl border p-4 shadow-sm transition-all space-y-5 sm:p-6 ${
           editingClientId 
             ? 'bg-amber-50/70 border-amber-200' 
             : 'bg-white border-slate-200/80'
         }`} 
         onSubmit={onAddClient}
       >
-        <div className="flex items-center justify-between pb-4 border-b border-slate-200/60">
-          <div>
+        <div className="flex flex-col gap-3 border-b border-slate-200/60 pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <h2 className="font-headline text-lg font-bold text-slate-900">
               {editingClientId ? 'Editar Usuario' : 'Registrar Nuevo Usuario'}
             </h2>
@@ -75,7 +75,7 @@ function ClientsPanel({
             <button 
               type="button" 
               onClick={onCancelEdit}
-              className="text-amber-700 text-xs font-bold flex items-center gap-1 hover:underline bg-white px-3 py-1.5 rounded-lg border border-amber-200 shadow-2xs"
+              className="flex w-full items-center justify-center gap-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs font-bold text-amber-700 shadow-2xs hover:underline sm:w-auto sm:py-1.5"
             >
               <span translate="no" className="material-symbols-outlined text-[16px]">close</span>
               Cancelar Edición
@@ -127,10 +127,10 @@ function ClientsPanel({
           </div>
         </div>
 
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-stretch pt-2 sm:justify-end">
           <button 
             type="submit" 
-            className={`rounded-xl px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all active:scale-95 ${
+            className={`w-full rounded-xl px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all active:scale-95 sm:w-auto ${
               editingClientId ? 'bg-amber-600 hover:bg-amber-700' : 'bg-slate-900 hover:bg-slate-800'
             }`}
           >
@@ -140,8 +140,8 @@ function ClientsPanel({
       </form>
 
       {/* ── USERS TABLE DIRECTORY ── */}
-      <div className="rounded-2xl bg-white border border-slate-200/80 shadow-sm overflow-hidden space-y-4 p-6">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm space-y-4 sm:p-6">
+        <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-headline text-lg font-bold text-slate-900">Directorio de Usuarios</h2>
             <p className="text-xs text-slate-400">Listado completo de clientes registrados en el sistema.</p>
@@ -155,17 +155,17 @@ function ClientsPanel({
         <div className="space-y-3 lg:hidden">
           {clientStats.map((row) => (
             <div key={`mobile-${row.client.id}`} className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-3">
                   <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-sm font-extrabold text-primary uppercase">
                     {row.client.name.substring(0, 2)}
                   </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">{row.client.name}</p>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-slate-900">{row.client.name}</p>
                     <p className="text-xs text-slate-500">{row.orders.length} pedidos realizados</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center justify-end gap-1.5">
                   {row.client.email && (
                     <button onClick={() => onResetPassword(row.client)} className="rounded-lg bg-white border border-slate-200 p-2 text-amber-600 shadow-2xs hover:bg-amber-50" title="Restablecer acceso">
                       <span translate="no" className="material-symbols-outlined text-base">lock_reset</span>
@@ -184,9 +184,9 @@ function ClientsPanel({
                 </div>
               </div>
               <div className="pt-2 border-t border-slate-200/60 space-y-1.5 text-xs text-slate-600">
-                <div className="flex justify-between">
+                <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between">
                   <span className="text-slate-400">Email / Login:</span>
-                  <span className="font-medium text-slate-800">{row.client.email || "Sin email"}</span>
+                  <span className="break-all font-medium text-slate-800 sm:text-right">{row.client.email || "Sin email"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Teléfono:</span>

@@ -225,7 +225,7 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
   return (
     <div className="min-h-screen bg-[#f4f6fa] text-slate-800 space-y-6 px-4 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-24">
       {/* ── TOP HEADER ── */}
-      <div className="flex flex-col gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="font-headline text-2xl font-extrabold text-slate-900 lg:text-3xl">Carrito Reposición</h1>
           <p className="mt-1 text-sm font-medium text-slate-500">Productos vendidos agrupados para preparar la reposición de stock.</p>
@@ -338,7 +338,7 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
       </div>
 
       {/* ── FILTER CHIPS ── */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {filters.map((filter) => (
           <button
             key={filter.value}
@@ -356,13 +356,83 @@ function RestockCartPanel({ orders, products, onOpenProductDetail }: RestockCart
       </div>
 
       {/* ── RESTOCK TABLE DIRECTORY ── */}
-      <div className="rounded-2xl bg-white border border-slate-200/80 shadow-sm overflow-hidden p-6 space-y-4">
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm space-y-4 sm:p-6">
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <h2 className="font-headline text-lg font-bold text-slate-900">Items para Reposición</h2>
           <span className="text-xs font-bold text-slate-500">{rows.length} ítems</span>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="space-y-3 md:hidden">
+          {rows.map((row) => (
+            <article key={`mobile-${row.product.id}`} className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+              <div className="flex items-start gap-3">
+                <div className="size-12 shrink-0 overflow-hidden rounded-xl border border-slate-200/60 bg-slate-100">
+                  {row.product.image ? (
+                    <ProductImage product={row.product} alt={row.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-slate-300">
+                      <span translate="no" className="material-symbols-outlined text-base">image</span>
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={() => onOpenProductDetail(row.product.id)}
+                    className="block w-full truncate text-left text-sm font-bold text-slate-900"
+                  >
+                    {row.name}
+                  </button>
+                  <p className="truncate text-[11px] font-medium text-slate-400">{row.product.categoryName ?? "General"}</p>
+                  <div className="mt-2 flex flex-wrap gap-2 text-[10px] font-bold">
+                    <span className="rounded-full bg-white px-2 py-1 text-slate-600 ring-1 ring-slate-200">{row.suggestedQuantity} sugeridas</span>
+                    <span className={`rounded-full px-2 py-1 ${row.product.stock <= 2 ? "bg-red-50 text-red-600 ring-1 ring-red-100" : "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100"}`}>Stock {row.product.stock}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-200/70 pt-3">
+                <button
+                  type="button"
+                  onClick={() => updateRow(row.product.id, { requested: !row.requested })}
+                  className={`inline-flex items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-bold ${row.requested ? "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100" : "bg-white text-slate-500 ring-1 ring-slate-200"}`}
+                >
+                  <span translate="no" className="material-symbols-outlined text-[16px]">{row.requested ? "check_circle" : "radio_button_unchecked"}</span>
+                  Pedido
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateRow(row.product.id, { inCart: !row.inCart })}
+                  className={`inline-flex items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-bold ${row.inCart ? "bg-purple-50 text-purple-600 ring-1 ring-purple-100" : "bg-white text-slate-500 ring-1 ring-slate-200"}`}
+                >
+                  <span translate="no" className="material-symbols-outlined text-[16px]">{row.inCart ? "shopping_cart_checkout" : "add_shopping_cart"}</span>
+                  En carrito
+                </button>
+              </div>
+              <div className="mt-2 flex justify-end gap-2">
+                <a
+                  href={row.product.sourceUrl || undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`rounded-lg p-2 ${row.product.sourceUrl ? "text-primary" : "pointer-events-none text-slate-300"}`}
+                  aria-label={`Abrir enlace de ${row.name}`}
+                >
+                  <span translate="no" className="material-symbols-outlined text-lg">open_in_new</span>
+                </a>
+                <button type="button" onClick={() => removeRow(row.product.id)} className="rounded-lg bg-red-50 p-2 text-red-600" aria-label={`Quitar ${row.name}`}>
+                  <span translate="no" className="material-symbols-outlined text-lg">delete</span>
+                </button>
+              </div>
+            </article>
+          ))}
+          {rows.length === 0 && (
+            <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-xs font-semibold text-slate-400">
+              No hay productos para reposición con los filtros actuales.
+            </div>
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">

@@ -3,6 +3,7 @@ import type { Category, Client, Order, OrderItem, Product } from "../../types";
 import { api } from "../../lib/api";
 import { getProductDisplayName } from "../../lib/productLabel";
 import ProductImage from "../../components/ProductImage";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 
 type QuickSaleItem = {
   product: Product;
@@ -44,6 +45,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   const [discountType, setDiscountType] = useState<"percent" | "fixed">("percent");
   const [discountInput, setDiscountInput] = useState<string>("");
   const [customTotalInput, setCustomTotalInput] = useState<string>("");
+  useBodyScrollLock(isMobileCartOpen);
 
   const handleDiscountChange = (val: string) => {
     const sanitized = val.replace(/[^0-9]/g, "");
@@ -303,7 +305,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
       {/* ══════════════════════════════════════════════════
           MOBILE LAYOUT
           ══════════════════════════════════════════════════ */}
-      <div className="mx-auto flex w-full max-w-md min-w-0 flex-1 flex-col overflow-x-hidden bg-background px-4 py-4 pb-32 md:hidden">
+      <div className="mx-auto flex w-full max-w-md min-w-0 flex-1 flex-col overflow-x-clip bg-background px-0 py-4 pb-32 md:hidden">
         {/* Success message */}
         {successMsg && (
           <div className="mb-5 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm font-semibold text-emerald-700 flex items-center gap-2">
@@ -319,11 +321,11 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         )}
 
         {/* Compact Header */}
-        <section ref={mobileCatalogRef} className="mb-4 flex items-center justify-between gap-3">
-          <div className="flex flex-col">
+        <section ref={mobileCatalogRef} className="mb-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 flex-col">
             <h2 className="font-headline text-xl text-ink leading-tight">Venta Rápida</h2>
           </div>
-          <div className="relative shrink-0 w-[160px]">
+          <div className="relative w-full sm:w-[160px] sm:shrink-0">
             <select
               className="w-full appearance-none rounded-lg border border-line bg-white py-1.5 pl-3 pr-8 text-[11px] font-bold text-ink/80 outline-none focus:border-primary/50 shadow-sm truncate"
               value={selectedClientId}
@@ -515,7 +517,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
 
         {/* Mobile Floating Sticky Footer */}
         {cartItemCount > 0 && (
-          <div className="fixed bottom-4 left-4 right-4 z-40 md:hidden">
+          <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:hidden">
             <button
               type="button"
               onClick={() => setIsMobileCartOpen(true)}
@@ -543,8 +545,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
 
         {/* Order Summary Modal (Mobile) */}
         {isMobileCartOpen && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 backdrop-blur-sm md:hidden p-2 transition-opacity">
-            <div className="w-full max-h-[85vh] max-h-[85dvh] bg-background rounded-[24px] shadow-2xl flex flex-col overflow-hidden animate-slide-up border border-line">
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-2 backdrop-blur-sm transition-opacity md:hidden">
+            <div className="mobile-modal flex w-full max-w-md flex-col overflow-hidden rounded-[24px] border border-line bg-background shadow-2xl animate-slide-up">
               
               {/* Modal Header */}
               <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-line/50 bg-white">
@@ -565,7 +567,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
               </div>
 
               {/* Cart Items Mapping */}
-              <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-white">
+              <div className="flex-1 overscroll-contain overflow-y-auto bg-white p-4 space-y-4 sm:p-5">
                 {cart.length === 0 ? (
                   <div className="rounded-xl border-2 border-dashed border-line p-6 text-center text-sm text-muted">
                     No hay productos en el carrito.
@@ -574,9 +576,9 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                   cart.map((item) => (
                     <div
                       key={item.product.id}
-                      className="flex items-start justify-between gap-3 border-b border-line/40 pb-4 last:border-0 last:pb-0"
+                      className="grid grid-cols-[3.5rem_minmax(0,1fr)] gap-3 border-b border-line/40 pb-4 last:border-0 last:pb-0 sm:grid-cols-[4rem_minmax(0,1fr)_auto]"
                     >
-                      <div className="size-16 shrink-0 rounded-lg bg-secondary border border-line overflow-hidden">
+                      <div className="size-14 shrink-0 rounded-lg bg-secondary border border-line overflow-hidden sm:size-16">
                         {item.product.image ? (
                           <ProductImage product={item.product} className="h-full w-full object-cover" alt={getProductDisplayName(item.product)} />
                         ) : (
@@ -607,7 +609,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                           </button>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-2 shrink-0">
+                      <div className="col-span-2 flex flex-row items-center justify-between gap-2 sm:col-span-1 sm:flex-col sm:items-end">
                         <span className="font-semibold text-sm text-primary">${(item.product.salePrice * item.quantity).toLocaleString("es-AR")}</span>
                         <button
                           type="button"
@@ -626,7 +628,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
               </div>
 
               {/* Checkout Footer */}
-              <div className="bg-secondary/30 p-5 border-t border-line/60">
+              <div className="border-t border-line/60 bg-secondary/30 p-4 sm:p-5">
                 <div className="mb-4 space-y-3">
                   <div className="flex justify-between text-xs text-muted font-medium">
                     <span>Subtotal</span>
@@ -634,7 +636,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                   </div>
 
                   {/* Discount + Custom Total row on Mobile */}
-                  <div className="grid grid-cols-2 gap-3 items-center">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-center">
                     <div>
                       <label className="block text-[9px] font-bold uppercase tracking-widest text-muted mb-1">
                         Descuento

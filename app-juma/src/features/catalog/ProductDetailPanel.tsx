@@ -136,11 +136,11 @@ function ProductDetailPanel({ product, onBack, onAddToCart, reviews, averageRati
   };
 
   return (
-    <div ref={detailRef} className="mx-auto w-full max-w-7xl px-6 py-10 md:px-20">
+    <div ref={detailRef} className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 md:px-20 md:py-10">
       <button
         type="button"
         onClick={onBack}
-        className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white px-4 py-2.5 text-sm font-bold uppercase tracking-[0.18em] text-primary shadow-subtle transition-all hover:-translate-x-0.5 hover:border-primary/40 hover:bg-primary/5"
+        className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white px-4 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-primary shadow-subtle transition-all hover:-translate-x-0.5 hover:border-primary/40 hover:bg-primary/5 sm:text-sm sm:tracking-[0.18em]"
       >
         <span translate="no" className="material-symbols-outlined text-base">arrow_back</span>
         Volver al catalogo
@@ -171,7 +171,7 @@ function ProductDetailPanel({ product, onBack, onAddToCart, reviews, averageRati
 
         <div className="flex flex-col justify-center">
           <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary/70">{product.categoryName || "Catalogo"}</p>
-          <h1 className="mt-3 font-headline text-4xl leading-tight text-carbon md:text-5xl">{getProductDisplayName(product)}</h1>
+          <h1 className="mt-3 font-headline text-3xl leading-tight text-carbon sm:text-4xl md:text-5xl">{getProductDisplayName(product)}</h1>
 
           {/* ── Rating summary ── */}
           {reviews.length > 0 && (
@@ -231,7 +231,7 @@ function ProductDetailPanel({ product, onBack, onAddToCart, reviews, averageRati
             </div>
           )}
 
-          <div className="mt-6 flex flex-wrap items-center gap-4">
+          <div className="mt-6 flex flex-col items-stretch gap-4 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="inline-flex items-center rounded-lg border border-primary/15 bg-white p-1 shadow-subtle">
               <button
                 type="button"
@@ -254,7 +254,7 @@ function ProductDetailPanel({ product, onBack, onAddToCart, reviews, averageRati
               type="button"
               disabled={!canAddToCart}
               onClick={handleAddToCart}
-              className={`inline-flex min-h-12 items-center justify-center gap-2 rounded px-8 py-3 text-sm font-bold uppercase tracking-[0.18em] text-white transition-all ${
+              className={`inline-flex min-h-12 w-full items-center justify-center gap-2 rounded px-5 py-3 text-center text-sm font-bold uppercase tracking-[0.12em] text-white transition-all sm:w-auto sm:px-8 sm:tracking-[0.18em] ${
                 canAddToCart
                   ? "bg-primary hover:opacity-90"
                   : "cursor-not-allowed bg-slate-300"
@@ -267,7 +267,7 @@ function ProductDetailPanel({ product, onBack, onAddToCart, reviews, averageRati
             <button
               type="button"
               onClick={onBack}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded border border-line bg-white px-6 py-3 text-sm font-bold uppercase tracking-[0.18em] text-ink transition-all hover:border-primary/35 hover:text-primary"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded border border-line bg-white px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-ink transition-all hover:border-primary/35 hover:text-primary sm:w-auto sm:tracking-[0.18em]"
             >
               <span translate="no" className="material-symbols-outlined text-sm">arrow_back</span>
               Volver

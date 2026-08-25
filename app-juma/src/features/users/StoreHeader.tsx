@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Category, Client, Tab } from "../../types";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 
 type StoreHeaderProps = {
   activeTab: Tab;
@@ -23,7 +24,6 @@ type StoreHeaderProps = {
   onCatalogSearchSubmit: () => void;
   onAdminFormChange: (form: { user: string; password: string }) => void;
   onLoginAdmin: (e: React.FormEvent<HTMLFormElement>) => void;
-  onOpenAdminLogin: () => void;
   onCloseAdminLogin: () => void;
   onLoginClientClick: () => void;
   onLogoutClient: () => void;
@@ -51,11 +51,12 @@ export default function StoreHeader({
   onCatalogSearchSubmit,
   onAdminFormChange,
   onLoginAdmin,
-  onOpenAdminLogin,
   onCloseAdminLogin,
   onLoginClientClick,
   onLogoutClient,
 }: StoreHeaderProps) {
+  useBodyScrollLock(showAdminLogin);
+
   const [showCatalogMenu, setShowCatalogMenu] = useState(false);
   const [showClientMenu, setShowClientMenu] = useState(false);
   const catalogMenuRef = useRef<HTMLDivElement | null>(null);
@@ -109,8 +110,8 @@ export default function StoreHeader({
   return (
     <>
       <div className="w-full bg-primary px-4 py-2 text-center">
-        <p className="flex items-center justify-center gap-4 text-xs font-medium uppercase tracking-wider text-white">
-          Envio gratis en compras superiores a $50.000
+        <p className="flex flex-col items-center justify-center gap-1 text-[10px] font-medium uppercase tracking-wider text-white sm:flex-row sm:gap-4 sm:text-xs">
+          <span>Envio gratis en compras superiores a $50.000</span>
           <a
             className="inline-flex items-center gap-1 decoration-white/50 hover:underline"
             href="https://www.instagram.com/juma.accessory/"
@@ -123,13 +124,13 @@ export default function StoreHeader({
         </p>
       </div>
 
-      <header className="sticky top-0 z-50 flex flex-col items-center gap-4 border-b border-primary/10 bg-background/80 px-6 py-4 shadow-sm backdrop-blur-md md:px-20">
+      <header className="sticky top-0 z-50 flex max-w-full flex-col items-center gap-4 border-b border-primary/10 bg-background/80 px-4 py-4 shadow-sm backdrop-blur-md sm:px-6 md:px-20">
         <div className="flex w-full flex-col items-center justify-between gap-4 md:flex-row">
           <div className="group flex cursor-pointer flex-col items-start select-none" onClick={onOpenCatalogHome}>
-            <h2 className="font-serif text-3xl font-black uppercase leading-tight tracking-tight text-primary transition-colors group-hover:text-primary/80">
+            <h2 className="font-serif text-2xl font-black uppercase leading-tight tracking-tight text-primary transition-colors group-hover:text-primary/80 sm:text-3xl">
               Juma Accessory
             </h2>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/60">
+            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-primary/60 sm:text-[10px] sm:tracking-[0.2em]">
               Plata 925, accesorios de acero blanco y dorado
             </p>
           </div>
@@ -158,11 +159,11 @@ export default function StoreHeader({
               </div>
             </label>
 
-            <div className="flex items-center gap-4">
+            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
               {currentClient ? (
                 <div className="relative">
                   <button
-                    className={`flex items-center gap-2 rounded-full border px-3 py-1.5 pr-4 text-xs font-bold uppercase tracking-wider transition-colors ${
+                    className={`flex min-w-0 items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors sm:px-3 sm:pr-4 ${
                       activeTab === "perfil" || showClientMenu
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-slate-200 text-slate-600 hover:border-primary hover:text-primary"
@@ -173,7 +174,7 @@ export default function StoreHeader({
                     <div className="flex size-6 items-center justify-center rounded-full bg-primary text-white">
                       <span translate="no" className="material-symbols-outlined text-[14px]">person</span>
                     </div>
-                    {currentClient.name.split(" ")[0]}
+                    <span className="max-w-24 truncate sm:max-w-40">{currentClient.name.split(" ")[0]}</span>
                     <span translate="no" className={`material-symbols-outlined text-[16px] transition-transform ${showClientMenu ? "rotate-180" : ""}`}>
                       expand_more
                     </span>
@@ -238,14 +239,14 @@ export default function StoreHeader({
           </div>
         </div>
 
-        <nav className="relative z-20 mt-2 flex w-full items-center gap-8 overflow-visible py-2 pb-0 text-sm font-bold uppercase tracking-widest text-slate-400">
+        <nav className="relative z-20 mt-2 grid w-full grid-cols-3 items-center gap-1 overflow-visible py-2 pb-0 text-xs font-bold uppercase tracking-wider text-slate-400 sm:text-sm sm:tracking-widest">
           <button
-            className={`border-b-2 pb-2 transition-colors hover:text-primary ${isHomeActive ? "border-primary text-primary" : "border-transparent"}`}
+            className={`justify-self-center border-b-2 pb-2 transition-colors hover:text-primary ${isHomeActive ? "border-primary text-primary" : "border-transparent"}`}
             onClick={onOpenCatalogHome}
           >
             Inicio
           </button>
-          <div ref={catalogMenuRef} className="relative shrink-0">
+          <div ref={catalogMenuRef} className="relative min-w-0 justify-self-center">
             <button
               type="button"
               className={`flex items-center gap-1 border-b-2 pb-2 transition-colors ${
@@ -262,7 +263,7 @@ export default function StoreHeader({
               </span>
             </button>
             {showCatalogMenu ? (
-              <div className="absolute left-0 top-full z-[90] mt-3 min-w-[240px] overflow-hidden border border-primary/20 bg-white shadow-xl">
+              <div className="absolute left-1/2 top-full z-[90] mt-3 w-[min(15rem,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden border border-primary/20 bg-white shadow-xl md:left-0 md:translate-x-0">
                 <div className="h-1.5 bg-primary" />
                 <div className="py-4">
                   {visibleCategories.map((category) => (
@@ -283,7 +284,7 @@ export default function StoreHeader({
             ) : null}
           </div>
           <button
-            className={`border-b-2 pb-2 transition-colors hover:text-primary ${activeTab === "carrito" ? "border-primary text-primary" : "border-transparent"}`}
+            className={`justify-self-center border-b-2 pb-2 transition-colors hover:text-primary ${activeTab === "carrito" ? "border-primary text-primary" : "border-transparent"}`}
             onClick={() => {
               onSetActiveTab("carrito");
               scrollToPageTop();
@@ -295,8 +296,8 @@ export default function StoreHeader({
       </header>
 
       {!isAdminLogged && showAdminLogin ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-carbon/80 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-carbon/80 p-3 backdrop-blur-sm sm:p-4">
+          <div className="mobile-modal relative w-full max-w-md overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl sm:p-8">
             <button
               className="absolute right-4 top-4 text-slate-400 transition-colors hover:text-primary"
               onClick={onCloseAdminLogin}

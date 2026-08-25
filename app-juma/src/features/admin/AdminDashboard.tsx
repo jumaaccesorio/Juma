@@ -126,7 +126,7 @@ export default function AdminDashboard({
   return (
     <div key={refreshKey} className="min-h-screen bg-[#f4f6fa] text-slate-800 space-y-6 px-4 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-24">
       {/* ── TOP BANNER & ACTION HEADER ── */}
-      <div className="flex flex-col gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="font-headline text-2xl font-extrabold text-slate-900 lg:text-3xl">Reporte del día</h1>
@@ -243,7 +243,7 @@ export default function AdminDashboard({
       {/* ── MIDDLE ROW (MEDIOS DE PAGO & ACTIVIDAD POR HORA) ── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Left Column: Medios de Pago */}
-        <div className="flex flex-col justify-between rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm lg:col-span-4">
+        <div className="flex flex-col justify-between rounded-2xl bg-white p-4 sm:p-6 border border-slate-200/80 shadow-sm lg:col-span-4">
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div>
@@ -324,7 +324,7 @@ export default function AdminDashboard({
         </div>
 
         {/* Right Column: Actividad por hora */}
-        <div className="flex flex-col justify-between rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm lg:col-span-8">
+        <div className="flex flex-col justify-between rounded-2xl bg-white p-4 sm:p-6 border border-slate-200/80 shadow-sm lg:col-span-8">
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <div>
               <h2 className="font-headline text-lg font-bold text-slate-900">Actividad por hora</h2>
@@ -385,7 +385,7 @@ export default function AdminDashboard({
       </div>
 
       {/* ── BOTTOM ROW: PRODUCTOS VENDIDOS HOY ── */}
-      <div className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm space-y-4">
+      <div className="rounded-2xl bg-white p-4 sm:p-6 border border-slate-200/80 shadow-sm space-y-4">
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div>
             <h2 className="font-headline text-lg font-bold text-slate-900">Productos vendidos hoy</h2>
@@ -402,7 +402,31 @@ export default function AdminDashboard({
             <p className="text-xs font-semibold text-slate-500">Todavía no hay productos vendidos hoy.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="space-y-3 md:hidden">
+            {soldProductsToday.map(({ product, quantity, total }) => {
+              const categoryName = product.categoryId ? categoryMap.get(product.categoryId) : product.categoryName;
+              return (
+                <article key={`mobile-${product.id}`} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                  <div className="size-11 shrink-0 overflow-hidden rounded-lg border border-slate-200/60 bg-slate-100">
+                    {product.image ? (
+                      <ProductImage product={product} alt={getProductDisplayName(product)} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-slate-300">
+                        <span translate="no" className="material-symbols-outlined text-base">image</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-800">{getProductDisplayName(product)}</p>
+                    <p className="truncate text-[11px] text-slate-500">{categoryName || "General"} · {quantity} u.</p>
+                  </div>
+                  <p className="shrink-0 font-mono text-sm font-bold text-emerald-600">${total.toLocaleString("es-AR")}</p>
+                </article>
+              );
+            })}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -452,6 +476,7 @@ export default function AdminDashboard({
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
 

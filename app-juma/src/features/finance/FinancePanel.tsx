@@ -242,7 +242,7 @@ function FinancePanel({
   ] as const;
 
   return (
-    <div className="min-h-screen bg-[#f4f6fa] text-slate-800 space-y-6 px-0 pb-12 pt-20 sm:px-0 lg:px-0 lg:pt-24">
+    <div className="min-h-screen bg-[#f4f6fa] text-slate-800 space-y-6 px-4 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-24">
       {/* ── TOP HEADER ── */}
       <div className="flex flex-col gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>

@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import type { Category, Product, ProductSize } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
 import ProductImage from "../../components/ProductImage";
@@ -97,6 +98,7 @@ function ProductsPanel({
   const [newSizeInput, setNewSizeInput] = useState("");
   const [newSizeStock, setNewSizeStock] = useState("1");
   const [isSavingSizes, setIsSavingSizes] = useState(false);
+  useBodyScrollLock(editingProductId !== null);
 
   useEffect(() => {
     setDrafts(() => {
@@ -252,7 +254,7 @@ function ProductsPanel({
   return (
     <div className="min-h-screen bg-[#f4f6fa] text-slate-800 space-y-6 px-4 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-24">
       {/* ── TOP HEADER ── */}
-      <div className="flex flex-col gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="font-headline text-2xl font-extrabold text-slate-900 lg:text-3xl">Gestión de Productos e Inventario</h1>
           <p className="mt-1 text-sm font-medium text-slate-500">Gestioná tu catálogo de joyería, variantes de talles, inventario y categorías.</p>
@@ -500,7 +502,7 @@ function ProductsPanel({
       )}
 
       {/* ── PRODUCTS DIRECTORY CONTAINER ── */}
-      <div className="rounded-2xl bg-white border border-slate-200/80 shadow-sm overflow-hidden p-6 space-y-4">
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm space-y-4 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-1.5 overflow-x-auto">
             <button
@@ -780,11 +782,11 @@ function ProductsPanel({
 
       {editingProduct && editingDraft && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#2D2D2D]/35 p-0 backdrop-blur-[2px] md:items-center md:p-4">
-          <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-2xl border border-line bg-background shadow-[0_24px_80px_rgba(45,45,45,0.16)] md:max-w-3xl md:rounded-xl">
-            <div className="flex items-start justify-between border-b border-line px-6 py-5">
+          <div className="mobile-modal w-full overflow-y-auto rounded-t-2xl border border-line bg-background shadow-[0_24px_80px_rgba(45,45,45,0.16)] md:max-w-3xl md:rounded-xl">
+            <div className="flex items-start justify-between gap-3 border-b border-line px-4 py-4 sm:px-6 sm:py-5">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-muted">Editor de producto</p>
-                <h3 className="mt-2 font-serif text-3xl text-ink">{getProductDisplayName(editingProduct)}</h3>
+                <h3 className="mt-2 font-serif text-2xl text-ink sm:text-3xl">{getProductDisplayName(editingProduct)}</h3>
                 <p className="mt-1 text-sm text-muted">Modifica el producto seleccionado sin salir del listado.</p>
               </div>
               <button
@@ -799,7 +801,7 @@ function ProductsPanel({
               </button>
             </div>
 
-            <div className="grid gap-6 px-6 py-6 md:grid-cols-[220px_minmax(0,1fr)]">
+            <div className="grid gap-6 px-4 py-5 sm:px-6 sm:py-6 md:grid-cols-[220px_minmax(0,1fr)]">
               <div className="space-y-4">
                 <div className="overflow-hidden rounded-xl border border-line bg-secondary">
                   <div className="flex aspect-square items-center justify-center">
@@ -937,7 +939,7 @@ function ProductsPanel({
             </div>
 
             {/* ── Gestor de Talles ────────────────────────── */}
-            <div className="border-t border-line px-6 py-5">
+            <div className="border-t border-line px-4 py-5 sm:px-6">
               <p className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-muted">Talles disponibles</p>
               <div className="flex flex-wrap gap-2 mb-4">
                 {(sizeDrafts[editingProduct.id] ?? []).length === 0 ? (
@@ -1001,7 +1003,7 @@ function ProductsPanel({
               )}
             </div>
 
-            <div className="flex flex-col gap-3 border-t border-line px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 border-t border-line px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <button
                 type="button"
                 onClick={() => {

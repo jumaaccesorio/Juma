@@ -38,7 +38,7 @@ export default function CommunityPanel({ subscribers, onDeleteSubscriber }: Comm
   return (
     <div className="min-h-screen bg-[#f4f6fa] text-slate-800 space-y-6 px-4 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-24">
       {/* ── TOP HEADER ── */}
-      <div className="flex flex-col gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="font-headline text-2xl font-extrabold text-slate-900 lg:text-3xl">Comunidad y Novedades</h1>
           <p className="mt-1 text-sm font-medium text-slate-500">Emails de suscriptores registrados desde el catálogo online.</p>
@@ -49,7 +49,7 @@ export default function CommunityPanel({ subscribers, onDeleteSubscriber }: Comm
             type="button"
             onClick={copyAllEmails}
             disabled={filtered.length === 0}
-            className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-slate-800 disabled:opacity-40"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-slate-800 disabled:opacity-40 sm:w-auto"
           >
             <span translate="no" className="material-symbols-outlined text-[18px]">content_copy</span>
             {copiedId === -1 ? "¡Copiados!" : "Copiar todos los emails"}
@@ -96,7 +96,7 @@ export default function CommunityPanel({ subscribers, onDeleteSubscriber }: Comm
       </div>
 
       {/* ── DIRECTORY TABLE ── */}
-      <div className="rounded-2xl bg-white border border-slate-200/80 shadow-sm overflow-hidden p-6 space-y-4">
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm space-y-4 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100">
           <div>
             <h2 className="font-headline text-lg font-bold text-slate-900">Lista de Suscriptores</h2>
@@ -114,8 +114,50 @@ export default function CommunityPanel({ subscribers, onDeleteSubscriber }: Comm
           </div>
         </div>
 
-        {/* Table View */}
-        <div className="overflow-x-auto">
+        {/* Mobile cards */}
+        <div className="space-y-3 md:hidden">
+          {filtered.map((sub) => (
+            <article key={`mobile-${sub.id}`} className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-xs font-extrabold uppercase text-purple-700">
+                  {sub.email.slice(0, 2)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="break-all text-sm font-bold text-slate-900">{sub.email}</p>
+                  <p className="mt-1 text-[11px] font-medium text-slate-500">
+                    {new Date(sub.createdAt).toLocaleDateString("es-AR", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-200/70 pt-3">
+                <button
+                  type="button"
+                  onClick={() => copyEmail(sub.email, sub.id)}
+                  className="inline-flex items-center gap-1 rounded-xl bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm ring-1 ring-slate-200"
+                >
+                  <span translate="no" className="material-symbols-outlined text-[16px]">{copiedId === sub.id ? "check" : "content_copy"}</span>
+                  {copiedId === sub.id ? "Copiado" : "Copiar"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDeleteSubscriber(sub.id)}
+                  className="rounded-xl bg-red-50 p-2 text-red-600"
+                  aria-label={`Eliminar suscriptor ${sub.email}`}
+                >
+                  <span translate="no" className="material-symbols-outlined text-lg">delete</span>
+                </button>
+              </div>
+            </article>
+          ))}
+          {filtered.length === 0 && (
+            <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-xs font-semibold text-slate-400">
+              No hay suscriptores registrados.
+            </div>
+          )}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">

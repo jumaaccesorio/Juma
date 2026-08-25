@@ -1919,7 +1919,7 @@ function App() {
 
   if (isAdminTab) {
     return (
-      <div className="flex min-h-screen bg-background font-body text-ink overflow-x-hidden">
+      <div className="flex min-h-screen w-full max-w-full overflow-x-clip bg-background font-body text-ink">
         <AdminSidebar
           activeTab={activeTab}
           onSetActiveTab={setActiveTab}
@@ -1927,7 +1927,7 @@ function App() {
           onClose={() => setIsAdminSidebarOpen(false)}
           onLogout={logoutAdmin}
         />
-        <main className="flex min-h-screen flex-1 flex-col overflow-x-hidden md:ml-64">
+        <main className="flex min-h-screen min-w-0 flex-1 flex-col overflow-x-clip md:ml-64">
           <AdminTopNav
             onOpenMenu={() => setIsAdminSidebarOpen(true)}
             onPreview={() => setActiveTab("catalogo")}
@@ -1937,7 +1937,7 @@ function App() {
             lowStockProducts={lowStockProducts}
           />
           
-          <div className="flex-1 overflow-x-hidden pb-28 md:pb-0">
+          <div className="min-w-0 flex-1 overflow-x-clip pb-28 md:pb-0">
             {error ? (
               <div className="px-4 pt-20 sm:px-6 lg:px-10">
                 <div className="bg-red-50 text-red-500 p-4 rounded-xl text-center text-sm font-bold tracking-widest uppercase flex items-center justify-center gap-2 border border-red-100">
@@ -1998,7 +1998,7 @@ function App() {
             )}
 
             {activeTab === "inicio_admin" && (
-              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
+              <div className="contents">
                 <AdminHomePanel
                   heroBanner={heroBanner ?? DEFAULT_HERO_BANNER}
                   featuredPanels={featuredPanels.length > 0 ? featuredPanels : DEFAULT_FEATURED_PANELS}
@@ -2044,7 +2044,7 @@ function App() {
             )}
 
             {activeTab === "productos" && (
-              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
+              <div className="contents">
                 <ProductsPanel
                   products={products}
                   categories={categories}
@@ -2070,7 +2070,7 @@ function App() {
             )}
 
             {activeTab === "clientes" && (
-              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
+              <div className="contents">
                 <ClientsPanel
                   clientForm={clientForm}
                   clientStats={clientStats}
@@ -2089,7 +2089,7 @@ function App() {
             )}
 
             {activeTab === "pedidos" && (
-              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
+              <div className="contents">
                 <OrdersPanel
                   clients={clients}
                   products={products}
@@ -2116,7 +2116,7 @@ function App() {
             )}
 
             {activeTab === "reposicion" && (
-              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
+              <div className="contents">
                 <RestockCartPanel
                   orders={orders}
                   products={products}
@@ -2126,7 +2126,7 @@ function App() {
             )}
 
             {activeTab === "finanzas" && (
-              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
+              <div className="contents">
                 <FinancePanel
                   finance={finance}
                   onAddExpense={addFinanceExpense}
@@ -2159,7 +2159,7 @@ function App() {
           </div>
 
           {activeTab !== "venta_rapida" && (
-            <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-line/80 bg-background/98 px-2 pb-6 pt-2 text-primary shadow-[0_-10px_30px_rgba(45,45,45,0.08)] backdrop-blur-sm md:hidden">
+            <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-line/80 bg-background/98 px-1 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 text-primary shadow-[0_-10px_30px_rgba(45,45,45,0.08)] backdrop-blur-sm md:hidden">
               {[
                 { id: "dashboard", label: "Inicio", icon: "dashboard" },
                 { id: "venta_rapida", label: "Ventas", icon: "payments" },
@@ -2172,7 +2172,7 @@ function App() {
                     key={item.id}
                     type="button"
                     onClick={() => setActiveTab(item.id as Tab)}
-                    className={`flex flex-col items-center justify-center px-3 py-1 transition-opacity ${
+                    className={`flex min-w-0 flex-1 flex-col items-center justify-center px-1 py-1 transition-opacity ${
                       isActive
                         ? "scale-90 rounded-xl bg-primary/14 text-primary"
                         : "text-muted hover:text-primary"
@@ -2190,7 +2190,7 @@ function App() {
               <button
                 type="button"
                 onClick={() => setIsAdminSidebarOpen(true)}
-                className="flex flex-col items-center justify-center px-3 py-1 text-muted transition-opacity hover:text-primary"
+                className="flex min-w-0 flex-1 flex-col items-center justify-center px-1 py-1 text-muted transition-opacity hover:text-primary"
               >
                 <span translate="no" className="material-symbols-outlined">more_horiz</span>
                 <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.1em]">Más</span>
@@ -2203,7 +2203,7 @@ function App() {
   }
 
   return (
-    <div className="layout-container flex min-h-screen flex-col">
+    <div className="layout-container flex min-h-screen min-w-0 max-w-full flex-col overflow-x-clip">
         <StoreHeader
           activeTab={activeTab}
           isAdminLogged={isAdminLogged}
@@ -2226,7 +2226,6 @@ function App() {
           onCatalogSearchSubmit={submitCatalogSearch}
           onAdminFormChange={setAdminForm}
           onLoginAdmin={loginAdmin}
-          onOpenAdminLogin={openAdminAccess}
           onCloseAdminLogin={() => setShowAdminLogin(false)}
           onLoginClientClick={() => { setAuthModalMode("login"); setShowAuthModal(true); }}
           onLogoutClient={() => {

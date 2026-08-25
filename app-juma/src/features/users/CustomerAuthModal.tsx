@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { api } from "../../lib/api";
 import type { Client } from "../../types";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 
 type CustomerAuthModalProps = {
   onClose: () => void;
@@ -10,6 +11,8 @@ type CustomerAuthModalProps = {
 };
 
 export default function CustomerAuthModal({ onClose, onSuccess, allowGuest, onGuestContinue }: CustomerAuthModalProps): React.ReactElement {
+  useBodyScrollLock(true);
+
   const [tab, setTab] = useState<"login" | "register" | "guest" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,8 +60,8 @@ export default function CustomerAuthModal({ onClose, onSuccess, allowGuest, onGu
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-carbon/80 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl relative">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-carbon/80 p-3 backdrop-blur-sm sm:p-4">
+      <div className="mobile-modal relative w-full max-w-md overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl sm:p-8">
         <button 
           className="absolute top-4 right-4 text-slate-400 hover:text-primary transition-colors"
           onClick={onClose}
@@ -66,22 +69,22 @@ export default function CustomerAuthModal({ onClose, onSuccess, allowGuest, onGu
           <span translate="no" className="material-symbols-outlined">close</span>
         </button>
 
-        <h3 className="font-serif text-3xl font-light text-slate-800 mb-6 text-center">
+        <h3 className="mb-6 px-8 text-center font-serif text-2xl font-light text-slate-800 sm:text-3xl">
           {tab === "login" ? "Ingresa a tu cuenta" : tab === "register" ? "Crea una cuenta" : tab === "forgot" ? "Restablecer acceso" : "Checkout Rápido"}
         </h3>
 
         {tab !== "forgot" ? (
-        <div className="flex bg-slate-100 p-1 rounded-lg mb-6">
+        <div className="mb-6 grid grid-cols-3 rounded-lg bg-slate-100 p-1">
           <button 
             type="button"
-            className={`flex-1 py-2 text-sm font-bold rounded-md transition-colors ${tab === "login" ? "bg-white text-primary shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+            className={`rounded-md px-1 py-2 text-[11px] font-bold transition-colors sm:text-sm ${tab === "login" ? "bg-white text-primary shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
             onClick={() => setTab("login")}
           >
             Ingresar
           </button>
           <button 
             type="button"
-            className={`flex-1 py-2 text-sm font-bold rounded-md transition-colors ${tab === "register" ? "bg-white text-primary shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+            className={`rounded-md px-1 py-2 text-[11px] font-bold transition-colors sm:text-sm ${tab === "register" ? "bg-white text-primary shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
             onClick={() => setTab("register")}
           >
             Registrarme
@@ -89,7 +92,7 @@ export default function CustomerAuthModal({ onClose, onSuccess, allowGuest, onGu
           {allowGuest && (
             <button 
               type="button"
-              className={`flex-1 py-2 text-sm font-bold rounded-md transition-colors ${tab === "guest" ? "bg-white text-primary shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+              className={`rounded-md px-1 py-2 text-[11px] font-bold transition-colors sm:text-sm ${tab === "guest" ? "bg-white text-primary shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
               onClick={() => setTab("guest")}
             >
               Invitado

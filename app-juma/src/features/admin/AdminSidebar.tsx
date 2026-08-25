@@ -1,4 +1,5 @@
 import type { Tab } from "../../types";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 
 type AdminSidebarProps = {
   activeTab: Tab;
@@ -9,6 +10,8 @@ type AdminSidebarProps = {
 };
 
 export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClose, onLogout }: AdminSidebarProps) {
+  useBodyScrollLock(isOpen);
+
   const menuItems = [
     { id: "dashboard", label: "Inicio", icon: "dashboard" },
     { id: "venta_rapida", label: "Venta Rápida", icon: "bolt" },
@@ -38,7 +41,7 @@ export default function AdminSidebar({ activeTab, onSetActiveTab, isOpen, onClos
 
       <aside
         className={`
-          fixed left-0 top-0 h-screen w-[20rem] md:w-64 bg-sidebar flex flex-col z-50
+          fixed left-0 top-0 h-dvh w-[min(20rem,calc(100vw-1rem))] md:w-64 bg-sidebar flex flex-col z-50
           sidebar-transition
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           md:translate-x-0

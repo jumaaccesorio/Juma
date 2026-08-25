@@ -60,7 +60,7 @@ function AdminHomePanel({
   return (
     <div className="min-h-screen bg-[#f4f6fa] text-slate-800 space-y-6 px-4 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-24">
       {/* ── TOP HEADER ── */}
-      <div className="flex flex-col gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="font-headline text-2xl font-extrabold text-slate-900 lg:text-3xl">Configuración del Inicio</h1>
           <p className="mt-1 text-sm font-medium text-slate-500">Gestioná los banners principales y los carteles destacados de la tienda.</p>
@@ -82,7 +82,7 @@ function AdminHomePanel({
       </div>
 
       {/* ── CATALOG SORTING & FEATURED PERIOD CONFIG ── */}
-      <div className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm space-y-6">
+      <div className="rounded-2xl bg-white p-4 sm:p-6 border border-slate-200/80 shadow-sm space-y-6">
         <div className="flex items-center gap-2 pb-4 border-b border-slate-100">
           <div className="flex size-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
             <span translate="no" className="material-symbols-outlined text-lg">sort</span>
@@ -119,11 +119,11 @@ function AdminHomePanel({
                         : "border-slate-100 bg-slate-50/50 text-slate-600 hover:border-slate-300"
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
                       <span translate="no" className={`material-symbols-outlined text-lg ${isActive ? "text-primary" : "text-slate-400"}`}>
                         {opt.icon}
                       </span>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-xs font-bold">{opt.label}</p>
                         <p className="text-[11px] text-slate-400 font-normal">{opt.desc}</p>
                       </div>
@@ -178,7 +178,7 @@ function AdminHomePanel({
       </div>
 
       {/* ── GESTIÓN DE RESEÑAS Y COMENTARIOS DE CLIENTES ── */}
-      <div className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm space-y-6">
+      <div className="rounded-2xl bg-white p-4 sm:p-6 border border-slate-200/80 shadow-sm space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <div className="flex size-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
@@ -258,7 +258,7 @@ function AdminHomePanel({
 
       <div className="space-y-6">
         {/* ── HERO BANNER EDITOR ── */}
-        <div className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm space-y-6">
+        <div className="rounded-2xl bg-white p-4 sm:p-6 border border-slate-200/80 shadow-sm space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <div className="flex size-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
@@ -329,7 +329,7 @@ function AdminHomePanel({
         </div>
 
         {/* ── FEATURED PANELS EDITOR ── */}
-        <div className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm space-y-6">
+        <div className="rounded-2xl bg-white p-4 sm:p-6 border border-slate-200/80 shadow-sm space-y-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <div className="flex size-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">

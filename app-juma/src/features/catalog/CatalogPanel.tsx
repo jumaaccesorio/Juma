@@ -189,7 +189,7 @@ function CatalogPanel({
     <div ref={panelRef} className="flex flex-col">
       {viewMode === "home" ? (
         <>
-      <section className="relative h-[716px] min-h-[500px] w-full overflow-hidden">
+      <section className="relative h-[560px] min-h-[460px] w-full overflow-hidden sm:h-[640px] md:h-[716px]">
         {isHomeContentLoaded && heroBanner ? (
           <>
             <img
@@ -201,9 +201,9 @@ function CatalogPanel({
               fetchPriority="high"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-[rgba(45,45,45,0.58)] to-transparent" />
-            <div className="relative h-full flex flex-col items-start justify-center px-6 md:px-40 gap-6">
+            <div className="relative flex h-full flex-col items-start justify-center gap-6 px-4 sm:px-6 md:px-40">
               <div className="max-w-xl">
-                <h1 className="font-headline text-white text-5xl md:text-7xl font-light leading-tight tracking-tight">
+                <h1 className="font-headline text-4xl font-light leading-tight tracking-tight text-white sm:text-5xl md:text-7xl">
                   {heroTitleLines.length > 1 ? (
                     <>
                       {heroTitleLines[0]} <br />
@@ -218,7 +218,7 @@ function CatalogPanel({
               <button
                 type="button"
                 onClick={onOpenFullCatalog}
-                className="group flex items-center gap-2 rounded border border-primary bg-background/85 px-5 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-primary shadow-subtle backdrop-blur transition-all hover:bg-primary hover:text-white"
+                className="group flex w-full max-w-sm items-center justify-center gap-2 rounded border border-primary bg-background/85 px-4 py-2.5 text-center text-xs font-bold uppercase tracking-[0.14em] text-primary shadow-subtle backdrop-blur transition-all hover:bg-primary hover:text-white sm:w-auto sm:px-5 sm:tracking-[0.18em]"
               >
                 <span>{heroBanner.tag || "Ver Coleccion"}</span>
                 <span translate="no" className="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
@@ -231,7 +231,7 @@ function CatalogPanel({
       </section>
 
       {isHomeContentLoaded && featuredPanels.length > 0 ? (
-        <section className="px-6 py-20 md:px-40">
+        <section className="px-4 py-12 sm:px-6 sm:py-16 md:px-40 md:py-20">
           <div className="mb-12 flex flex-col items-center text-center">
             <span className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-primary">Seleccion Exclusiva</span>
             <h2 className="font-headline text-3xl font-light text-carbon">Nuestras Categorias</h2>
@@ -263,7 +263,7 @@ function CatalogPanel({
           </div>
         </section>
       ) : null}
-      <section className="bg-background px-6 py-20 md:px-40">
+      <section className="bg-background px-4 py-12 sm:px-6 sm:py-16 md:px-40 md:py-20">
         <div className="mb-12 flex flex-col items-center text-center">
           <span className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-primary">Los más elegidos</span>
           <h2 className="font-headline text-3xl font-light text-carbon">Piezas destacadas</h2>
@@ -337,8 +337,8 @@ function CatalogPanel({
       ) : null}
 
       {viewMode !== "home" ? (
-      <section ref={productsGridRef} id="catalog-products-section" className="bg-primary/[0.03] px-6 md:px-40 py-20">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
+      <section ref={productsGridRef} id="catalog-products-section" className="bg-primary/[0.03] px-4 py-12 sm:px-6 sm:py-16 md:px-40 md:py-20">
+        <div className="mb-10 flex flex-col items-start justify-between gap-4 md:mb-12 md:flex-row md:items-end">
           <div className="flex flex-col">
             <span className="text-primary font-bold tracking-[0.3em] uppercase text-xs mb-2">{viewMode === "search" ? "Busqueda" : "Catalogo Online"}</span>
             <h2 className="font-headline text-carbon text-3xl font-light">{sectionTitle}</h2>
@@ -534,8 +534,8 @@ function CommunitySubscribeSection({ onSubscribe }: { onSubscribe: (email: strin
   };
 
   return (
-    <section className="px-6 md:px-40 py-20 bg-background">
-      <div className="rounded bg-secondary/45 border border-line p-8 md:p-16 flex flex-col items-center text-center gap-6 shadow-subtle">
+    <section className="bg-background px-4 py-12 sm:px-6 sm:py-16 md:px-40 md:py-20">
+      <div className="flex flex-col items-center gap-6 rounded border border-line bg-secondary/45 p-5 text-center shadow-subtle sm:p-8 md:p-16">
         <span translate="no" className="material-symbols-outlined text-5xl text-primary/50">mail</span>
         <h2 className="font-headline text-3xl font-light text-carbon">Unite a nuestra comunidad</h2>
         <p className="text-muted max-w-lg">Suscribite para recibir novedades, promociones exclusivas y un 10% OFF en tu primera compra.</p>

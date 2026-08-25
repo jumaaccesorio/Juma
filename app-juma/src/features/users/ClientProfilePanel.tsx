@@ -15,8 +15,8 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
 
   return (
-    <div className="max-w-5xl mx-auto w-full px-6 md:px-20 py-10 space-y-12 min-h-screen">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-slate-200 pb-10">
+    <div className="mx-auto min-h-screen w-full max-w-5xl space-y-10 px-4 py-8 sm:px-6 md:px-20 md:py-10">
+      <div className="flex flex-col items-start justify-between gap-6 border-b border-slate-200 pb-8 md:flex-row md:items-center md:pb-10">
         <div>
           <h1 className="font-serif text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Mi Cuenta</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2">¡Hola, {clientName}! Aquí puedes revisar el estado de todos tus pedidos.</p>
@@ -24,7 +24,7 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
         <button 
           id="client-profile-logout"
           onClick={onLogout}
-          className="bg-red-50 text-red-600 hover:bg-red-100 px-6 py-2 rounded-md font-bold text-sm transition-colors flex items-center gap-2"
+          className="flex w-full items-center justify-center gap-2 rounded-md bg-red-50 px-6 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-100 sm:w-auto"
         >
           <span translate="no" className="material-symbols-outlined">logout</span>
           Cerrar Sesión
@@ -44,11 +44,11 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
             {myOrders.map(order => (
               <div key={order.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
                 <div 
-                  className="p-6 cursor-pointer flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group"
+                  className="group flex cursor-pointer flex-col items-start justify-between gap-4 p-4 sm:p-6 md:flex-row md:items-center"
                   onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}
                 >
                   <div className="space-y-1">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       <span className="font-black text-lg text-slate-900 dark:text-white">Pedido #{String(order.id).padStart(5, '0')}</span>
                       <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${order.status === 'REALIZADO' ? 'bg-green-100 text-green-700' : 'bg-primary/10 text-primary'}`}>
                         {order.status}
@@ -72,7 +72,7 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
                 </div>
 
                 {expandedOrderId === order.id && (
-                  <div className="bg-slate-50 dark:bg-slate-800/80 p-6 border-t border-slate-100 dark:border-slate-700 animate-fade-in">
+                  <div className="animate-fade-in border-t border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/80 sm:p-6">
                     <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
                       <span translate="no" className="material-symbols-outlined text-[18px] text-primary">shopping_bag</span>
                       Detalle de productos
@@ -81,7 +81,7 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
                       {order.items.map((item) => {
                         const product = products.find((p) => p.id === item.productId);
                         return (
-                          <div key={`${order.id}-${item.productId}`} className="flex items-center justify-between gap-4 bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200/60 shadow-sm">
+                          <div key={`${order.id}-${item.productId}`} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200/60 bg-white p-3 shadow-sm dark:bg-slate-800">
                             <div className="flex items-center gap-3 min-w-0">
                                <div className="h-12 w-12 rounded bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
                                  {product?.image ? (
@@ -126,7 +126,7 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
             <p className="text-slate-500 font-medium">Aún no guardaste ningún accesorio en favoritos.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 md:grid-cols-4">
             {myFavorites.map(product => (
               <div key={product.id} className="flex flex-col group">
                 <div className="aspect-square overflow-hidden rounded-xl bg-slate-100 mb-3">
