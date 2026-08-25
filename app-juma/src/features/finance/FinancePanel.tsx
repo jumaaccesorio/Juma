@@ -502,11 +502,21 @@ function FinancePanel({
           {/* Bar Chart Container */}
           <div className="w-full overflow-x-auto pb-2">
             <div className="flex min-w-[700px] items-end gap-2.5 h-64 pt-6">
-              {visibleFinance.dailyBreakdown.map((row) => {
+              {visibleFinance.dailyBreakdown.map((row, index) => {
                 const incomeHeight = visibleFinance.chartMax > 0 ? Math.max(6, (row.income / visibleFinance.chartMax) * 100) : 6;
                 const expenseHeight = visibleFinance.chartMax > 0 ? Math.max(6, (row.expense / visibleFinance.chartMax) * 100) : 6;
+                const tooltipPosition = index < 2
+                  ? "left-0"
+                  : index >= visibleFinance.dailyBreakdown.length - 2
+                    ? "right-0"
+                    : "left-1/2 -translate-x-1/2";
                 return (
-                  <div key={row.day} className="group relative flex flex-1 flex-col items-center h-full justify-end">
+                  <div
+                    key={row.day}
+                    className="group relative flex h-full flex-1 flex-col items-center justify-end outline-none"
+                    tabIndex={0}
+                    aria-label={`Día ${row.day}: ingresos ${row.income.toLocaleString("es-AR")}, egresos ${row.expense.toLocaleString("es-AR")}, ${row.salesCount} ventas`}
+                  >
                     <div className="flex h-full w-full items-end gap-1 px-0.5">
                       <div className="flex-1 h-full flex items-end">
                         <div className="w-full rounded-t-md bg-emerald-500 transition-all group-hover:bg-emerald-600" style={{ height: `${incomeHeight}%` }} />
@@ -518,8 +528,13 @@ function FinancePanel({
                     <span className="mt-2 text-[10px] font-bold text-slate-400">{row.day}</span>
 
                     {/* Tooltip */}
-                    <div className="pointer-events-none absolute bottom-full mb-2 hidden rounded-lg bg-slate-900 px-3 py-1.5 text-[10px] font-bold text-white shadow-lg group-hover:block whitespace-nowrap z-20">
-                      Día {row.day}: Ing. ${row.income.toLocaleString("es-AR")} | Egr. ${row.expense.toLocaleString("es-AR")} ({row.salesCount} vtas)
+                    <div className={`pointer-events-none absolute top-1 z-30 hidden w-max max-w-56 rounded-lg bg-slate-900 px-3 py-2 text-[10px] font-bold leading-4 text-white shadow-lg group-hover:block group-focus:block ${tooltipPosition}`}>
+                      <p className="mb-0.5 text-white/70">Día {row.day} · {row.salesCount} venta{row.salesCount === 1 ? "" : "s"}</p>
+                      <p className="whitespace-nowrap">
+                        <span className="text-emerald-300">Ingresos ${row.income.toLocaleString("es-AR")}</span>
+                        <span className="px-1.5 text-white/40">·</span>
+                        <span className="text-red-300">Egresos ${row.expense.toLocaleString("es-AR")}</span>
+                      </p>
                     </div>
                   </div>
                 );

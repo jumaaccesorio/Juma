@@ -1,5 +1,4 @@
-import { useState } from "react";
-import type { Category, FeaturedPanel, FeaturedPeriod, CatalogSortOrder, HeroBanner, ProductReview } from "../../types";
+import type { Category, FeaturedPanel, FeaturedPeriod, CatalogSortOrder, HeroBanner } from "../../types";
 
 type AdminHomePanelProps = {
   heroBanner: HeroBanner;
@@ -12,8 +11,6 @@ type AdminHomePanelProps = {
   onChangeFeaturedPeriod: (period: FeaturedPeriod) => void;
   catalogSortOrder: CatalogSortOrder;
   onChangeCatalogSortOrder: (order: CatalogSortOrder) => void;
-  allReviews: ProductReview[];
-  onDeleteReview: (reviewId: number) => void;
   onUpdateHeroText: (field: "tag" | "title" | "subtitle", value: string) => void;
   onUpdateHeroImage: (file: File | null) => void;
   onUpdateFeaturedPanelText: (id: string, field: "title" | "cta", value: string) => void;
@@ -35,8 +32,6 @@ function AdminHomePanel({
   onChangeFeaturedPeriod,
   catalogSortOrder,
   onChangeCatalogSortOrder,
-  allReviews,
-  onDeleteReview,
   onUpdateHeroText,
   onUpdateHeroImage,
   onUpdateFeaturedPanelText,
@@ -46,17 +41,6 @@ function AdminHomePanel({
   onUpdateFeaturedPanelCategory,
   onSaveConfiguration,
 }: AdminHomePanelProps) {
-  const [reviewSearch, setReviewSearch] = useState("");
-
-  const filteredReviews = allReviews.filter((rev) => {
-    if (!reviewSearch.trim()) return true;
-    const q = reviewSearch.toLowerCase().trim();
-    return (
-      (rev.clientName ?? "").toLowerCase().includes(q) ||
-      (rev.productName ?? "").toLowerCase().includes(q) ||
-      (rev.comment ?? "").toLowerCase().includes(q)
-    );
-  });
   return (
     <div className="min-h-screen bg-[#f4f6fa] text-slate-800 space-y-6 px-4 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-24">
       {/* ── TOP HEADER ── */}
@@ -175,85 +159,6 @@ function AdminHomePanel({
             </p>
           </div>
         </div>
-      </div>
-
-      {/* ── GESTIÓN DE RESEÑAS Y COMENTARIOS DE CLIENTES ── */}
-      <div className="rounded-2xl bg-white p-4 sm:p-6 border border-slate-200/80 shadow-sm space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pb-4 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
-              <span translate="no" className="material-symbols-outlined text-lg">star</span>
-            </div>
-            <div>
-              <h2 className="font-headline text-lg font-bold text-slate-900">Gestión de Reseñas y Comentarios</h2>
-              <p className="text-xs text-slate-400">Moderá y revisá todas las valoraciones enviadas por los clientes.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-xl bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-700">
-              <span translate="no" className="material-symbols-outlined text-sm">rate_review</span>
-              {allReviews.length} reseña{allReviews.length === 1 ? "" : "s"} totales
-            </span>
-          </div>
-        </div>
-
-        {/* Buscador de reseñas */}
-        <div className="relative">
-          <span translate="no" className="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-lg">search</span>
-          <input
-            type="text"
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-2 text-xs text-slate-800 outline-none focus:border-primary focus:bg-white"
-            placeholder="Buscar por cliente, producto o contenido del comentario..."
-            value={reviewSearch}
-            onChange={(e) => setReviewSearch(e.target.value)}
-          />
-        </div>
-
-        {/* Lista de reseñas */}
-        {filteredReviews.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center text-xs text-slate-400">
-            {reviewSearch ? "No se encontraron reseñas que coincidan con la búsqueda." : "Aún no hay reseñas cargadas por clientes."}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {filteredReviews.map((rev) => (
-              <div key={rev.id} className="flex flex-col justify-between rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs hover:shadow-xs transition-shadow">
-                <div>
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-xs font-bold text-slate-900">{rev.productName || `Producto #${rev.productId}`}</p>
-                      <p className="text-[11px] font-medium text-slate-500">Por: {rev.clientName || `Cliente #${rev.clientId}`}</p>
-                    </div>
-                    <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200/60">
-                      <span translate="no" className="material-symbols-outlined text-xs text-amber-500" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                      <span className="text-xs font-extrabold text-amber-700">{rev.rating}</span>
-                    </div>
-                  </div>
-                  {rev.comment.trim() && (
-                    <p className="mt-2.5 text-xs text-slate-600 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-100 italic">
-                      "{rev.comment}"
-                    </p>
-                  )}
-                </div>
-                <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5 text-[10px] text-slate-400">
-                  <span>{new Date(rev.createdAt).toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" })}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (window.confirm("¿Seguro que deseas eliminar esta reseña?")) {
-                        onDeleteReview(rev.id);
-                      }
-                    }}
-                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <span translate="no" className="material-symbols-outlined text-xs">delete</span>
-                    Eliminar
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="space-y-6">

@@ -378,7 +378,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                   setMobilePage(1);
                   setDesktopPage(1);
                 }}
-                className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
+                className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
                   !selectedMainCategoryId
                     ? "bg-primary text-white shadow-sm"
                     : "bg-white border border-line text-ink/60 hover:border-primary/40"
@@ -397,7 +397,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                     setMobilePage(1);
                     setDesktopPage(1);
                   }}
-                  className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
+                  className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
                     selectedMainCategoryId === category.id
                       ? "bg-primary text-white shadow-sm"
                       : "bg-white border border-line text-ink/60 hover:border-primary/40"
@@ -417,7 +417,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                     setMobilePage(1);
                     setDesktopPage(1);
                   }}
-                  className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors ${
+                  className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors ${
                     !selectedSubCategoryId
                       ? "bg-secondary text-primary"
                       : "bg-background border border-line text-muted hover:border-primary/30"
@@ -434,7 +434,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                       setMobilePage(1);
                       setDesktopPage(1);
                     }}
-                    className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors ${
+                    className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors ${
                       selectedSubCategoryId === category.id
                         ? "bg-secondary text-primary"
                         : "bg-white border border-line/60 text-muted hover:border-primary/30"
@@ -811,7 +811,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                 setDesktopPage(1);
               }}
               type="button"
-              className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${!selectedMainCategoryId ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-line text-ink/60 hover:border-primary"}`}
+              className={`shrink-0 whitespace-nowrap rounded-full px-5 py-2 text-sm font-medium transition-all ${!selectedMainCategoryId ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-line text-ink/60 hover:border-primary"}`}
             >
               Todos
             </button>
@@ -826,7 +826,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                   setMobilePage(1);
                   setDesktopPage(1);
                 }}
-                className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${selectedMainCategoryId === cat.id ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-line text-ink/60 hover:border-primary"}`}
+                className={`shrink-0 whitespace-nowrap rounded-full px-5 py-2 text-sm font-medium transition-all ${selectedMainCategoryId === cat.id ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-line text-ink/60 hover:border-primary"}`}
               >
                 {cat.name}
               </button>
@@ -842,7 +842,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                   setMobilePage(1);
                   setDesktopPage(1);
                 }}
-                className={`px-4 py-1.5 rounded-full text-[12px] font-bold whitespace-nowrap transition-all ${!selectedSubCategoryId ? "bg-secondary text-primary" : "bg-white/50 border border-line/60 text-muted hover:border-primary/50"}`}
+                className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-[12px] font-bold transition-all ${!selectedSubCategoryId ? "bg-secondary text-primary" : "bg-white/50 border border-line/60 text-muted hover:border-primary/50"}`}
               >
                 Todo en {mainCategories.find(c => c.id === selectedMainCategoryId)?.name}
               </button>
@@ -855,7 +855,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                     setMobilePage(1);
                     setDesktopPage(1);
                   }}
-                  className={`px-4 py-1.5 rounded-full text-[12px] font-bold whitespace-nowrap transition-all ${selectedSubCategoryId === cat.id ? "bg-secondary text-primary" : "bg-white/50 border border-line/60 text-muted hover:border-primary/50"}`}
+                  className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-[12px] font-bold transition-all ${selectedSubCategoryId === cat.id ? "bg-secondary text-primary" : "bg-white/50 border border-line/60 text-muted hover:border-primary/50"}`}
                 >
                   {cat.name}
                 </button>
@@ -872,7 +872,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
               <p className="font-medium text-muted">No hay productos en esta categoría</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3 2xl:grid-cols-4">
               {desktopProductsPage.map(product => {
                 const inCart = cart.find(i => i.product.id === product.id)?.quantity ?? 0;
                 const lowStock = product.stock <= 3;
@@ -920,7 +920,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
       </section>
 
       {/* Right: Order Summary */}
-      <aside className="flex w-full flex-col border-t border-line bg-white shadow-xl xl:w-96 xl:border-l xl:border-t-0">
+      <aside className="flex w-full flex-col border-t border-line bg-white shadow-xl xl:w-80 xl:shrink-0 xl:border-l xl:border-t-0 2xl:w-96">
         <div className="border-b border-line p-4 md:p-6">
           <h3 className="font-headline text-xl font-bold text-ink flex items-center gap-2">
             <span translate="no" className="material-symbols-outlined text-primary">point_of_sale</span>

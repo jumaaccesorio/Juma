@@ -263,7 +263,6 @@ function App() {
   const [catalogSortOrder, setCatalogSortOrder] = useState<CatalogSortOrder>("ventas");
   const [bestSellerProductIds, setBestSellerProductIds] = useState<number[]>([]);
   const [productReviews, setProductReviews] = useState<ProductReview[]>([]);
-  const [allReviews, setAllReviews] = useState<ProductReview[]>([]);
   const [error, setError] = useState("");
   const [adminError, setAdminError] = useState("");
   const [isAdminLogged, setIsAdminLogged] = useState(() => localStorage.getItem(ADMIN_SESSION_KEY) === "1");
@@ -764,28 +763,6 @@ function App() {
       .map(id => products.find(p => p.id === id && p.enabled))
       .filter((p): p is Product => p !== undefined);
   }, [bestSellerProductIds, products]);
-
-  // Load all reviews for admin moderation
-  useEffect(() => {
-    if (!isAdminLogged) return;
-    let cancelled = false;
-    api.getAllReviews().then((reviews) => {
-      if (!cancelled) setAllReviews(reviews);
-    }).catch((e) => {
-      console.warn("Error cargando todas las reseñas para administración.", e);
-    });
-    return () => { cancelled = true; };
-  }, [isAdminLogged, activeTab]);
-
-  const handleDeleteReview = async (reviewId: number) => {
-    try {
-      await api.deleteProductReview(reviewId);
-      setAllReviews((prev) => prev.filter((r) => r.id !== reviewId));
-      setProductReviews((prev) => prev.filter((r) => r.id !== reviewId));
-    } catch (e) {
-      console.warn("Error al eliminar reseña.", e);
-    }
-  };
 
   // Load reviews when a product is opened
   useEffect(() => {
@@ -2026,8 +2003,6 @@ function App() {
                       console.warn("Error guardando orden de catálogo.", e);
                     }
                   }}
-                  allReviews={allReviews}
-                  onDeleteReview={handleDeleteReview}
                   onUpdateHeroText={updateHeroText}
                   onUpdateHeroImage={updateHeroImage}
                   onUpdateFeaturedPanelText={updateFeaturedPanelText}
