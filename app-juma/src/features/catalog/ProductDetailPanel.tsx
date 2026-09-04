@@ -278,9 +278,9 @@ function ProductDetailPanel({ product, onBack, onAddToCart, reviews, averageRati
             <span className="inline-flex items-center rounded-full bg-quaternary px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
               {hasSizes
                 ? selectedSize
-                  ? `Talle ${selectedSize}: ${displayStock > 0 ? `${displayStock} disp.` : "Sin stock"}`
-                  : `${product.sizes!.reduce((a, s) => a + s.stock, 0)} u. en total`
-                : displayStock > 0 ? `${displayStock} disponibles` : "Disponible por encargo"}
+                  ? `Talle ${selectedSize}: ${displayStock > 0 ? "Disponible" : "Sin stock"}`
+                  : "Talles disponibles"
+                : displayStock > 0 ? "Disponible" : "Disponible por encargo"}
             </span>
             {product.size?.trim() && !hasSizes ? (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">

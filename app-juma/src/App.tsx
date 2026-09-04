@@ -297,7 +297,6 @@ function App() {
   const [productForm, setProductForm] = useState({
     name: "",
     subName: "",
-    size: "",
     categoryId: "",
     purchasePrice: "",
     salePrice: "",
@@ -984,19 +983,35 @@ function App() {
     }
   };
 
-  const addProduct = async (event: React.FormEvent<HTMLFormElement>) => {
+  const addProduct = async (
+    event: React.FormEvent<HTMLFormElement>,
+    sizes: { size: string; stock: number }[] = [],
+  ): Promise<boolean> => {
     event.preventDefault();
     setError("");
-    if ((!productForm.name.trim() && !productForm.subName.trim()) || !productForm.purchasePrice || !productForm.salePrice || !productForm.stock) return;
-    const stock = Number(productForm.stock);
-    if (Number.isNaN(stock) || stock < 0) return;
+    const normalizedSizes = sizes
+      .map((item) => ({ size: item.size.trim(), stock: Math.max(0, Math.trunc(Number(item.stock) || 0)) }))
+      .filter((item) => item.size.length > 0);
+    const stock = normalizedSizes.length > 0
+      ? normalizedSizes.reduce((total, item) => total + item.stock, 0)
+      : Number(productForm.stock);
+    if (
+      (!productForm.name.trim() && !productForm.subName.trim()) ||
+      !productForm.purchasePrice ||
+      !productForm.salePrice ||
+      Number.isNaN(stock) ||
+      stock < 0
+    ) {
+      setError("Completa los datos obligatorios y agrega un stock valido.");
+      return false;
+    }
     
+    let createdProductId: number | null = null;
     try {
       const uploadedImages = productImageFile ? await api.uploadProductImages(productImageFile) : null;
       const newProduct = await api.addProduct({
         name: productForm.name.trim() || productForm.subName.trim(),
         subName: productForm.subName.trim(),
-        size: productForm.size.trim(),
         categoryId: Number(productForm.categoryId) || undefined,
         isFeatured: productForm.isFeatured,
         purchasePrice: Number(productForm.purchasePrice),
@@ -1008,15 +1023,29 @@ function App() {
         originalImage: uploadedImages?.originalImage ?? uploadedImages?.image ?? productImageData,
         sourceUrl: productForm.sourceUrl.trim(),
       });
-      setProducts((prev) => [newProduct, ...prev]);
+      createdProductId = newProduct.id;
+      const savedSizes = normalizedSizes.length > 0
+        ? await api.setProductSizes(newProduct.id, normalizedSizes)
+        : [];
+      const savedProduct = { ...newProduct, sizes: savedSizes, stock };
+      setProducts((prev) => [savedProduct, ...prev]);
       
-      setProductForm({ name: "", subName: "", size: "", categoryId: "", purchasePrice: "", salePrice: "", stock: "", sourceUrl: "", isFeatured: false });
+      setProductForm({ name: "", subName: "", categoryId: "", purchasePrice: "", salePrice: "", stock: "", sourceUrl: "", isFeatured: false });
       setProductImageData("");
       setProductImageFile(null);
       window.alert("Producto guardado correctamente.");
+      return true;
     } catch (err) {
       console.error(err);
-      setError("Error al guardar producto");
+      if (createdProductId !== null) {
+        try {
+          await api.deleteProduct(createdProductId);
+        } catch (rollbackError) {
+          console.error("No se pudo revertir el producto incompleto.", rollbackError);
+        }
+      }
+      setError(getErrorMessage(err, "Error al guardar el producto y sus talles."));
+      return false;
     }
   };
 

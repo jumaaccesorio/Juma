@@ -50,6 +50,21 @@ CREATE TABLE IF NOT EXISTS products (
 );
 
 -- ============================================================
+-- 3B. TALLES Y STOCK POR VARIANTE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS product_sizes (
+  id         BIGSERIAL PRIMARY KEY,
+  product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  size       TEXT NOT NULL CHECK (BTRIM(size) <> ''),
+  stock      INT NOT NULL DEFAULT 0 CHECK (stock >= 0),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (product_id, size)
+);
+
+CREATE INDEX IF NOT EXISTS product_sizes_product_id_idx
+  ON product_sizes(product_id);
+
+-- ============================================================
 -- 4. PEDIDOS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS orders (
@@ -178,6 +193,7 @@ ON CONFLICT (id) DO NOTHING;
 ALTER TABLE categories       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE clients          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_sizes    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE restock_cart_items ENABLE ROW LEVEL SECURITY;
@@ -194,6 +210,9 @@ CREATE POLICY "open_clients" ON clients FOR ALL TO anon, authenticated USING (tr
 
 DROP POLICY IF EXISTS "open_products" ON products;
 CREATE POLICY "open_products" ON products FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "open_product_sizes" ON product_sizes;
+CREATE POLICY "open_product_sizes" ON product_sizes FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "open_orders" ON orders;
 CREATE POLICY "open_orders" ON orders FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);

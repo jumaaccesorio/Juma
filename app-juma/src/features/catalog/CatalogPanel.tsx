@@ -482,7 +482,7 @@ function CatalogPanel({
                     </p>
                   ) : null}
                   <p className="mt-2 min-h-[2.5rem] text-center text-xs text-muted">
-                    {product.stock > 0 ? `${product.stock} disponibles` : "Sin stock inmediato. Se puede pedir por encargo."}
+                    {product.stock > 0 ? "Disponible" : "Sin stock inmediato. Se puede pedir por encargo."}
                   </p>
                 </div>
                 <button

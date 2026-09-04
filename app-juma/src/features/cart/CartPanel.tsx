@@ -112,7 +112,7 @@ function CartPanel({
                         <div className="min-w-0">
                           <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{getProductDisplayName(row.product)}</h3>
                           <p className="text-sm text-slate-500">
-                            {row.product.categoryName || "Sin categoria"} • {row.product.stock > 0 ? `${row.product.stock} disp.` : "Sin stock inmediato"}
+                            {row.product.categoryName || "Sin categoria"} • {row.product.stock > 0 ? "Disponible" : "Sin stock inmediato"}
                           </p>
                           {row.size ? (
                             <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">

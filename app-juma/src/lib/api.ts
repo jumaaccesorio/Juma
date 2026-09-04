@@ -7,6 +7,7 @@ const PRODUCT_PUBLIC_PREFIX = `/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET
 const PRODUCT_SIGNED_PREFIX = `/storage/v1/object/sign/${PRODUCT_IMAGES_BUCKET}/`;
 let supportsProductImageVariants: boolean | null = null;
 let supportsOrderItemSize: boolean | null = null;
+let supportsProductSizes: boolean | null = null;
 
 function toErrorMessage(error: unknown, fallback = "Ocurrio un error inesperado.") {
   if (error && typeof error === "object" && "message" in error && typeof (error as { message?: unknown }).message === "string") {
@@ -197,12 +198,13 @@ export const api = {
       .order("created_at", { ascending: false });
 
     if (query.error) throw query.error;
-    return ((query.data ?? []) as any[]).map((row: any) =>
+    const products = ((query.data ?? []) as any[]).map((row: any) =>
       mapProduct({
         ...normalizeProductStorageUrls(row),
         category_name: row.category_name ?? null,
       })
     );
+    return attachProductSizes(products);
   },
 
   async getProducts(): Promise<Product[]> {
@@ -220,12 +222,14 @@ export const api = {
       supportsProductImageVariants = false;
       const legacyQuery = await supabase.from("products").select(selectLegacy).order("created_at", { ascending: false });
       if (legacyQuery.error) throw legacyQuery.error;
-      return ((legacyQuery.data ?? []) as any[]).map((row: any) => mapProduct({ ...normalizeProductStorageUrls(row), category_name: row.categories?.name ?? null }));
+      const products = ((legacyQuery.data ?? []) as any[]).map((row: any) => mapProduct({ ...normalizeProductStorageUrls(row), category_name: row.categories?.name ?? null }));
+      return attachProductSizes(products);
     }
 
     if (query.error) throw query.error;
     if (supportsProductImageVariants !== false) supportsProductImageVariants = true;
-    return ((query.data ?? []) as any[]).map((row: any) => mapProduct({ ...normalizeProductStorageUrls(row), category_name: row.categories?.name ?? null }));
+    const products = ((query.data ?? []) as any[]).map((row: any) => mapProduct({ ...normalizeProductStorageUrls(row), category_name: row.categories?.name ?? null }));
+    return attachProductSizes(products);
   },
 
   async getProductImages(productIds: number[]): Promise<Array<{ id: number; image: string }>> {
@@ -296,7 +300,12 @@ export const api = {
       .select("id, product_id, size, stock")
       .eq("product_id", productId)
       .order("size");
-    if (query.error) throw query.error;
+    if (query.error) {
+      if (isMissingTableError(query.error, "product_sizes")) {
+        throw new Error("La tabla de talles todavia no esta instalada en Supabase.");
+      }
+      throw query.error;
+    }
     return (query.data ?? []).map((row: any) => ({
       id: row.id,
       productId: row.product_id,
@@ -306,23 +315,69 @@ export const api = {
   },
 
   async setProductSizes(productId: number, sizes: { size: string; stock: number }[]): Promise<ProductSize[]> {
-    // Delete all existing sizes for this product and reinsert
-    const deleteQuery = await supabase.from("product_sizes").delete().eq("product_id", productId);
-    if (deleteQuery.error) throw deleteQuery.error;
+    const normalizedSizes = sizes
+      .map((item) => ({ size: item.size.trim(), stock: Math.max(0, Math.trunc(Number(item.stock) || 0)) }))
+      .filter((item) => item.size.length > 0);
+    const normalizedNames = normalizedSizes.map((item) => item.size.toLocaleLowerCase("es-AR"));
+    if (new Set(normalizedNames).size !== normalizedNames.length) {
+      throw new Error("No se puede repetir el mismo talle.");
+    }
 
-    if (sizes.length === 0) return [];
+    if (normalizedSizes.length > 0) {
+      const upsertQuery = await supabase
+        .from("product_sizes")
+        .upsert(
+          normalizedSizes.map((item) => ({ product_id: productId, size: item.size, stock: item.stock })),
+          { onConflict: "product_id,size" },
+        )
+        .select("id, product_id, size, stock");
+      if (upsertQuery.error) {
+        if (isMissingTableError(upsertQuery.error, "product_sizes")) {
+          throw new Error("La tabla de talles todavia no esta instalada en Supabase.");
+        }
+        throw upsertQuery.error;
+      }
 
-    const insertQuery = await supabase
+      const existingQuery = await supabase
+        .from("product_sizes")
+        .select("id, size")
+        .eq("product_id", productId);
+      if (existingQuery.error) throw existingQuery.error;
+
+      const keepNames = new Set(normalizedSizes.map((item) => item.size));
+      const removedIds = (existingQuery.data ?? [])
+        .filter((item) => !keepNames.has(item.size))
+        .map((item) => Number(item.id));
+      if (removedIds.length > 0) {
+        const deleteRemovedQuery = await supabase
+          .from("product_sizes")
+          .delete()
+          .in("id", removedIds)
+          .eq("product_id", productId);
+        if (deleteRemovedQuery.error) throw deleteRemovedQuery.error;
+      }
+    } else {
+      const deleteQuery = await supabase.from("product_sizes").delete().eq("product_id", productId);
+      if (deleteQuery.error) {
+        if (isMissingTableError(deleteQuery.error, "product_sizes")) {
+          throw new Error("La tabla de talles todavia no esta instalada en Supabase.");
+        }
+        throw deleteQuery.error;
+      }
+    }
+
+    const totalStock = normalizedSizes.reduce((acc, item) => acc + item.stock, 0);
+    const stockQuery = await supabase.from("products").update({ stock: totalStock }).eq("id", productId);
+    if (stockQuery.error) throw stockQuery.error;
+
+    const savedQuery = await supabase
       .from("product_sizes")
-      .insert(sizes.map((s) => ({ product_id: productId, size: s.size.trim(), stock: s.stock })))
-      .select("id, product_id, size, stock");
-    if (insertQuery.error) throw insertQuery.error;
+      .select("id, product_id, size, stock")
+      .eq("product_id", productId)
+      .order("size");
+    if (savedQuery.error) throw savedQuery.error;
 
-    // Also update product total stock to sum of sizes
-    const totalStock = sizes.reduce((acc, s) => acc + s.stock, 0);
-    await supabase.from("products").update({ stock: totalStock }).eq("id", productId);
-
-    return (insertQuery.data ?? []).map((row: any) => ({
+    return (savedQuery.data ?? []).map((row: any) => ({
       id: row.id,
       productId: row.product_id,
       size: row.size,
@@ -985,6 +1040,35 @@ function mapProduct(row: any): Product {
   };
 }
 
+async function attachProductSizes(products: Product[]): Promise<Product[]> {
+  if (products.length === 0 || supportsProductSizes === false) return products;
+
+  const query = await supabase
+    .from("product_sizes")
+    .select("id, product_id, size, stock")
+    .in("product_id", products.map((product) => product.id))
+    .order("size");
+
+  if (query.error) {
+    if (isMissingTableError(query.error, "product_sizes")) {
+      supportsProductSizes = false;
+      return products;
+    }
+    throw query.error;
+  }
+
+  supportsProductSizes = true;
+  const sizesByProduct = new Map<number, ProductSize[]>();
+  for (const row of query.data ?? []) {
+    const productId = Number(row.product_id);
+    const current = sizesByProduct.get(productId) ?? [];
+    current.push({ id: Number(row.id), productId, size: row.size, stock: Number(row.stock ?? 0) });
+    sizesByProduct.set(productId, current);
+  }
+
+  return products.map((product) => ({ ...product, sizes: sizesByProduct.get(product.id) ?? [] }));
+}
+
 function parseProductMeta(rawValue: unknown): { sourceUrl: string; description: string } {
   const raw = typeof rawValue === "string" ? rawValue.trim() : "";
   if (!raw) return { sourceUrl: "", description: "" };
@@ -1011,6 +1095,11 @@ function encodeProductMeta(sourceUrl: string, description: string): string {
 function isMissingColumnError(error: unknown, columnName: string) {
   const message = toErrorMessage(error, "");
   return message.toLowerCase().includes(columnName.toLowerCase());
+}
+
+function isMissingTableError(error: unknown, tableName: string) {
+  const message = toErrorMessage(error, "").toLowerCase();
+  return message.includes(tableName.toLowerCase()) && (message.includes("schema cache") || message.includes("does not exist"));
 }
 
 function pickRawProductImage(row: any): string {

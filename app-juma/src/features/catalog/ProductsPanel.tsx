@@ -7,7 +7,6 @@ import ProductImage from "../../components/ProductImage";
 type ProductForm = {
   name: string;
   subName: string;
-  size: string;
   categoryId: string;
   purchasePrice: string;
   salePrice: string;
@@ -35,7 +34,7 @@ type ProductsPanelProps = {
   productImageData: string;
   onProductFormChange: (next: ProductForm) => void;
   onProductImageChange: (file: File | null) => void;
-  onAddProduct: (event: FormEvent<HTMLFormElement>) => void;
+  onAddProduct: (event: FormEvent<HTMLFormElement>, sizes: { size: string; stock: number }[]) => Promise<boolean>;
   onToggleProductEnabled: (productId: number) => void;
   onUpdateExistingProductImage: (productId: number, file: File | null) => void;
   onSaveProductEdits: (productId: number, updates: Partial<Product>) => Promise<void>;
@@ -91,6 +90,10 @@ function ProductsPanel({
   const [visibilityFilter, setVisibilityFilter] = useState<"ALL" | "VISIBLE" | "HIDDEN">("ALL");
   const [stockFilter, setStockFilter] = useState<"ALL" | "OUT" | "LOW" | "AVAILABLE">("ALL");
   const [showForm, setShowForm] = useState(false);
+  const [newProductSizes, setNewProductSizes] = useState<Array<{ size: string; stock: number }>>([]);
+  const [newProductSizeInput, setNewProductSizeInput] = useState("");
+  const [newProductSizeStock, setNewProductSizeStock] = useState("1");
+  const [isCreatingProduct, setIsCreatingProduct] = useState(false);
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [drafts, setDrafts] = useState<Record<number, ProductDraft>>({});
   // Size manager state (keyed by productId)
@@ -161,6 +164,18 @@ function ProductsPanel({
         [key]: value,
       },
     }));
+  };
+
+  const addNewProductSize = () => {
+    const size = newProductSizeInput.trim();
+    if (!size) return;
+    const stock = Math.max(0, Math.trunc(Number(newProductSizeStock) || 0));
+    setNewProductSizes((current) => {
+      const duplicate = current.some((item) => item.size.toLocaleLowerCase("es-AR") === size.toLocaleLowerCase("es-AR"));
+      return duplicate ? current : [...current, { size, stock }];
+    });
+    setNewProductSizeInput("");
+    setNewProductSizeStock("1");
   };
 
   const handleSaveDraft = async (product: Product) => {
@@ -360,9 +375,16 @@ function ProductsPanel({
       {showForm && (
         <form
           className="animate-fade-in rounded-xl border border-line bg-background p-5 shadow-sm md:p-8"
-          onSubmit={(event) => {
-            onAddProduct(event);
-            setShowForm(false);
+          onSubmit={async (event) => {
+            setIsCreatingProduct(true);
+            const saved = await onAddProduct(event, newProductSizes);
+            setIsCreatingProduct(false);
+            if (saved) {
+              setNewProductSizes([]);
+              setNewProductSizeInput("");
+              setNewProductSizeStock("1");
+              setShowForm(false);
+            }
           }}
         >
           <h3 className="text-lg font-bold text-ink mb-6">Agregar Nuevo Producto</h3>
@@ -383,15 +405,6 @@ function ProductsPanel({
                 placeholder="Ej. Collar serpiente"
                 value={productForm.subName}
                 onChange={(e) => onProductFormChange({ ...productForm, subName: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Talle / Medida <span className="font-normal text-slate-400">(Opcional)</span></label>
-              <input
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
-                placeholder="Ej. 17, 18, Única, 15-20cm"
-                value={productForm.size}
-                onChange={(e) => onProductFormChange({ ...productForm, size: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -437,16 +450,22 @@ function ProductsPanel({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Stock Inicial</label>
+              <label className="text-sm font-bold text-slate-700">Stock sin talles</label>
               <input
-                required
+                required={newProductSizes.length === 0}
                 type="number"
                 min="0"
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
-                placeholder="Cantidad de unidades"
+                placeholder={newProductSizes.length > 0 ? "Se calcula con los talles" : "Cantidad de unidades"}
                 value={productForm.stock}
+                disabled={newProductSizes.length > 0}
                 onChange={(e) => onProductFormChange({ ...productForm, stock: e.target.value })}
               />
+              <p className="text-xs text-slate-400">
+                {newProductSizes.length > 0
+                  ? `Stock total calculado: ${newProductSizes.reduce((total, item) => total + item.stock, 0)}`
+                  : "Usalo solamente si el producto no tiene variantes."}
+              </p>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">URL Reposicion (Opcional)</label>
@@ -471,6 +490,66 @@ function ProductsPanel({
             </div>
           </div>
 
+          <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-bold text-slate-800">Talles y stock por variante <span className="font-normal text-slate-400">(Opcional)</span></p>
+              <p className="text-xs text-slate-500">Agregá cada talle por separado. El stock total se calcula automáticamente.</p>
+            </div>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_140px_auto] sm:items-end">
+              <label className="space-y-1.5 text-xs font-bold text-slate-600">
+                Talle
+                <input
+                  type="text"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-800 outline-none focus:border-primary"
+                  placeholder="Ej. 16, 17, M o Único"
+                  value={newProductSizeInput}
+                  onChange={(event) => setNewProductSizeInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      addNewProductSize();
+                    }
+                  }}
+                />
+              </label>
+              <label className="space-y-1.5 text-xs font-bold text-slate-600">
+                Stock de ese talle
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-800 outline-none focus:border-primary"
+                  value={newProductSizeStock}
+                  onChange={(event) => setNewProductSizeStock(event.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={addNewProductSize}
+                className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-slate-700"
+              >
+                <span translate="no" className="material-symbols-outlined text-base">add</span>
+                Agregar talle
+              </button>
+            </div>
+            {newProductSizes.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {newProductSizes.map((item) => (
+                  <span key={item.size} className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 py-1.5 pl-3 pr-1.5 text-xs font-bold text-primary">
+                    {item.size} · {item.stock} u.
+                    <button
+                      type="button"
+                      onClick={() => setNewProductSizes((current) => current.filter((row) => row.size !== item.size))}
+                      className="flex h-6 w-6 items-center justify-center rounded-full text-primary/60 hover:bg-primary/10 hover:text-primary"
+                      aria-label={`Quitar talle ${item.size}`}
+                    >
+                      <span translate="no" className="material-symbols-outlined text-sm">close</span>
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="mb-8 flex flex-col gap-4 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:gap-6">
             <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-200">
               {productImageData ? (
@@ -491,11 +570,11 @@ function ProductsPanel({
           </div>
 
           <div className="flex justify-end gap-4">
-            <button type="button" onClick={() => setShowForm(false)} className="px-6 py-3 font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+            <button type="button" disabled={isCreatingProduct} onClick={() => setShowForm(false)} className="px-6 py-3 font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50">
               Cancelar
             </button>
-            <button type="submit" className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg font-bold shadow-lg shadow-primary/20 transition-all">
-              Guardar Producto
+            <button type="submit" disabled={isCreatingProduct} className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg font-bold shadow-lg shadow-primary/20 transition-all disabled:cursor-wait disabled:opacity-60">
+              {isCreatingProduct ? "Guardando..." : "Guardar Producto"}
             </button>
           </div>
         </form>
