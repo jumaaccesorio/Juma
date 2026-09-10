@@ -189,7 +189,7 @@ function CatalogPanel({
     <div ref={panelRef} className="flex flex-col">
       {viewMode === "home" ? (
         <>
-      <section className="relative h-[560px] min-h-[460px] w-full overflow-hidden sm:h-[640px] md:h-[716px]">
+      <section className="relative h-[min(68svh,620px)] min-h-[480px] w-full overflow-hidden md:h-[716px] md:min-h-[500px]">
         {isHomeContentLoaded && heroBanner ? (
           <>
             <img
@@ -200,8 +200,8 @@ function CatalogPanel({
               decoding="async"
               fetchPriority="high"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-[rgba(45,45,45,0.58)] to-transparent" />
-            <div className="relative flex h-full flex-col items-start justify-center gap-6 px-4 sm:px-6 md:px-40">
+            <div className="absolute inset-0 bg-gradient-to-r from-[rgba(45,45,45,0.62)] via-[rgba(45,45,45,0.28)] to-transparent" />
+            <div className="relative flex h-full flex-col items-start justify-end gap-6 px-5 pb-12 md:justify-center md:px-40 md:pb-0">
               <div className="max-w-xl">
                 <h1 className="font-headline text-4xl font-light leading-tight tracking-tight text-white sm:text-5xl md:text-7xl">
                   {heroTitleLines.length > 1 ? (
@@ -231,12 +231,12 @@ function CatalogPanel({
       </section>
 
       {isHomeContentLoaded && featuredPanels.length > 0 ? (
-        <section className="px-4 py-12 sm:px-6 sm:py-16 md:px-40 md:py-20">
-          <div className="mb-12 flex flex-col items-center text-center">
+        <section className="px-4 py-14 md:px-40 md:py-20">
+          <div className="mb-8 flex flex-col items-center text-center md:mb-12">
             <span className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-primary">Seleccion Exclusiva</span>
             <h2 className="font-headline text-3xl font-light text-carbon">Nuestras Categorias</h2>
           </div>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 md:gap-6 lg:grid-cols-4">
             {featuredPanels.map((panel) => (
               <button
                 key={panel.id}
@@ -252,9 +252,9 @@ function CatalogPanel({
                   decoding="async"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[rgba(45,45,45,0.45)] to-transparent" />
-                <div className="absolute inset-0 flex flex-col justify-end p-6">
-                  <h3 className="font-headline text-xl font-medium tracking-tight text-white">{panel.title}</h3>
-                  <span className="mt-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-white/80 group-hover:text-white">
+                <div className="absolute inset-0 flex flex-col justify-end p-3 md:p-6">
+                  <h3 className="font-headline text-base font-medium tracking-tight text-white md:text-xl">{panel.title}</h3>
+                  <span className="mt-1.5 hidden items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-white/80 group-hover:text-white sm:flex md:mt-2">
                     {panel.cta} <span translate="no" className="material-symbols-outlined text-sm">trending_flat</span>
                   </span>
                 </div>

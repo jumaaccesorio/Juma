@@ -6,14 +6,15 @@ import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 type CustomerAuthModalProps = {
   onClose: () => void;
   onSuccess: (client: Client) => void;
+  initialTab?: "login" | "register";
   allowGuest?: boolean;
   onGuestContinue?: (guestData: { name: string; email: string; phone: string }) => void;
 };
 
-export default function CustomerAuthModal({ onClose, onSuccess, allowGuest, onGuestContinue }: CustomerAuthModalProps): React.ReactElement {
+export default function CustomerAuthModal({ onClose, onSuccess, initialTab = "login", allowGuest, onGuestContinue }: CustomerAuthModalProps): React.ReactElement {
   useBodyScrollLock(true);
 
-  const [tab, setTab] = useState<"login" | "register" | "guest" | "forgot">("login");
+  const [tab, setTab] = useState<"login" | "register" | "guest" | "forgot">(initialTab);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");

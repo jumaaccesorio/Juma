@@ -275,7 +275,7 @@ function App() {
     return raw ? JSON.parse(raw) : null;
   });
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState<"login" | "checkout">("login");
+  const [authModalMode, setAuthModalMode] = useState<"login" | "register" | "checkout">("login");
   const [lastOrderConfirmation, setLastOrderConfirmation] = useState<{ orderId: number; customerName?: string } | null>(null);
   const [cartSuccessToast, setCartSuccessToast] = useState<{
     productId: number;
@@ -2232,6 +2232,7 @@ function App() {
           onLoginAdmin={loginAdmin}
           onCloseAdminLogin={() => setShowAdminLogin(false)}
           onLoginClientClick={() => { setAuthModalMode("login"); setShowAuthModal(true); }}
+          onRegisterClientClick={() => { setAuthModalMode("register"); setShowAuthModal(true); }}
           onLogoutClient={() => {
             localStorage.removeItem(CLIENT_SESSION_KEY);
           setCurrentClient(null);
@@ -2301,6 +2302,7 @@ function App() {
 
       {showAuthModal && (
         <CustomerAuthModal
+          initialTab={authModalMode === "register" ? "register" : "login"}
           allowGuest={authModalMode === "checkout"}
           onClose={() => setShowAuthModal(false)}
           onSuccess={(client) => {
@@ -2442,7 +2444,7 @@ function App() {
       </main>
       )}
 
-      <footer className="bg-background-dark text-slate-400 px-6 md:px-20 py-16 mt-auto">
+      <footer id="site-contact" className="bg-background-dark text-slate-400 px-6 md:px-20 py-16 mt-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-white/10 pb-16">
           <div className="col-span-1 md:col-span-1">
             <h3 className="text-white text-xl font-black uppercase mb-4">Juma Accessory</h3>

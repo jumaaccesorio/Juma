@@ -26,6 +26,7 @@ type StoreHeaderProps = {
   onLoginAdmin: (e: React.FormEvent<HTMLFormElement>) => void;
   onCloseAdminLogin: () => void;
   onLoginClientClick: () => void;
+  onRegisterClientClick: () => void;
   onLogoutClient: () => void;
 };
 
@@ -53,13 +54,17 @@ export default function StoreHeader({
   onLoginAdmin,
   onCloseAdminLogin,
   onLoginClientClick,
+  onRegisterClientClick,
   onLogoutClient,
 }: StoreHeaderProps) {
   useBodyScrollLock(showAdminLogin);
 
   const [showCatalogMenu, setShowCatalogMenu] = useState(false);
   const [showClientMenu, setShowClientMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showMobileProducts, setShowMobileProducts] = useState(false);
   const catalogMenuRef = useRef<HTMLDivElement | null>(null);
+  useBodyScrollLock(showMobileMenu);
 
   const scrollToPageTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -85,7 +90,19 @@ export default function StoreHeader({
 
   useEffect(() => {
     setShowCatalogMenu(false);
+    setShowMobileMenu(false);
   }, [activeTab]);
+
+  useEffect(() => {
+    if (!showMobileMenu) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setShowMobileMenu(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showMobileMenu]);
 
   useEffect(() => {
     if (!currentClient) {
@@ -124,7 +141,26 @@ export default function StoreHeader({
         </p>
       </div>
 
-      <header className="sticky top-0 z-50 flex max-w-full flex-col items-center gap-4 border-b border-primary/10 bg-background/80 px-4 py-4 shadow-sm backdrop-blur-md sm:px-6 md:px-20">
+      <header className="sticky top-0 z-50 flex h-[72px] items-center justify-between border-b border-primary/10 bg-background/95 px-5 shadow-sm backdrop-blur-md md:hidden">
+        <button
+          type="button"
+          onClick={() => setShowMobileMenu(true)}
+          className="flex size-11 items-center justify-start text-carbon transition-colors hover:text-primary"
+          aria-label="Abrir menú"
+          aria-expanded={showMobileMenu}
+        >
+          <span translate="no" className="material-symbols-outlined text-[28px]">menu</span>
+        </button>
+
+        <button type="button" onClick={onOpenCatalogHome} className="absolute left-1/2 -translate-x-1/2 text-center select-none" aria-label="Ir al inicio">
+          <span className="block font-serif text-[19px] font-black uppercase leading-none tracking-[0.08em] text-primary">Juma Accessory</span>
+          <span className="mt-1 block whitespace-nowrap text-[7px] font-bold uppercase tracking-[0.16em] text-primary/60">Plata 925 · Acero blanco y dorado</span>
+        </button>
+
+        <span className="size-11" aria-hidden="true" />
+      </header>
+
+      <header className="sticky top-0 z-50 hidden max-w-full flex-col items-center gap-4 border-b border-primary/10 bg-background/80 px-4 py-4 shadow-sm backdrop-blur-md sm:px-6 md:flex md:px-20">
         <div className="flex w-full flex-col items-center justify-between gap-4 md:flex-row">
           <div className="group flex cursor-pointer flex-col items-start select-none" onClick={onOpenCatalogHome}>
             <h2 className="font-serif text-2xl font-black uppercase leading-tight tracking-tight text-primary transition-colors group-hover:text-primary/80 sm:text-3xl">
@@ -294,6 +330,162 @@ export default function StoreHeader({
           </button>
         </nav>
       </header>
+
+      {showMobileMenu ? (
+        <div className="fixed inset-0 z-[110] md:hidden" role="dialog" aria-modal="true" aria-label="Menú principal">
+          <button
+            type="button"
+            className="absolute inset-0 bg-carbon/65 backdrop-blur-[1px]"
+            onClick={() => setShowMobileMenu(false)}
+            aria-label="Cerrar menú"
+          />
+          <aside className="relative flex h-full w-[min(86vw,350px)] flex-col bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-line px-5 py-4">
+              <div>
+                <p className="text-lg font-semibold text-carbon">Menú</p>
+                <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Juma Accessory</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMobileMenu(false)}
+                className="flex size-9 items-center justify-center rounded-full border border-line text-muted transition-colors hover:border-primary hover:text-primary"
+                aria-label="Cerrar menú"
+              >
+                <span className="material-symbols-outlined text-[22px]">close</span>
+              </button>
+            </div>
+
+            <nav className="flex-1 overflow-y-auto px-5 py-2 text-[15px] text-carbon">
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenCatalogHome();
+                  setShowMobileMenu(false);
+                }}
+                className="flex w-full items-center justify-between border-b border-line py-4 text-left"
+              >
+                <span>Inicio</span>
+                <span className="material-symbols-outlined text-lg text-primary">home</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowMobileProducts((previous) => !previous)}
+                className="flex w-full items-center justify-between border-b border-line py-4 text-left"
+                aria-expanded={showMobileProducts}
+              >
+                <span>Productos</span>
+                <span className={`material-symbols-outlined text-xl text-muted transition-transform ${showMobileProducts ? "rotate-90" : ""}`}>chevron_right</span>
+              </button>
+              {showMobileProducts ? (
+                <div className="border-b border-line bg-secondary/35 px-3 py-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenFullCatalog();
+                      setShowMobileMenu(false);
+                    }}
+                    className="block w-full py-3 text-left text-sm font-semibold text-primary"
+                  >
+                    Ver todo el catálogo
+                  </button>
+                  {visibleCategories.map((category) => (
+                    <button
+                      key={`mobile-${category.id}`}
+                      type="button"
+                      onClick={() => {
+                        onSelectCatalogCategory(category.id);
+                        setShowMobileMenu(false);
+                      }}
+                      className="block w-full py-2.5 text-left text-sm text-slate-600 transition-colors hover:text-primary"
+                    >
+                      {category.name}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={() => {
+                  onSetActiveTab("carrito");
+                  setShowMobileMenu(false);
+                  scrollToPageTop();
+                }}
+                className="flex w-full items-center justify-between border-b border-line py-4 text-left"
+              >
+                <span>Carrito</span>
+                <span className="flex items-center gap-2 text-sm font-semibold text-primary">
+                  {cartItemsCount > 0 ? cartItemsCount : null}
+                  <span className="material-symbols-outlined text-xl">shopping_bag</span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMobileMenu(false);
+                  window.setTimeout(() => document.getElementById("site-contact")?.scrollIntoView({ behavior: "smooth" }), 0);
+                }}
+                className="flex w-full items-center justify-between border-b border-line py-4 text-left"
+              >
+                <span>Contacto</span>
+                <span className="material-symbols-outlined text-xl text-primary">alternate_email</span>
+              </button>
+            </nav>
+
+            <div className="border-t border-line bg-white p-4">
+              {currentClient ? (
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSetActiveTab("perfil");
+                      setShowMobileMenu(false);
+                    }}
+                    className="w-full rounded-md bg-primary px-4 py-3 text-xs font-bold uppercase tracking-wider text-white"
+                  >
+                    Mi cuenta · {currentClient.name.split(" ")[0]}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onLogoutClient();
+                      setShowMobileMenu(false);
+                    }}
+                    className="w-full rounded-md bg-secondary px-4 py-3 text-xs font-bold uppercase tracking-wider text-primary"
+                  >
+                    Cerrar sesión
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMobileMenu(false);
+                      onLoginClientClick();
+                    }}
+                    className="w-full rounded-md bg-primary px-4 py-3 text-xs font-bold uppercase tracking-wider text-white"
+                  >
+                    Iniciar sesión
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMobileMenu(false);
+                      onRegisterClientClick();
+                    }}
+                    className="w-full rounded-md bg-secondary px-4 py-3 text-xs font-bold uppercase tracking-wider text-primary"
+                  >
+                    Registrarse
+                  </button>
+                </div>
+              )}
+            </div>
+          </aside>
+        </div>
+      ) : null}
 
       {!isAdminLogged && showAdminLogin ? (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-carbon/80 p-3 backdrop-blur-sm sm:p-4">
