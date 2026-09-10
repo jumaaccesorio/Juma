@@ -62,9 +62,21 @@ export default function StoreHeader({
   const [showCatalogMenu, setShowCatalogMenu] = useState(false);
   const [showClientMenu, setShowClientMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isMobileMenuClosing, setIsMobileMenuClosing] = useState(false);
   const [showMobileProducts, setShowMobileProducts] = useState(false);
   const catalogMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileMenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useBodyScrollLock(showMobileMenu);
+
+  const closeMobileMenu = () => {
+    if (!showMobileMenu || isMobileMenuClosing) return;
+    setIsMobileMenuClosing(true);
+    mobileMenuCloseTimerRef.current = setTimeout(() => {
+      setShowMobileMenu(false);
+      setIsMobileMenuClosing(false);
+      mobileMenuCloseTimerRef.current = null;
+    }, 300);
+  };
 
   const scrollToPageTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -90,14 +102,17 @@ export default function StoreHeader({
 
   useEffect(() => {
     setShowCatalogMenu(false);
-    setShowMobileMenu(false);
   }, [activeTab]);
+
+  useEffect(() => () => {
+    if (mobileMenuCloseTimerRef.current) clearTimeout(mobileMenuCloseTimerRef.current);
+  }, []);
 
   useEffect(() => {
     if (!showMobileMenu) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setShowMobileMenu(false);
+      if (event.key === "Escape") closeMobileMenu();
     };
     window.addEventListener("keydown", handleKeyDown);
 
@@ -335,11 +350,11 @@ export default function StoreHeader({
         <div className="fixed inset-0 z-[110] md:hidden" role="dialog" aria-modal="true" aria-label="Menú principal">
           <button
             type="button"
-            className="mobile-menu-backdrop absolute inset-0 bg-carbon/65 backdrop-blur-[1px]"
-            onClick={() => setShowMobileMenu(false)}
+            className={`mobile-menu-backdrop absolute inset-0 bg-carbon/65 backdrop-blur-[1px] ${isMobileMenuClosing ? "is-closing" : ""}`}
+            onClick={closeMobileMenu}
             aria-label="Cerrar menú"
           />
-          <aside className="mobile-menu-drawer relative flex h-full w-[min(86vw,350px)] flex-col bg-white shadow-2xl">
+          <aside className={`mobile-menu-drawer relative flex h-full w-[min(86vw,350px)] flex-col bg-white shadow-2xl ${isMobileMenuClosing ? "is-closing" : ""}`}>
             <div className="flex items-center justify-between border-b border-line px-5 py-4">
               <div>
                 <p className="text-lg font-semibold text-carbon">Menú</p>
@@ -347,7 +362,7 @@ export default function StoreHeader({
               </div>
               <button
                 type="button"
-                onClick={() => setShowMobileMenu(false)}
+                onClick={closeMobileMenu}
                 className="flex size-9 items-center justify-center rounded-full border border-line text-muted transition-colors hover:border-primary hover:text-primary"
                 aria-label="Cerrar menú"
               >
@@ -360,7 +375,7 @@ export default function StoreHeader({
                 type="button"
                 onClick={() => {
                   onOpenCatalogHome();
-                  setShowMobileMenu(false);
+                  closeMobileMenu();
                 }}
                 className="flex w-full items-center justify-between border-b border-line py-4 text-left"
               >
@@ -383,7 +398,7 @@ export default function StoreHeader({
                     type="button"
                     onClick={() => {
                       onOpenFullCatalog();
-                      setShowMobileMenu(false);
+                      closeMobileMenu();
                     }}
                     className="block w-full py-3 text-left text-sm font-semibold text-primary"
                   >
@@ -395,7 +410,7 @@ export default function StoreHeader({
                       type="button"
                       onClick={() => {
                         onSelectCatalogCategory(category.id);
-                        setShowMobileMenu(false);
+                        closeMobileMenu();
                       }}
                       className="block w-full py-2.5 text-left text-sm text-slate-600 transition-colors hover:text-primary"
                     >
@@ -409,7 +424,7 @@ export default function StoreHeader({
                 type="button"
                 onClick={() => {
                   onSetActiveTab("carrito");
-                  setShowMobileMenu(false);
+                  closeMobileMenu();
                   scrollToPageTop();
                 }}
                 className="flex w-full items-center justify-between border-b border-line py-4 text-left"
@@ -424,8 +439,8 @@ export default function StoreHeader({
               <button
                 type="button"
                 onClick={() => {
-                  setShowMobileMenu(false);
-                  window.setTimeout(() => document.getElementById("site-contact")?.scrollIntoView({ behavior: "smooth" }), 0);
+                  closeMobileMenu();
+                  window.setTimeout(() => document.getElementById("site-contact")?.scrollIntoView({ behavior: "smooth" }), 300);
                 }}
                 className="flex w-full items-center justify-between border-b border-line py-4 text-left"
               >
@@ -441,7 +456,7 @@ export default function StoreHeader({
                     type="button"
                     onClick={() => {
                       onSetActiveTab("perfil");
-                      setShowMobileMenu(false);
+                      closeMobileMenu();
                     }}
                     className="w-full rounded-md bg-primary px-4 py-3 text-xs font-bold uppercase tracking-wider text-white"
                   >
@@ -451,7 +466,7 @@ export default function StoreHeader({
                     type="button"
                     onClick={() => {
                       onLogoutClient();
-                      setShowMobileMenu(false);
+                      closeMobileMenu();
                     }}
                     className="w-full rounded-md bg-secondary px-4 py-3 text-xs font-bold uppercase tracking-wider text-primary"
                   >
@@ -463,8 +478,8 @@ export default function StoreHeader({
                   <button
                     type="button"
                     onClick={() => {
-                      setShowMobileMenu(false);
-                      onLoginClientClick();
+                      closeMobileMenu();
+                      window.setTimeout(onLoginClientClick, 300);
                     }}
                     className="w-full rounded-md bg-primary px-4 py-3 text-xs font-bold uppercase tracking-wider text-white"
                   >
@@ -473,8 +488,8 @@ export default function StoreHeader({
                   <button
                     type="button"
                     onClick={() => {
-                      setShowMobileMenu(false);
-                      onRegisterClientClick();
+                      closeMobileMenu();
+                      window.setTimeout(onRegisterClientClick, 300);
                     }}
                     className="w-full rounded-md bg-secondary px-4 py-3 text-xs font-bold uppercase tracking-wider text-primary"
                   >

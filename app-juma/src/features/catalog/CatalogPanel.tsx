@@ -274,15 +274,15 @@ function CatalogPanel({
             Todavia no hay productos destacados para mostrar en el inicio.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-6 lg:grid-cols-4">
             {featuredProducts.map((product) => (
               <div
                 key={`featured-${product.id}`}
                 data-product-card-id={product.id}
-                className="group flex h-full cursor-pointer flex-col rounded bg-white p-4 shadow-subtle transition-shadow hover:shadow-md"
+                className="group flex h-full cursor-pointer flex-col rounded bg-white p-2 shadow-subtle transition-shadow hover:shadow-md sm:p-4"
                 onClick={() => onOpenProduct(product.id)}
               >
-                <div className="relative mb-4 aspect-square overflow-hidden rounded bg-secondary/60">
+                <div className="relative mb-2 aspect-square overflow-hidden rounded bg-secondary/60 sm:mb-4">
                   {product.image ? (
                     <ProductImage
                       product={product}
@@ -298,9 +298,9 @@ function CatalogPanel({
                   )}
                 </div>
                 <div className="flex flex-1 flex-col">
-                  <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.24em] text-primary/70">{product.categoryName || "Categoria"}</p>
-                  <h3 className="min-h-[5.5rem] text-center font-headline text-[1.35rem] leading-tight text-carbon">{getProductDisplayName(product)}</h3>
-                  <p className="mt-2 text-center text-lg font-semibold text-carbon">${product.salePrice.toLocaleString("es-AR")}</p>
+                  <p className="mb-1 text-center text-[8px] font-bold uppercase tracking-[0.16em] text-primary/70 sm:mb-2 sm:text-[10px] sm:tracking-[0.24em]">{product.categoryName || "Categoria"}</p>
+                  <h3 className="min-h-[3.6rem] text-center font-headline text-[0.95rem] leading-tight text-carbon sm:min-h-[5.5rem] sm:text-[1.35rem]">{getProductDisplayName(product)}</h3>
+                  <p className="mt-1.5 text-center text-base font-semibold text-carbon sm:mt-2 sm:text-lg">${product.salePrice.toLocaleString("es-AR")}</p>
                   {product.size?.trim() ? (
                     <p className="mt-1 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-primary/60">
                       Talle {product.size}
@@ -313,7 +313,7 @@ function CatalogPanel({
                     event.stopPropagation();
                     onAddToCart(product.id);
                   }}
-                  className="mt-5 flex w-full items-center justify-center gap-2 rounded bg-primary py-3 text-sm font-bold uppercase tracking-[0.18em] text-white transition-all hover:opacity-90"
+                  className="mt-3 flex w-full items-center justify-center gap-1 rounded bg-primary px-1 py-2 text-[9px] font-bold uppercase tracking-[0.08em] text-white transition-all hover:opacity-90 sm:mt-5 sm:gap-2 sm:py-3 sm:text-sm sm:tracking-[0.18em]"
                 >
                   <span translate="no" className="material-symbols-outlined text-sm">{product.stock <= 0 ? "inventory_2" : "add_shopping_cart"}</span>
                   {product.stock <= 0 ? "Pedir por encargo" : "Agregar al carrito"}
@@ -423,7 +423,7 @@ function CatalogPanel({
             ))}
           </div>
         ) : null}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-6 lg:grid-cols-4 lg:gap-8">
           {filteredProducts.length === 0 ? (
             <div className="col-span-full text-center py-20 text-muted">No hay productos cargados en el catalogo.</div>
           ) : (
@@ -431,10 +431,10 @@ function CatalogPanel({
               <div
                 key={product.id}
                 data-product-card-id={product.id}
-                className="group flex h-full cursor-pointer flex-col rounded bg-white p-4 shadow-subtle transition-shadow hover:shadow-md"
+                className="group flex h-full cursor-pointer flex-col rounded bg-white p-2 shadow-subtle transition-shadow hover:shadow-md sm:p-4"
                 onClick={() => onOpenProduct(product.id)}
               >
-                <div className="relative aspect-square overflow-hidden rounded mb-4 bg-secondary/60 flex items-center justify-center">
+                <div className="relative mb-2 flex aspect-square items-center justify-center overflow-hidden rounded bg-secondary/60 sm:mb-4">
                   {product.image ? (
                     <ProductImage
                       product={product}
@@ -447,7 +447,7 @@ function CatalogPanel({
                     <span translate="no" className="material-symbols-outlined text-6xl text-slate-300">image</span>
                   )}
                   <button
-                    className={`absolute top-3 right-3 backdrop-blur rounded-full p-2 transition-all ${
+                    className={`absolute right-1.5 top-1.5 rounded-full p-1.5 backdrop-blur transition-all sm:right-3 sm:top-3 sm:p-2 ${
                       favoriteProductIds.has(product.id) ? "bg-red-100 text-red-500 hover:bg-red-200" : "bg-white/85 text-muted hover:text-red-400"
                     }`}
                     onClick={(event) => {
@@ -456,21 +456,21 @@ function CatalogPanel({
                     }}
                     title={favoriteProductIds.has(product.id) ? "Quitar de favoritos" : "Guardar en favoritos"}
                   >
-                    <span translate="no" className="material-symbols-outlined text-xl" style={{ fontVariationSettings: favoriteProductIds.has(product.id) ? "'FILL' 1" : "'FILL' 0" }}>
+                    <span translate="no" className="material-symbols-outlined text-base sm:text-xl" style={{ fontVariationSettings: favoriteProductIds.has(product.id) ? "'FILL' 1" : "'FILL' 0" }}>
                       favorite
                     </span>
                   </button>
-                  {product.stock <= 0 && <span className="absolute top-3 left-3 rounded bg-carbon px-2 py-1 text-[10px] font-bold uppercase text-white">Por encargo</span>}
+                  {product.stock <= 0 && <span className="absolute left-1.5 top-1.5 rounded bg-carbon px-1.5 py-1 text-[8px] font-bold uppercase text-white sm:left-3 sm:top-3 sm:px-2 sm:text-[10px]">Por encargo</span>}
                 </div>
                 <div className="flex flex-1 flex-col">
-                  <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.24em] text-primary/70">{product.categoryName || "Categoria"}</p>
-                  <h4 className="min-h-[5.5rem] text-center font-headline text-[1.35rem] leading-tight text-carbon">{getProductDisplayName(product)}</h4>
-                  <p className="mt-2 text-center text-lg font-semibold text-carbon">${product.salePrice.toLocaleString("es-AR")}</p>
+                  <p className="mb-1 text-center text-[8px] font-bold uppercase tracking-[0.16em] text-primary/70 sm:mb-2 sm:text-[10px] sm:tracking-[0.24em]">{product.categoryName || "Categoria"}</p>
+                  <h4 className="min-h-[3.6rem] text-center font-headline text-[0.95rem] leading-tight text-carbon sm:min-h-[5.5rem] sm:text-[1.35rem]">{getProductDisplayName(product)}</h4>
+                  <p className="mt-1.5 text-center text-base font-semibold text-carbon sm:mt-2 sm:text-lg">${product.salePrice.toLocaleString("es-AR")}</p>
                   {/* Chips de talles disponibles */}
                   {Array.isArray(product.sizes) && product.sizes.length > 0 ? (
-                    <div className="mt-2 flex flex-wrap justify-center gap-1">
+                    <div className="mt-1.5 flex flex-wrap justify-center gap-1 sm:mt-2">
                       {product.sizes.filter((s) => s.stock > 0).slice(0, 6).map((s) => (
-                        <span key={s.size} className="rounded border border-primary/25 bg-primary/5 px-2 py-0.5 text-[10px] font-bold text-primary">{s.size}</span>
+                        <span key={s.size} className="rounded border border-primary/25 bg-primary/5 px-1.5 py-0.5 text-[8px] font-bold text-primary sm:px-2 sm:text-[10px]">{s.size}</span>
                       ))}
                       {product.sizes.filter((s) => s.stock > 0).length > 6 && (
                         <span className="rounded border border-primary/25 bg-primary/5 px-2 py-0.5 text-[10px] font-bold text-primary">+{product.sizes.filter((s) => s.stock > 0).length - 6}</span>
@@ -481,7 +481,7 @@ function CatalogPanel({
                       Talle {product.size}
                     </p>
                   ) : null}
-                  <p className="mt-2 min-h-[2.5rem] text-center text-xs text-muted">
+                  <p className="mt-1.5 min-h-[2rem] text-center text-[10px] leading-tight text-muted sm:mt-2 sm:min-h-[2.5rem] sm:text-xs">
                     {product.stock > 0 ? "Disponible" : "Sin stock inmediato. Se puede pedir por encargo."}
                   </p>
                 </div>
@@ -495,7 +495,7 @@ function CatalogPanel({
                       onAddToCart(product.id);
                     }
                   }}
-                  className="mt-5 flex w-full items-center justify-center gap-2 rounded bg-primary py-3 text-sm font-bold uppercase tracking-[0.18em] text-white transition-all hover:opacity-90"
+                  className="mt-3 flex w-full items-center justify-center gap-1 rounded bg-primary px-1 py-2 text-[9px] font-bold uppercase tracking-[0.08em] text-white transition-all hover:opacity-90 sm:mt-5 sm:gap-2 sm:py-3 sm:text-sm sm:tracking-[0.18em]"
                 >
                   <span translate="no" className="material-symbols-outlined text-sm">{product.stock <= 0 ? "inventory_2" : Array.isArray(product.sizes) && product.sizes.length > 0 ? "straighten" : "add_shopping_cart"}</span>
                   {product.stock <= 0 ? "Pedir por encargo" : Array.isArray(product.sizes) && product.sizes.length > 0 ? "Elegir talle" : "Agregar al carrito"}
