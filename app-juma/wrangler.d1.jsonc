@@ -1,0 +1,11 @@
+{
+  "name": "juma-data-migration",
+  "account_id": "6f7477f1ef18b1f3b1f8785d2ec7fe57",
+  "compatibility_date": "2026-09-07",
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "juma-migration-db",
+    "database_id": "c4229704-edcd-4731-913f-1cf028497c3e",
+    "migrations_dir": "cloudflare/migrations"
+  }]
+}
