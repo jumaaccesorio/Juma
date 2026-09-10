@@ -2450,8 +2450,11 @@ function App() {
             <h3 className="text-white text-xl font-black uppercase mb-4">Juma Accessory</h3>
             <p className="text-sm leading-relaxed mb-6">Tu destino premium para accesorios de plata 925 y joyería de diseño. Elegancia y calidad en cada pieza.</p>
             <div className="flex gap-4">
-              <a href="mailto:hola@jumaaccessory.com" className="size-8 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all" title="Contacto">
+              <a href="mailto:Juma.accesorio@gmail.com" className="size-8 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all" title="Enviar correo">
                 <span translate="no" className="material-symbols-outlined text-lg">alternate_email</span>
+              </a>
+              <a href="https://www.instagram.com/juma.accessory/" target="_blank" rel="noreferrer" className="size-8 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all" title="Instagram @Juma.accessory">
+                <span translate="no" className="material-symbols-outlined text-lg">brand_awareness</span>
               </a>
             </div>
           </div>
@@ -2474,11 +2477,15 @@ function App() {
             <ul className="space-y-4 text-sm">
               <li className="flex items-center gap-3">
                 <span translate="no" className="material-symbols-outlined text-primary text-sm">location_on</span>
-                Buenos Aires, Argentina
+                Córdoba, Argentina
               </li>
               <li className="flex items-center gap-3">
                 <span translate="no" className="material-symbols-outlined text-primary text-sm">mail</span>
-                hola@jumaaccessory.com
+                <a href="mailto:Juma.accesorio@gmail.com" className="transition-colors hover:text-primary">Juma.accesorio@gmail.com</a>
+              </li>
+              <li className="flex items-center gap-3">
+                <span translate="no" className="material-symbols-outlined text-primary text-sm">brand_awareness</span>
+                <a href="https://www.instagram.com/juma.accessory/" target="_blank" rel="noreferrer" className="transition-colors hover:text-primary">@Juma.accessory</a>
               </li>
             </ul>
           </div>

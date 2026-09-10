@@ -335,11 +335,11 @@ export default function StoreHeader({
         <div className="fixed inset-0 z-[110] md:hidden" role="dialog" aria-modal="true" aria-label="Menú principal">
           <button
             type="button"
-            className="absolute inset-0 bg-carbon/65 backdrop-blur-[1px]"
+            className="mobile-menu-backdrop absolute inset-0 bg-carbon/65 backdrop-blur-[1px]"
             onClick={() => setShowMobileMenu(false)}
             aria-label="Cerrar menú"
           />
-          <aside className="relative flex h-full w-[min(86vw,350px)] flex-col bg-white shadow-2xl">
+          <aside className="mobile-menu-drawer relative flex h-full w-[min(86vw,350px)] flex-col bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-line px-5 py-4">
               <div>
                 <p className="text-lg font-semibold text-carbon">Menú</p>
