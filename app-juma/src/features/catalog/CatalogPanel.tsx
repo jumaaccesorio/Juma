@@ -3,6 +3,8 @@ import type { Category, FeaturedPanel, HeroBanner, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
 import ProductImage from "../../components/ProductImage";
 
+const CATALOG_PAGE_SIZE = 24;
+
 type CatalogPanelProps = {
   products: Product[];
   categories: Category[];
@@ -49,6 +51,7 @@ function CatalogPanel({
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [selectedRootCategory, setSelectedRootCategory] = useState<number | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const productsGridRef = useRef<HTMLElement | null>(null);
   const normalizeText = (value: string) =>
     value
@@ -146,6 +149,33 @@ function CatalogPanel({
       return haystack.includes(normalizedSearch);
     });
   }, [categories, products, searchQuery, selectedRootCategory, selectedSubcategory]);
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / CATALOG_PAGE_SIZE));
+  const paginatedProducts = useMemo(() => {
+    const pageStart = (currentPage - 1) * CATALOG_PAGE_SIZE;
+    return filteredProducts.slice(pageStart, pageStart + CATALOG_PAGE_SIZE);
+  }, [currentPage, filteredProducts]);
+  const firstVisibleProduct = filteredProducts.length === 0 ? 0 : (currentPage - 1) * CATALOG_PAGE_SIZE + 1;
+  const lastVisibleProduct = Math.min(currentPage * CATALOG_PAGE_SIZE, filteredProducts.length);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedRootCategory, selectedSubcategory, viewMode]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
+  const changePage = (page: number) => {
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+    if (nextPage === currentPage) return;
+    setCurrentPage(nextPage);
+    window.requestAnimationFrame(() => {
+      const section = productsGridRef.current;
+      if (!section) return;
+      const top = section.getBoundingClientRect().top + window.scrollY - 88;
+      window.scrollTo({ top, behavior: "smooth" });
+    });
+  };
 
   useEffect(() => {
     const root = panelRef.current;
@@ -183,7 +213,7 @@ function CatalogPanel({
     productCards.forEach((card) => observer.observe(card));
 
     return () => observer.disconnect();
-  }, [featuredProducts, filteredProducts, onRequestProductImages, viewMode]);
+  }, [featuredProducts, paginatedProducts, onRequestProductImages, viewMode]);
 
   return (
     <div ref={panelRef} className="flex flex-col">
@@ -427,7 +457,7 @@ function CatalogPanel({
           {filteredProducts.length === 0 ? (
             <div className="col-span-full text-center py-20 text-muted">No hay productos cargados en el catalogo.</div>
           ) : (
-            filteredProducts.map((product) => (
+            paginatedProducts.map((product) => (
               <div
                 key={product.id}
                 data-product-card-id={product.id}
@@ -504,6 +534,38 @@ function CatalogPanel({
             ))
           )}
         </div>
+        {filteredProducts.length > 0 ? (
+          <div className="mt-8 flex flex-col items-center gap-4 sm:mt-12">
+            <p className="text-xs font-medium text-muted">
+              Mostrando {firstVisibleProduct}–{lastVisibleProduct} de {filteredProducts.length} accesorios
+            </p>
+            {totalPages > 1 ? (
+              <nav className="flex items-center gap-2" aria-label="Paginación del catálogo">
+                <button
+                  type="button"
+                  onClick={() => changePage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="flex size-10 items-center justify-center rounded-full border border-primary/25 bg-white text-primary transition-colors hover:border-primary hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-white disabled:hover:text-primary"
+                  aria-label="Página anterior"
+                >
+                  <span translate="no" className="material-symbols-outlined text-xl">chevron_left</span>
+                </button>
+                <span className="min-w-28 text-center text-xs font-bold uppercase tracking-[0.12em] text-carbon">
+                  Página {currentPage} de {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => changePage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="flex size-10 items-center justify-center rounded-full border border-primary/25 bg-white text-primary transition-colors hover:border-primary hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-white disabled:hover:text-primary"
+                  aria-label="Página siguiente"
+                >
+                  <span translate="no" className="material-symbols-outlined text-xl">chevron_right</span>
+                </button>
+              </nav>
+            ) : null}
+          </div>
+        ) : null}
       </section>
       ) : null}
 
