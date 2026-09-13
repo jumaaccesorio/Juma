@@ -63,7 +63,10 @@ function CatalogPanel({
     () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
     [categories],
   );
-  const featuredProducts = useMemo(() => bestSellerProducts.length > 0 ? bestSellerProducts : products.filter((product) => product.isFeatured).slice(0, 8), [bestSellerProducts, products]);
+  const featuredProducts = useMemo(() => {
+    const manuallyFeatured = products.filter((product) => product.isFeatured);
+    return manuallyFeatured.length > 0 ? manuallyFeatured : bestSellerProducts;
+  }, [bestSellerProducts, products]);
   const subcategories = useMemo(
     () =>
       categories
