@@ -264,6 +264,7 @@ function App() {
   const [error, setError] = useState("");
   const [adminError, setAdminError] = useState("");
   const [isAdminLogged, setIsAdminLogged] = useState(false);
+  const [isAdminSessionChecked, setIsAdminSessionChecked] = useState(false);
   const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState(false);
   const [adminForm, setAdminForm] = useState({ user: "", password: "" });
   const [showAdminLogin, setShowAdminLogin] = useState(false);
@@ -679,10 +680,16 @@ function App() {
     fetch("/api/admin/session", { credentials: "same-origin", cache: "no-store" })
       .then(async (response) => response.ok ? response.json() : { authenticated: false })
       .then((result) => {
-        if (!cancelled) setIsAdminLogged(result.authenticated === true);
+        if (!cancelled) {
+          setIsAdminLogged(result.authenticated === true);
+          setIsAdminSessionChecked(true);
+        }
       })
       .catch(() => {
-        if (!cancelled) setIsAdminLogged(false);
+        if (!cancelled) {
+          setIsAdminLogged(false);
+          setIsAdminSessionChecked(true);
+        }
       });
     return () => { cancelled = true; };
   }, []);
@@ -719,10 +726,10 @@ function App() {
   const isRestrictedTab = !isAdminLogged && activeTab !== "catalogo" && activeTab !== "carrito";
 
   useEffect(() => {
-    if (!isAdminLogged && isRestrictedTab) {
+    if (isAdminSessionChecked && !isAdminLogged && isRestrictedTab) {
       setActiveTab("carrito");
     }
-  }, [isAdminLogged, isRestrictedTab]);
+  }, [isAdminLogged, isAdminSessionChecked, isRestrictedTab, setActiveTab]);
 
   const lowStockProducts = useMemo(() => products.filter((product) => product.stock <= 2), [products]);
   const cartRows = useMemo(
@@ -1879,6 +1886,7 @@ function App() {
     setLoadedAdminSlices({ clients: false, orders: false, finance: false });
     setLoadingAdminSlices({ clients: false, orders: false, finance: false });
     setIsAdminLogged(true);
+    setIsAdminSessionChecked(true);
     setAdminForm({ user: "", password: "" });
     setShowAdminLogin(false);
     setActiveTab("dashboard");
@@ -1887,6 +1895,7 @@ function App() {
   const logoutAdmin = () => {
     void fetch("/api/admin/logout", { method: "POST", credentials: "same-origin" }).catch(() => {});
     setIsAdminLogged(false);
+    setIsAdminSessionChecked(true);
     setIsAdminSidebarOpen(false);
     setLoadedAdminSlices({ clients: false, orders: false, finance: false });
     setLoadingAdminSlices({ clients: false, orders: false, finance: false });
@@ -1945,6 +1954,14 @@ function App() {
   };
 
   const isAdminTab = isAdminLogged && ["dashboard", "catalogo", "venta_rapida", "inicio_admin", "productos", "clientes", "pedidos", "reposicion", "finanzas", "comunidad"].includes(activeTab);
+
+  if (!isAdminSessionChecked && location.pathname.startsWith("/admin")) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-primary">
+        <span className="material-symbols-outlined animate-spin text-4xl">progress_activity</span>
+      </div>
+    );
+  }
 
   if (isAdminTab) {
     return (
