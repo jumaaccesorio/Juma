@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
-  ADMIN_PASS,
   ADMIN_SESSION_KEY,
-  ADMIN_USER,
   CART_ADMIN_KEY,
   CART_GUEST_KEY,
 } from "./constants";
@@ -265,7 +263,7 @@ function App() {
   const [productReviews, setProductReviews] = useState<ProductReview[]>([]);
   const [error, setError] = useState("");
   const [adminError, setAdminError] = useState("");
-  const [isAdminLogged, setIsAdminLogged] = useState(() => localStorage.getItem(ADMIN_SESSION_KEY) === "1");
+  const [isAdminLogged, setIsAdminLogged] = useState(false);
   const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState(false);
   const [adminForm, setAdminForm] = useState({ user: "", password: "" });
   const [showAdminLogin, setShowAdminLogin] = useState(false);
@@ -676,8 +674,18 @@ function App() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(ADMIN_SESSION_KEY, isAdminLogged ? "1" : "0");
-  }, [isAdminLogged]);
+    localStorage.removeItem(ADMIN_SESSION_KEY);
+    let cancelled = false;
+    fetch("/api/admin/session", { credentials: "same-origin", cache: "no-store" })
+      .then(async (response) => response.ok ? response.json() : { authenticated: false })
+      .then((result) => {
+        if (!cancelled) setIsAdminLogged(result.authenticated === true);
+      })
+      .catch(() => {
+        if (!cancelled) setIsAdminLogged(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     if (isAdminLogged) {
@@ -1825,7 +1833,7 @@ function App() {
     setShowAdminLogin(true);
   };
 
-  const loginAdmin = (event: React.FormEvent<HTMLFormElement>) => {
+  const loginAdmin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAdminError("");
     const activeLock = adminLockedUntil && adminLockedUntil > Date.now() ? adminLockedUntil : null;
@@ -1837,7 +1845,21 @@ function App() {
       return;
     }
 
-    if (adminForm.user.trim() !== ADMIN_USER || adminForm.password !== ADMIN_PASS) {
+    let authenticated = false;
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ user: adminForm.user.trim(), password: adminForm.password }),
+      });
+      authenticated = response.ok;
+    } catch {
+      setAdminError("No se pudo conectar con el servidor. Intentá nuevamente.");
+      return;
+    }
+
+    if (!authenticated) {
       const nextAttempts = Number(localStorage.getItem(ADMIN_LOGIN_ATTEMPTS_KEY) || "0") + 1;
       if (nextAttempts >= ADMIN_MAX_LOGIN_ATTEMPTS) {
         const lockUntil = Date.now() + ADMIN_LOGIN_LOCK_MS;
@@ -1863,6 +1885,7 @@ function App() {
   };
 
   const logoutAdmin = () => {
+    void fetch("/api/admin/logout", { method: "POST", credentials: "same-origin" }).catch(() => {});
     setIsAdminLogged(false);
     setIsAdminSidebarOpen(false);
     setLoadedAdminSlices({ clients: false, orders: false, finance: false });
