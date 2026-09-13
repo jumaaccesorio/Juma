@@ -24,7 +24,6 @@ type CatalogPanelProps = {
   onPanelCategoryClick: (categoryId: number | null) => void;
   onOpenFullCatalog: () => void;
   onSubscribeCommunity: (email: string) => Promise<void>;
-  bestSellerProducts: Product[];
 };
 
 function CatalogPanel({
@@ -46,7 +45,6 @@ function CatalogPanel({
   onPanelCategoryClick,
   onOpenFullCatalog,
   onSubscribeCommunity,
-  bestSellerProducts,
 }: CatalogPanelProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [selectedRootCategory, setSelectedRootCategory] = useState<number | null>(null);
@@ -63,10 +61,7 @@ function CatalogPanel({
     () => categories.filter((category) => !category.parentId).sort((a, b) => a.name.localeCompare(b.name)),
     [categories],
   );
-  const featuredProducts = useMemo(() => {
-    const manuallyFeatured = products.filter((product) => product.isFeatured);
-    return manuallyFeatured.length > 0 ? manuallyFeatured : bestSellerProducts;
-  }, [bestSellerProducts, products]);
+  const featuredProducts = useMemo(() => products.filter((product) => product.isFeatured), [products]);
   const subcategories = useMemo(
     () =>
       categories
@@ -298,9 +293,9 @@ function CatalogPanel({
       ) : null}
       <section className="bg-background px-4 py-12 sm:px-6 sm:py-16 md:px-40 md:py-20">
         <div className="mb-12 flex flex-col items-center text-center">
-          <span className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-primary">Los más elegidos</span>
+          <span className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-primary">Selección Juma</span>
           <h2 className="font-headline text-3xl font-light text-carbon">Piezas destacadas</h2>
-          <p className="mt-3 max-w-2xl text-sm text-muted">Las piezas preferidas por nuestros clientes. Lo más vendido y deseado de Juma.</p>
+          <p className="mt-3 max-w-2xl text-sm text-muted">Una selección especial de piezas elegidas por Juma.</p>
         </div>
         {featuredProducts.length === 0 ? (
           <div className="rounded border border-dashed border-line bg-secondary/35 px-6 py-14 text-center text-sm text-muted">

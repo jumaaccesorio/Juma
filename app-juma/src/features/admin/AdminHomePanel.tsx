@@ -1,4 +1,4 @@
-import type { Category, FeaturedPanel, FeaturedPeriod, CatalogSortOrder, HeroBanner } from "../../types";
+import type { Category, FeaturedPanel, CatalogSortOrder, HeroBanner } from "../../types";
 
 type AdminHomePanelProps = {
   heroBanner: HeroBanner;
@@ -7,8 +7,6 @@ type AdminHomePanelProps = {
   canAddMorePanels: boolean;
   hasUnsavedChanges: boolean;
   isSaving: boolean;
-  featuredPeriod: FeaturedPeriod;
-  onChangeFeaturedPeriod: (period: FeaturedPeriod) => void;
   catalogSortOrder: CatalogSortOrder;
   onChangeCatalogSortOrder: (order: CatalogSortOrder) => void;
   onUpdateHeroText: (field: "tag" | "title" | "subtitle", value: string) => void;
@@ -28,8 +26,6 @@ function AdminHomePanel({
   canAddMorePanels,
   hasUnsavedChanges,
   isSaving,
-  featuredPeriod,
-  onChangeFeaturedPeriod,
   catalogSortOrder,
   onChangeCatalogSortOrder,
   onUpdateHeroText,
@@ -65,19 +61,19 @@ function AdminHomePanel({
         </button>
       </div>
 
-      {/* ── CATALOG SORTING & FEATURED PERIOD CONFIG ── */}
+      {/* ── CATALOG SORTING ── */}
       <div className="rounded-2xl bg-white p-4 sm:p-6 border border-slate-200/80 shadow-sm space-y-6">
         <div className="flex items-center gap-2 pb-4 border-b border-slate-100">
           <div className="flex size-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
             <span translate="no" className="material-symbols-outlined text-lg">sort</span>
           </div>
           <div>
-            <h2 className="font-headline text-lg font-bold text-slate-900">Ordenamiento de Productos y Destacados</h2>
-            <p className="text-xs text-slate-400">Configurá cómo se muestran los productos en el catálogo principal y en el inicio.</p>
+            <h2 className="font-headline text-lg font-bold text-slate-900">Ordenamiento de Productos</h2>
+            <p className="text-xs text-slate-400">Configurá cómo se muestran los productos en el catálogo principal.</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="max-w-2xl">
           {/* Criterio de ordenamiento global */}
           <div>
             <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -85,7 +81,6 @@ function AdminHomePanel({
             </label>
             <div className="space-y-2">
               {[
-                { id: "ventas", label: "Más vendidos", desc: "Prioriza los productos con mayores ventas registradas", icon: "trending_up" },
                 { id: "recientes", label: "Más recientes", desc: "Muestra primero los últimos cargados a la tienda", icon: "new_releases" },
                 { id: "precio_asc", label: "Menor a Mayor precio", desc: "Ordena de más económico a más costoso", icon: "arrow_upward" },
                 { id: "precio_desc", label: "Mayor a Menor precio", desc: "Ordena de más costoso a más económico", icon: "arrow_downward" },
@@ -121,43 +116,6 @@ function AdminHomePanel({
             </div>
           </div>
 
-          {/* Periodo de cálculo de ventas */}
-          <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
-              Periodo de cálculo de Más Vendidos
-            </label>
-            <div className="space-y-3">
-              {(["1", "6", "12"] as const).map((p) => {
-                const labels: Record<string, string> = { "1": "Último mes (30 días)", "6": "Últimos 6 meses", "12": "Último año (12 meses)" };
-                const isActive = featuredPeriod === p;
-                return (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => onChangeFeaturedPeriod(p)}
-                    className={`w-full flex items-center justify-between p-3.5 rounded-xl border-2 text-left transition-all ${
-                      isActive
-                        ? "border-amber-500 bg-amber-50/50 text-slate-900 font-bold shadow-sm"
-                        : "border-slate-100 bg-slate-50/50 text-slate-600 hover:border-slate-300"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span translate="no" className={`material-symbols-outlined text-lg ${isActive ? "text-amber-600" : "text-slate-400"}`}>
-                        calendar_today
-                      </span>
-                      <span className="text-xs font-bold">{labels[p]}</span>
-                    </div>
-                    <span translate="no" className={`material-symbols-outlined text-sm ${isActive ? "text-amber-600" : "text-slate-300"}`}>
-                      {isActive ? "radio_button_checked" : "radio_button_unchecked"}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-            <p className="mt-4 text-[11px] text-slate-400 leading-relaxed">
-              Los datos se calculan automáticamente analizando los pedidos finalizados en el periodo seleccionado.
-            </p>
-          </div>
         </div>
       </div>
 

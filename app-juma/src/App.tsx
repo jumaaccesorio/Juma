@@ -24,7 +24,7 @@ import ClientProfilePanel from "./features/users/ClientProfilePanel";
 import CustomerAuthModal from "./features/users/CustomerAuthModal";
 import AuthConfirmPanel from "./features/users/AuthConfirmPanel";
 import ResetPasswordPanel from "./features/users/ResetPasswordPanel";
-import type { CartItem, Client, CommunitySubscriber, Favorite, FeaturedPanel, FeaturedPeriod, CatalogSortOrder, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, PackagingCost, Product, ProductReview, Tab, Category } from "./types";
+import type { CartItem, Client, CommunitySubscriber, Favorite, FeaturedPanel, CatalogSortOrder, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, PackagingCost, Product, ProductReview, Tab, Category } from "./types";
 import { api } from "./lib/api";
 import { getProductDisplayName } from "./lib/productLabel";
 import { optimizeFileForPreview } from "./lib/imageUpload";
@@ -257,9 +257,7 @@ function App() {
   const [isHomeContentLoaded, setIsHomeContentLoaded] = useState(false);
   const [homeConfigDirty, setHomeConfigDirty] = useState(false);
   const [isSavingHomeConfig, setIsSavingHomeConfig] = useState(false);
-  const [featuredPeriod, setFeaturedPeriod] = useState<FeaturedPeriod>("1");
-  const [catalogSortOrder, setCatalogSortOrder] = useState<CatalogSortOrder>("ventas");
-  const [bestSellerProductIds, setBestSellerProductIds] = useState<number[]>([]);
+  const [catalogSortOrder, setCatalogSortOrder] = useState<CatalogSortOrder>("recientes");
   const [productReviews, setProductReviews] = useState<ProductReview[]>([]);
   const [error, setError] = useState("");
   const [adminError, setAdminError] = useState("");
@@ -357,11 +355,10 @@ function App() {
         isAdmin ? api.getProducts() : api.getCatalogProducts(),
         api.getFeaturedPanels(),
         api.getHeroBanner(),
-        api.getSetting("featured_products_period"),
         api.getSetting("catalog_sort_order"),
       ]);
 
-      const [categoriesResult, productsResult, panelsResult, heroResult, periodResult, sortOrderResult] = results;
+      const [categoriesResult, productsResult, panelsResult, heroResult, sortOrderResult] = results;
 
       if (categoriesResult.status === "fulfilled") {
         setCategories(categoriesResult.value);
@@ -391,27 +388,12 @@ function App() {
       setHomeConfigDirty(false);
       setIsHomeContentLoaded(true);
 
-      // Load featured period setting
-      if (periodResult.status === "fulfilled" && periodResult.value) {
-        const val = periodResult.value as FeaturedPeriod;
-        if (["1", "6", "12"].includes(val)) setFeaturedPeriod(val);
-      }
-
       // Load catalog sort order setting
       if (sortOrderResult.status === "fulfilled" && sortOrderResult.value) {
         const val = sortOrderResult.value as CatalogSortOrder;
-        if (["ventas", "recientes", "nombre", "precio_asc", "precio_desc"].includes(val)) {
+        if (["recientes", "nombre", "precio_asc", "precio_desc"].includes(val)) {
           setCatalogSortOrder(val);
         }
-      }
-
-      // Load best sellers based on period
-      try {
-        const period = (periodResult.status === "fulfilled" && periodResult.value && ["1", "6", "12"].includes(periodResult.value)) ? periodResult.value as FeaturedPeriod : "1";
-        const bestIds = await api.getBestSellingProductIds(period);
-        setBestSellerProductIds(bestIds);
-      } catch (e) {
-        console.warn("No se pudieron cargar los productos más vendidos.", e);
       }
 
       const criticalErrors: string[] = [];
@@ -746,16 +728,6 @@ function App() {
   const cartItemsCount = useMemo(() => cartItems.reduce((acc, item) => acc + item.quantity, 0), [cartItems]);
   const catalogProducts = useMemo(() => {
     const enabled = products.filter((product) => product.enabled);
-    if (catalogSortOrder === "ventas") {
-      return [...enabled].sort((a, b) => {
-        const indexA = bestSellerProductIds.indexOf(a.id);
-        const indexB = bestSellerProductIds.indexOf(b.id);
-        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-        if (indexA !== -1) return -1;
-        if (indexB !== -1) return 1;
-        return b.id - a.id;
-      });
-    }
     if (catalogSortOrder === "recientes") {
       return [...enabled].sort((a, b) => b.id - a.id);
     }
@@ -769,14 +741,7 @@ function App() {
       return [...enabled].sort((a, b) => a.name.localeCompare(b.name));
     }
     return enabled;
-  }, [products, catalogSortOrder, bestSellerProductIds]);
-
-  const bestSellerProducts = useMemo(() => {
-    if (bestSellerProductIds.length === 0) return [];
-    return bestSellerProductIds
-      .map(id => products.find(p => p.id === id && p.enabled))
-      .filter((p): p is Product => p !== undefined);
-  }, [bestSellerProductIds, products]);
+  }, [products, catalogSortOrder]);
 
   // Load reviews when a product is opened
   useEffect(() => {
@@ -2025,7 +1990,6 @@ function App() {
                   onPanelCategoryClick={navigateToCategoryInCatalog}
                   onOpenFullCatalog={openFullCatalog}
                   onSubscribeCommunity={async (email) => { await api.subscribeToCommunity(email); }}
-                  bestSellerProducts={bestSellerProducts}
                 />
               </div>
             )}
@@ -2052,17 +2016,6 @@ function App() {
                   canAddMorePanels={featuredPanels.length < PANEL_SLOTS.length}
                   hasUnsavedChanges={homeConfigDirty}
                   isSaving={isSavingHomeConfig}
-                  featuredPeriod={featuredPeriod}
-                  onChangeFeaturedPeriod={async (period) => {
-                    setFeaturedPeriod(period);
-                    try {
-                      await api.setSetting("featured_products_period", period);
-                      const bestIds = await api.getBestSellingProductIds(period);
-                      setBestSellerProductIds(bestIds);
-                    } catch (e) {
-                      console.warn("Error guardando periodo de destacados.", e);
-                    }
-                  }}
                   catalogSortOrder={catalogSortOrder}
                   onChangeCatalogSortOrder={async (order) => {
                     setCatalogSortOrder(order);
@@ -2437,7 +2390,6 @@ function App() {
             onPanelCategoryClick={navigateToCategoryInCatalog}
             onOpenFullCatalog={openFullCatalog}
             onSubscribeCommunity={async (email) => { await api.subscribeToCommunity(email); }}
-            bestSellerProducts={bestSellerProducts}
           />
         )
       ) : null}

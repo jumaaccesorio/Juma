@@ -1,4 +1,4 @@
-import type { Category, Client, CommunitySubscriber, Favorite, FeaturedPanel, FeaturedPeriod, FinanceExpense, HeroBanner, Order, OrderItem, PackagingCost, Product, ProductReview, ProductSize, RestockCartItem } from "../types";
+import type { Category, Client, CommunitySubscriber, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, Order, OrderItem, PackagingCost, Product, ProductReview, ProductSize, RestockCartItem } from "../types";
 import { supabase } from "./supabase";
 import { dataUrlToOptimizedFile, optimizeImageFile, type UploadImageVariant } from "./imageUpload";
 
@@ -943,17 +943,6 @@ export const api = {
     if (query.error) throw query.error;
   },
 
-  // ── Best Sellers ────────────────────────────────────────────
-
-  async getBestSellingProductIds(period: FeaturedPeriod = "1", limit = 8): Promise<number[]> {
-    const monthsBack = Number(period) || 1;
-    const { data, error } = await supabase.rpc("get_best_selling_products", {
-      months_back: monthsBack,
-      max_results: limit,
-    });
-    if (error) throw error;
-    return (data ?? []).map((row: any) => Number(row.product_id));
-  },
 };
 
 function mapClient(row: any): Client {

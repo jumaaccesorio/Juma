@@ -144,5 +144,4 @@ export type ProductReview = {
   createdAt: string;
 };
 
-export type FeaturedPeriod = "1" | "6" | "12";
-export type CatalogSortOrder = "ventas" | "recientes" | "nombre" | "precio_asc" | "precio_desc";
+export type CatalogSortOrder = "recientes" | "nombre" | "precio_asc" | "precio_desc";
