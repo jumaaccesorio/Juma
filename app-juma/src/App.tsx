@@ -24,6 +24,7 @@ import ClientProfilePanel from "./features/users/ClientProfilePanel";
 import CustomerAuthModal from "./features/users/CustomerAuthModal";
 import AuthConfirmPanel from "./features/users/AuthConfirmPanel";
 import ResetPasswordPanel from "./features/users/ResetPasswordPanel";
+import LegalPage from "./features/users/LegalPage";
 import type { CartItem, Client, CommunitySubscriber, Favorite, FeaturedPanel, CatalogSortOrder, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, PackagingCost, Product, ProductReview, Tab, Category } from "./types";
 import { api } from "./lib/api";
 import { getProductDisplayName } from "./lib/productLabel";
@@ -100,11 +101,15 @@ function parseAppDate(value?: string | null) {
   return new Date(value);
 }
 
-function getAuthRoute(pathname: string): "confirm" | "reset" | "admin" | null {
+type SpecialRoute = "confirm" | "reset" | "admin" | "privacy" | "terms";
+
+function getAuthRoute(pathname: string): SpecialRoute | null {
   const normalized = pathname.replace(/\/+$/, "") || "/";
   if (normalized === "/auth/confirm") return "confirm";
   if (normalized === "/reset-password") return "reset";
   if (normalized === "/ninalola") return "admin";
+  if (normalized === "/privacidad") return "privacy";
+  if (normalized === "/terminos") return "terms";
   return null;
 }
 
@@ -283,7 +288,7 @@ function App() {
     cartItemsCount: number;
     cartTotal: number;
   } | null>(null);
-  const [authRoute, setAuthRoute] = useState<"confirm" | "reset" | "admin" | null>(() => getAuthRoute(window.location.pathname));
+  const [authRoute, setAuthRoute] = useState<SpecialRoute | null>(() => getAuthRoute(window.location.pathname));
   const [authConfirmState, setAuthConfirmState] = useState<{
     status: "loading" | "success" | "error";
     message: string;
@@ -675,6 +680,14 @@ function App() {
       });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => api.onClientAuthStateChange((event) => {
+    if (event !== "PASSWORD_RECOVERY") return;
+    if (window.location.pathname !== "/reset-password") {
+      window.history.replaceState({}, "", "/reset-password");
+    }
+    setAuthRoute("reset");
+  }), []);
 
   useEffect(() => {
     if (isAdminLogged) {
@@ -2227,6 +2240,7 @@ function App() {
           onLoginClientClick={() => { setAuthModalMode("login"); setShowAuthModal(true); }}
           onRegisterClientClick={() => { setAuthModalMode("register"); setShowAuthModal(true); }}
           onLogoutClient={() => {
+            void api.signOutClient().catch((err) => console.warn("No se pudo cerrar la sesión de Supabase.", err));
             localStorage.removeItem(CLIENT_SESSION_KEY);
           setCurrentClient(null);
           setFavorites([]);
@@ -2331,6 +2345,8 @@ function App() {
             onContinue={() => leaveAuthRoute("catalogo")}
           />
         </main>
+      ) : authRoute === "privacy" || authRoute === "terms" ? (
+        <LegalPage type={authRoute} onBack={() => leaveAuthRoute("catalogo")} />
       ) : (
 
       <main className="flex flex-col grow">
@@ -2425,6 +2441,7 @@ function App() {
           myFavorites={products.filter(p => favorites.some(f => f.productId === p.id))}
           products={products}
           onLogout={() => {
+            void api.signOutClient().catch((err) => console.warn("No se pudo cerrar la sesión de Supabase.", err));
             localStorage.removeItem(CLIENT_SESSION_KEY);
             setCurrentClient(null);
             setFavorites([]);
@@ -2460,8 +2477,10 @@ function App() {
           <div>
             <h4 className="text-white font-bold uppercase text-xs tracking-widest mb-6">Soporte</h4>
             <ul className="space-y-4 text-sm">
-              <li><a href="#" className="hover:text-primary transition-colors uppercase font-medium tracking-wider text-[10px]">Envíos y Entregas</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors uppercase font-medium tracking-wider text-[10px]">Políticas de Devolución</a></li>
+              <li><a href="/terminos" className="hover:text-primary transition-colors uppercase font-medium tracking-wider text-[10px]">Envíos y Entregas</a></li>
+              <li><a href="/terminos" className="hover:text-primary transition-colors uppercase font-medium tracking-wider text-[10px]">Políticas de Devolución</a></li>
+              <li><a href="/privacidad" className="hover:text-primary transition-colors uppercase font-medium tracking-wider text-[10px]">Política de Privacidad</a></li>
+              <li><a href="/terminos" className="hover:text-primary transition-colors uppercase font-medium tracking-wider text-[10px]">Términos y Condiciones</a></li>
             </ul>
           </div>
           <div>

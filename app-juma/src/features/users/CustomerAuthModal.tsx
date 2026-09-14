@@ -60,6 +60,18 @@ export default function CustomerAuthModal({ onClose, onSuccess, initialTab = "lo
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setError("");
+    setSuccessMessage("");
+    setLoading(true);
+    try {
+      await api.signInClientWithGoogle();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No pudimos iniciar sesión con Google.");
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-carbon/80 p-3 backdrop-blur-sm sm:p-4">
       <div className="mobile-modal relative w-full max-w-md overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl sm:p-8">
@@ -116,6 +128,25 @@ export default function CustomerAuthModal({ onClose, onSuccess, initialTab = "lo
             </button>
           </div>
         )}
+
+        {(tab === "login" || tab === "register") ? (
+          <>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={handleGoogleLogin}
+              className="flex w-full items-center justify-center gap-3 rounded-md border border-slate-200 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:opacity-50"
+            >
+              <span className="flex size-6 items-center justify-center rounded-full bg-white text-lg font-bold text-[#4285f4]">G</span>
+              Continuar con Google
+            </button>
+            <div className="my-4 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+              <span className="h-px flex-1 bg-slate-200" />
+              o usar correo
+              <span className="h-px flex-1 bg-slate-200" />
+            </div>
+          </>
+        ) : null}
 
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           {(tab === "register" || tab === "guest") && (

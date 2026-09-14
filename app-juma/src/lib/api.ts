@@ -73,6 +73,26 @@ export const api = {
     return client;
   },
 
+  async signInClientWithGoogle(): Promise<void> {
+    const login = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/confirm`,
+      },
+    });
+    if (login.error) throw login.error;
+  },
+
+  async signOutClient(): Promise<void> {
+    const logout = await supabase.auth.signOut();
+    if (logout.error) throw logout.error;
+  },
+
+  onClientAuthStateChange(callback: (event: string) => void): () => void {
+    const { data } = supabase.auth.onAuthStateChange((event) => callback(event));
+    return () => data.subscription.unsubscribe();
+  },
+
   async requestClientPasswordReset(email: string): Promise<void> {
     const reset = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
