@@ -87,7 +87,7 @@ export default function CustomerAuthModal({ onClose, onSuccess, initialTab = "lo
   const isExpandedForm = tab === "register" || tab === "guest";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-carbon/75 p-3 backdrop-blur-md sm:p-5">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-carbon/80 p-3 sm:p-5">
       <div className={`mobile-modal relative max-h-[calc(100dvh-1.5rem)] w-full max-w-[440px] overflow-y-auto rounded-[28px] border border-white/70 bg-white px-5 shadow-[0_28px_80px_rgba(16,24,40,0.28)] sm:max-h-[calc(100dvh-2.5rem)] sm:px-8 ${isExpandedForm ? "pb-5 pt-6 sm:pb-6 sm:pt-6" : "pb-6 pt-7 sm:pb-8 sm:pt-9"}`}>
         <button 
           type="button"
