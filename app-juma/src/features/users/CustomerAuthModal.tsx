@@ -28,10 +28,12 @@ export default function CustomerAuthModal({ onClose, onSuccess, initialTab = "lo
   const [tab, setTab] = useState<"login" | "register" | "guest" | "forgot">(initialTab);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -49,9 +51,13 @@ export default function CustomerAuthModal({ onClose, onSuccess, initialTab = "lo
         if (!name.trim() || !phone.trim() || !email.trim() || !password.trim()) {
            throw new Error("Por favor completa todos los campos.");
         }
+        if (password !== passwordConfirmation) {
+          throw new Error("Las contraseñas no coinciden.");
+        }
         await api.signUpClient(email, password, name, phone);
         setSuccessMessage("Te enviamos un correo para activar tu cuenta. Revisá tu email antes de ingresar.");
         setPassword("");
+        setPasswordConfirmation("");
         setTab("login");
       } else if (tab === "forgot") {
         if (!email.trim()) {
@@ -197,6 +203,31 @@ export default function CustomerAuthModal({ onClose, onSuccess, initialTab = "lo
                 <input className={`${isExpandedForm ? "min-h-11" : "min-h-12"} w-full rounded-xl border border-slate-200 bg-[#fcfaf8] px-4 pr-12 text-sm font-normal text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-primary/60 focus:bg-white focus:ring-4 focus:ring-primary/10`} type={showPassword ? "text" : "password"} placeholder="Tu contraseña" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={tab === "login" ? "current-password" : "new-password"} required />
                 <button type="button" aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"} onClick={() => setShowPassword(value => !value)} className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-400 transition-colors hover:text-primary">
                   <span translate="no" className="material-symbols-outlined text-xl">{showPassword ? "visibility_off" : "visibility"}</span>
+                </button>
+              </div>
+            </label>
+          )}
+
+          {tab === "register" && (
+            <label className={`grid ${isExpandedForm ? "gap-1" : "gap-1.5"} text-xs font-bold text-slate-600`}>
+              Repetir contraseña
+              <div className="relative">
+                <input
+                  className={`${isExpandedForm ? "min-h-11" : "min-h-12"} w-full rounded-xl border border-slate-200 bg-[#fcfaf8] px-4 pr-12 text-sm font-normal text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-primary/60 focus:bg-white focus:ring-4 focus:ring-primary/10`}
+                  type={showPasswordConfirmation ? "text" : "password"}
+                  placeholder="Escribe nuevamente tu contraseña"
+                  value={passwordConfirmation}
+                  onChange={(e) => setPasswordConfirmation(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                />
+                <button
+                  type="button"
+                  aria-label={showPasswordConfirmation ? "Ocultar contraseña repetida" : "Mostrar contraseña repetida"}
+                  onClick={() => setShowPasswordConfirmation(value => !value)}
+                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-400 transition-colors hover:text-primary"
+                >
+                  <span translate="no" className="material-symbols-outlined text-xl">{showPasswordConfirmation ? "visibility_off" : "visibility"}</span>
                 </button>
               </div>
             </label>
