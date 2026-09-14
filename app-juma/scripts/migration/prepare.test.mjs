@@ -46,6 +46,20 @@ test('extracts and deduplicates embedded images instead of exceeding D1 statemen
  assert.ok(result.sql.includes('/media/imports/'));
  assert.ok(result.sql.length<2000);
 });
+
+test('generates a non-destructive upsert for an existing D1 copy',()=>{
+ const data=fixture();
+ data.tables.categories=[{id:1,name:'Actualizada',parent_id:null}];
+ const result=prepare(data);
+ const db=new DatabaseSync(':memory:');
+ try {
+  db.exec(schema);
+  db.exec("INSERT INTO categories(id,name) VALUES (1,'Anterior'),(99,'Solo D1')");
+  db.exec(result.upsertSql);
+  assert.equal(db.prepare('SELECT name FROM categories WHERE id=1').get().name,'Actualizada');
+  assert.equal(db.prepare('SELECT name FROM categories WHERE id=99').get().name,'Solo D1');
+ } finally { db.close(); }
+});
 test('fails closed on unknown columns, missing tables, duplicate IDs and orphaned relationships',()=>{
  const unknown=fixture(); unknown.tables.products=[{id:1,name:'Test',surprise:'value'}];
  assert.throws(()=>prepare(unknown),/Columna sin migrar/);

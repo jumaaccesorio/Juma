@@ -44,6 +44,7 @@ export function prepare(snapshot) {
  if (snapshot.sourceUrl!=='https://ezpbabxossevlheftgcu.supabase.co') throw new Error('El proyecto de origen no coincide con la configuración de JUMA.');
  const db=new DatabaseSync(':memory:');
  const statements=['PRAGMA defer_foreign_keys = ON;'];
+ const upsertStatements=['PRAGMA defer_foreign_keys = ON;'];
  const assets=new Map();
  const imageReferences=new Set();
  const counts={};
@@ -79,6 +80,10 @@ export function prepare(snapshot) {
     const sql=`INSERT INTO ${table} (${names.join(',')}) VALUES (${names.map(n=>literal(row[n])).join(',')});`;
     if (Buffer.byteLength(sql)>90000) throw new Error(`Fila demasiado grande para D1: ${table}/${source.id}`);
     statements.push(sql);
+    const updateNames=names.filter(name=>name!=='id');
+    const upsert=`${sql.slice(0,-1)} ON CONFLICT(id) DO ${updateNames.length ? `UPDATE SET ${updateNames.map(name=>`${name}=excluded.${name}`).join(',')}` : 'NOTHING'};`;
+    if (Buffer.byteLength(upsert)>90000) throw new Error(`Fila demasiado grande para sincronizar en D1: ${table}/${source.id}`);
+    upsertStatements.push(upsert);
    }
   }
   db.exec(`BEGIN;\n${statements.join('\n')}\nCOMMIT;`);
@@ -91,7 +96,11 @@ export function prepare(snapshot) {
     }
    }
   }
-  return {sql:statements.join('\n')+'\n',counts,totals,assets:[...assets.values()],imageReferences:[...imageReferences]};
+  return {
+   sql:statements.join('\n')+'\n',
+   upsertSql:upsertStatements.join('\n')+'\n',
+   counts,totals,assets:[...assets.values()],imageReferences:[...imageReferences]
+  };
  } finally { db.close(); }
 }
 
@@ -106,6 +115,7 @@ async function main() {
  await mkdir(path.join(output,'assets'),{recursive:true});
  await writeFile(path.join(output,'snapshot.json'),JSON.stringify(snapshot,null,2));
  await writeFile(path.join(output,'import.sql'),result.sql);
+ await writeFile(path.join(output,'upsert.sql'),result.upsertSql);
  for (const asset of result.assets) await writeFile(path.join(output,'assets',asset.sha256),asset.bytes);
  const report={
   sourceUrl:snapshot.sourceUrl,exportedAt:snapshot.exportedAt,

@@ -12,6 +12,7 @@
     "cf:deploy": "npm run build:cloudflare && node scripts/deploy-cloudflare.mjs",
     "cf:preview": "npx --yes wrangler@4.129.0 dev --config wrangler.jsonc",
     "migration:prepare": "node scripts/migration/prepare.mjs",
+    "migration:snapshot": "node scripts/migration/snapshot-supabase.mjs",
     "test:migration": "node --test scripts/migration/*.test.mjs cloudflare/*.test.mjs",
     "lint": "eslint .",
     "preview": "vite preview",

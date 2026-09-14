@@ -136,6 +136,39 @@ Esta es una copia de ensayo en un instante concreto, no una sincronización cont
 Supabase sigue recibiendo las operaciones de la tienda; habrá que repetir la copia
 final con escrituras pausadas antes del cambio definitivo.
 
+### Sincronización incremental del 14 de septiembre de 2026
+
+- Se agregó `npm run migration:snapshot`, que lee la configuración de producción,
+  valida que el origen sea el proyecto JUMA y guarda una copia privada sin imprimir
+  datos de clientes ni claves.
+- La nueva preparación genera `upsert.sql`: actualiza o inserta por ID y no contiene
+  sentencias `DELETE`. Antes de aplicarlo se exportó un respaldo completo de D1.
+- Supabase pasó de 196 a 234 productos, de 28 a 29 categorías, de 6 a 7 clientes y
+  de 0 a 2 talles. Los 41 pedidos y sus 75 artículos permanecieron sin cambios.
+- Se detectaron y copiaron 54 archivos nuevos. R2 verificó 296 referencias actuales
+  sin errores; el inventario acumulado contiene 1.355 objetos.
+- D1 quedó con los mismos conteos y totales que la copia del origen: 234 productos,
+  431 unidades de stock y 29 categorías. `foreign_key_check` no devolvió errores y
+  no quedan URLs de Supabase en las imágenes de productos.
+- El endpoint público devuelve 222 productos habilitados. Se comprobaron imágenes
+  de los ingresos nuevos desde `jumaaccessory.com.ar/media/...`, todas con HTTP 200.
+- `community_subscribers` no permite lectura mediante la clave pública. No se borró
+  ni reemplazó su contenido en D1; se exportará con acceso privado durante el corte
+  final.
+
+Para repetir una sincronización sin borrados:
+
+```powershell
+npm run migration:snapshot
+npm run migration:prepare -- migration-data/snapshot-<fecha>.json
+node scripts/migration/copy-media.mjs migration-data/snapshot-<fecha>.json <wrangler.js>
+node scripts/migration/media-paths.mjs migration-data/snapshot-<fecha>.json migration-data/prepared-<fecha>/media-paths.sql
+```
+
+Luego se exporta un respaldo remoto de D1 y se aplican `upsert.sql` y
+`media-paths.sql`. Los informes, respaldos y datos privados permanecen excluidos de
+Git.
+
 ### Trabajo restante
 
 1. Implementar y probar API, sesiones, roles administrativos, recuperación de
