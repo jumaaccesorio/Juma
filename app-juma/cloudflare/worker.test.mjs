@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import worker, { mediaKey, productPayload } from "./worker.js";
+import worker, { mediaKey, productPayload, orderPayload } from "./worker.js";
 
 test("mediaKey acepta rutas válidas y bloquea traversal", () => {
   assert.equal(mediaKey("/media/products/products/thumbs/a.webp"), "products/products/thumbs/a.webp");
@@ -65,4 +65,28 @@ test("normaliza y valida productos antes de escribir en D1", () => {
   assert.equal(payload.stock, 4);
   assert.equal(payload.is_featured, 1);
   assert.throws(() => productPayload({ name: "", salePrice: -1 }), /obligatorio|inválido/);
+});
+
+test("valida pedidos antes de ejecutar el lote atómico", () => {
+  const order = orderPayload({
+    clientId: 7,
+    date: "2026-09-14",
+    status: "REALIZADO",
+    items: [{ productId: 10, quantity: 2, size: "M", unitSalePrice: 1500, unitPurchasePrice: 700 }],
+  });
+  assert.equal(order.items[0].unitSalePriceCents, 150000);
+  assert.equal(order.status, "REALIZADO");
+  assert.throws(() => orderPayload({ clientId: 7, date: "14/09/2026", status: "REALIZADO", items: [] }), /Fecha|artículo/);
+  assert.throws(() => orderPayload({ clientId: 7, date: "2026-09-14", status: "REALIZADO", items: [
+    { productId: 10, quantity: 1, unitSalePrice: 1, unitPurchasePrice: 1 },
+    { productId: 10, quantity: 1, unitSalePrice: 1, unitPurchasePrice: 1 },
+  ] }), /repetidos/);
+});
+
+test("auth de Cloudflare falla de forma explícita hasta configurar Google", async () => {
+  const start = await worker.fetch(new Request("https://juma.test/api/auth/google/start"), {});
+  assert.equal(start.status, 503);
+  assert.match((await start.json()).error, /Google/);
+  const session = await worker.fetch(new Request("https://juma.test/api/auth/session"), {});
+  assert.deepEqual(await session.json(), { authenticated: false });
 });

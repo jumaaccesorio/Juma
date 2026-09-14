@@ -273,7 +273,6 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
       // Update stock
       for (const item of cart) {
         const newStock = item.product.stock - item.quantity;
-        await api.updateStock(item.product.id, Math.max(0, newStock));
         onUpdateStock(item.product.id, Math.max(0, newStock));
       }
 

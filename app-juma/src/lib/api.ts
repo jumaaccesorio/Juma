@@ -28,7 +28,7 @@ async function getClientByEmailOrAuth(email: string, authId?: string | null) {
   return emailQuery.data ? mapClient(emailQuery.data) : null;
 }
 
-export const api = {
+const supabaseApi = {
   async signUpClient(email: string, password: string, name: string, phone: string): Promise<Client> {
     const signUp = await supabase.auth.signUp({
       email,
@@ -74,18 +74,14 @@ export const api = {
   },
 
   async signInClientWithGoogle(): Promise<void> {
-    const login = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/confirm`,
-      },
-    });
-    if (login.error) throw login.error;
+    window.location.assign("/api/auth/google/start");
   },
 
   async signOutClient(): Promise<void> {
+    const cloudflareLogout = await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin", cache: "no-store" });
+    if (!cloudflareLogout.ok) throw new Error("No se pudo cerrar la sesión.");
     const logout = await supabase.auth.signOut();
-    if (logout.error) throw logout.error;
+    if (logout.error && !/session/i.test(logout.error.message)) throw logout.error;
   },
 
   onClientAuthStateChange(callback: (event: string) => void): () => void {
@@ -101,6 +97,12 @@ export const api = {
   },
 
   async finalizeCurrentClientFromSession(): Promise<Client> {
+    const cloudflareSession = await fetch("/api/auth/session", { credentials: "same-origin", cache: "no-store" });
+    if (cloudflareSession.ok) {
+      const result = await cloudflareSession.json() as { authenticated?: boolean; client?: Client };
+      if (result.authenticated && result.client) return result.client;
+    }
+
     const { data: userResult, error } = await supabase.auth.getUser();
     if (error) throw error;
 
@@ -112,7 +114,7 @@ export const api = {
     const existing = await getClientByEmailOrAuth(user.email, user.id);
     if (existing) {
       if (!existing.authId || existing.authId !== user.id) {
-        await this.updateClient(existing.id, { authId: user.id });
+        await supabaseApi.updateClient(existing.id, { authId: user.id });
         return { ...existing, authId: user.id };
       }
       return existing;
@@ -965,6 +967,234 @@ export const api = {
 
 };
 
+class CloudflareApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
+async function cloudflareJson<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const headers = new Headers(options.headers);
+  if (typeof options.body === "string" && !headers.has("content-type")) headers.set("content-type", "application/json");
+  const response = await fetch(path, { ...options, headers, credentials: "same-origin", cache: "no-store" });
+  const payload = await response.json().catch(() => ({})) as { error?: string };
+  if (!response.ok) throw new CloudflareApiError(payload.error || "No se pudo completar la operación.", response.status);
+  return payload as T;
+}
+
+function cloudflareProduct(row: any): Product {
+  const meta = parseProductMeta(row.sourceUrl);
+  const image = row.imageThumb || row.image || row.imageFull || "";
+  return {
+    id: Number(row.id),
+    name: row.name || row.subName || "",
+    subName: row.subName || "",
+    description: meta.description,
+    size: row.size || undefined,
+    sizes: Array.isArray(row.sizes) ? row.sizes : [],
+    categoryId: row.categoryId ?? null,
+    categoryName: row.categoryName ?? undefined,
+    isFeatured: Boolean(row.isFeatured),
+    purchasePrice: Number(row.purchasePrice ?? 0),
+    salePrice: Number(row.salePrice ?? 0),
+    stock: Number(row.stock ?? 0),
+    initialStock: Number(row.initialStock ?? 0),
+    enabled: Boolean(row.enabled),
+    image,
+    originalImage: row.imageFull || row.image || image,
+    imageThumb: row.imageThumb || image,
+    imageCard: row.imageCard || image,
+    imageFull: row.imageFull || row.image || image,
+    sourceUrl: meta.sourceUrl,
+    createdAt: row.createdAt || "",
+  };
+}
+
+function productWritePayload(product: Partial<Product>) {
+  const payload: Record<string, unknown> = {};
+  for (const key of ["name", "subName", "size", "categoryId", "isFeatured", "purchasePrice", "salePrice", "stock", "initialStock", "enabled"] as const) {
+    if (product[key] !== undefined) payload[key] = product[key];
+  }
+  if (product.image !== undefined) {
+    payload.image = product.image;
+    payload.imageThumb = product.imageThumb ?? product.image;
+    payload.imageCard = product.imageCard ?? product.image;
+  }
+  if (product.originalImage !== undefined || product.imageFull !== undefined) payload.imageFull = product.originalImage ?? product.imageFull;
+  if (product.sourceUrl !== undefined || product.description !== undefined) payload.sourceUrl = encodeProductMeta(product.sourceUrl ?? "", product.description ?? "");
+  return payload;
+}
+
+async function cloudflareUpload(file: File, variant: string): Promise<string> {
+  const response = await fetch("/api/admin/media", {
+    method: "POST",
+    credentials: "same-origin",
+    cache: "no-store",
+    headers: { "content-type": file.type || "application/octet-stream", "x-juma-variant": variant },
+    body: file,
+  });
+  const payload = await response.json().catch(() => ({})) as { path?: string; error?: string };
+  if (!response.ok || !payload.path) throw new CloudflareApiError(payload.error || "No se pudo subir la imagen.", response.status);
+  return payload.path;
+}
+
+const cloudflareApi = {
+  async getCategories(): Promise<Category[]> {
+    return (await cloudflareJson<any[]>("/api/catalog/categories")).map(mapCategory);
+  },
+  async addCategory(name: string, parentId?: number | null): Promise<Category> {
+    return cloudflareJson<Category>("/api/admin/catalog/categories", { method: "POST", body: JSON.stringify({ name, parentId: parentId ?? null }) });
+  },
+  async updateCategory(id: number, name: string): Promise<Category> {
+    return cloudflareJson<Category>(`/api/admin/catalog/categories/${id}`, { method: "PATCH", body: JSON.stringify({ name }) });
+  },
+  async deleteCategory(id: number): Promise<void> {
+    await cloudflareJson(`/api/admin/catalog/categories/${id}`, { method: "DELETE" });
+  },
+  async getClients(): Promise<Client[]> {
+    return cloudflareJson<Client[]>("/api/admin/clients");
+  },
+  async addClient(client: { name: string; phone: string; email: string }): Promise<Client> {
+    return cloudflareJson<Client>("/api/admin/clients", { method: "POST", body: JSON.stringify(client) });
+  },
+  async updateClient(id: number, updates: Partial<Client>): Promise<void> {
+    await cloudflareJson(`/api/admin/clients/${id}`, { method: "PATCH", body: JSON.stringify(updates) });
+  },
+  async deleteClient(id: number): Promise<void> {
+    await cloudflareJson(`/api/admin/clients/${id}`, { method: "DELETE" });
+  },
+  async getCatalogProducts(): Promise<Product[]> {
+    const rows = await cloudflareJson<any[]>("/api/catalog/products");
+    return rows.map(row => mapProduct(normalizeProductStorageUrls(row)));
+  },
+  async getProducts(): Promise<Product[]> {
+    return (await cloudflareJson<any[]>("/api/admin/catalog/products")).map(cloudflareProduct);
+  },
+  async getProductImages(productIds: number[]): Promise<Array<{ id: number; image: string }>> {
+    if (!productIds.length) return [];
+    const wanted = new Set(productIds);
+    return (await this.getProducts()).filter(product => wanted.has(product.id)).map(product => ({ id: product.id, image: product.originalImage || product.image }));
+  },
+  async addProduct(product: Partial<Product>): Promise<Product> {
+    const payload = {
+      name: product.name ?? "",
+      subName: product.subName ?? "",
+      size: product.size ?? "",
+      categoryId: product.categoryId ?? null,
+      isFeatured: Boolean(product.isFeatured),
+      purchasePrice: product.purchasePrice ?? 0,
+      salePrice: product.salePrice ?? 0,
+      stock: product.stock ?? 0,
+      initialStock: product.initialStock ?? product.stock ?? 0,
+      enabled: product.enabled ?? true,
+      image: product.image ?? "",
+      imageThumb: product.imageThumb ?? product.image ?? "",
+      imageCard: product.imageCard ?? product.image ?? "",
+      imageFull: product.originalImage ?? product.imageFull ?? product.image ?? "",
+      sourceUrl: encodeProductMeta(product.sourceUrl ?? "", product.description ?? ""),
+    };
+    return cloudflareProduct(await cloudflareJson<any>("/api/admin/catalog/products", { method: "POST", body: JSON.stringify(payload) }));
+  },
+  async getProductSizes(productId: number): Promise<ProductSize[]> {
+    return (await this.getProducts()).find(product => product.id === productId)?.sizes ?? [];
+  },
+  async setProductSizes(productId: number, sizes: { size: string; stock: number }[]): Promise<ProductSize[]> {
+    return cloudflareJson<ProductSize[]>(`/api/admin/catalog/products/${productId}/sizes`, { method: "PUT", body: JSON.stringify({ sizes }) });
+  },
+  async updateProduct(id: number, updates: Partial<Product>): Promise<void> {
+    await cloudflareJson(`/api/admin/catalog/products/${id}`, { method: "PATCH", body: JSON.stringify(productWritePayload(updates)) });
+  },
+  async updateStock(id: number, stock: number): Promise<void> {
+    await this.updateProduct(id, { stock });
+  },
+  async deleteProduct(id: number): Promise<void> {
+    await cloudflareJson(`/api/admin/catalog/products/${id}`, { method: "DELETE" });
+  },
+  async getOrders(): Promise<Order[]> {
+    return cloudflareJson<Order[]>("/api/admin/orders");
+  },
+  async addOrder(order: { clientId?: number; guestName?: string; guestEmail?: string; guestPhone?: string; date: string; status: string; items: OrderItem[] }): Promise<Order> {
+    try {
+      return await cloudflareJson<Order>("/api/admin/orders", { method: "POST", body: JSON.stringify(order) });
+    } catch (error) {
+      if (!(error instanceof CloudflareApiError) || error.status !== 401) throw error;
+      return cloudflareJson<Order>("/api/orders", { method: "POST", body: JSON.stringify(order) });
+    }
+  },
+  async updateOrderStatus(id: number, status: string): Promise<void> {
+    await cloudflareJson(`/api/admin/orders/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
+  },
+  async deleteOrder(id: number): Promise<void> {
+    await cloudflareJson(`/api/admin/orders/${id}`, { method: "DELETE" });
+  },
+  async getFinanceExpenses(): Promise<FinanceExpense[]> { return cloudflareJson<FinanceExpense[]>("/api/admin/finance"); },
+  async addFinanceExpense(expense: { type: "INGRESO" | "EGRESO"; description: string; detail: string; category: string; amount: number; date: string }): Promise<FinanceExpense> {
+    return cloudflareJson<FinanceExpense>("/api/admin/finance", { method: "POST", body: JSON.stringify(expense) });
+  },
+  async deleteFinanceExpense(id: number): Promise<void> { await cloudflareJson(`/api/admin/finance/${id}`, { method: "DELETE" }); },
+  async getRestockCartItems(): Promise<RestockCartItem[]> { return cloudflareJson<RestockCartItem[]>("/api/admin/restock"); },
+  async upsertRestockCartItem(productId: number, updates: Partial<RestockCartItem>): Promise<RestockCartItem> {
+    return cloudflareJson<RestockCartItem>(`/api/admin/restock/${productId}`, { method: "PUT", body: JSON.stringify(updates) });
+  },
+  async getFavorites(_clientId: number): Promise<Favorite[]> { return cloudflareJson<Favorite[]>("/api/customer/favorites"); },
+  async toggleFavorite(_clientId: number, productId: number, isFav: boolean): Promise<void> {
+    await cloudflareJson(`/api/customer/favorites/${productId}`, { method: "PUT", body: JSON.stringify({ favorite: !isFav }) });
+  },
+  async getHeroBanner(): Promise<HeroBanner | null> {
+    const data = await cloudflareJson<{ hero: any }>("/api/catalog/home");
+    return data.hero ? { tag: data.hero.tag, title: data.hero.title, subtitle: data.hero.subtitle, image: normalizeStoragePublicUrl(data.hero.image) } : null;
+  },
+  async getFeaturedPanels(): Promise<FeaturedPanel[]> {
+    const data = await cloudflareJson<{ panels: any[] }>("/api/catalog/home");
+    return data.panels.map(panel => ({ id: String(panel.id), title: panel.title, cta: panel.cta, image: normalizeStoragePublicUrl(panel.image), className: panel.class_name, categoryId: panel.category_id ?? null }));
+  },
+  async saveHomeConfiguration(heroBanner: HeroBanner, featuredPanels: FeaturedPanel[]): Promise<{ heroBanner: HeroBanner; featuredPanels: FeaturedPanel[] }> {
+    let resolvedHeroImage = heroBanner.image;
+    if (resolvedHeroImage.startsWith("data:image/")) resolvedHeroImage = await this.uploadImage(await dataUrlToOptimizedFile(resolvedHeroImage, "hero", "hero-banner"), { variant: "hero" });
+    const resolvedPanels = await Promise.all(featuredPanels.map(async panel => panel.image.startsWith("data:image/") ? { ...panel, image: await this.uploadImage(await dataUrlToOptimizedFile(panel.image, "panel", `featured-panel-${panel.id}`), { variant: "panel" }) } : panel));
+    return cloudflareJson("/api/admin/content", { method: "PUT", body: JSON.stringify({ heroBanner: { ...heroBanner, image: resolvedHeroImage }, featuredPanels: resolvedPanels }) });
+  },
+  async uploadImage(file: File, options?: { variant?: UploadImageVariant; folder?: string }): Promise<string> {
+    return cloudflareUpload(await optimizeImageFile(file, options?.variant ?? "product_preview"), options?.variant ?? "image");
+  },
+  async uploadProductImages(file: File): Promise<{ image: string; originalImage: string }> {
+    const previewFile = await optimizeImageFile(file, "product_preview");
+    const [image, originalImage] = await Promise.all([cloudflareUpload(previewFile, "preview"), cloudflareUpload(file, "original")]);
+    return { image, originalImage };
+  },
+  async uploadRawOptimizedImage(file: File, folder: string): Promise<string> { return cloudflareUpload(file, folder.split("/").pop() || "optimized"); },
+  async uploadRawFile(file: File, folder: string): Promise<string> { return cloudflareUpload(file, folder.split("/").pop() || "original"); },
+  async subscribeToCommunity(email: string): Promise<CommunitySubscriber> {
+    return cloudflareJson<CommunitySubscriber>("/api/community", { method: "POST", body: JSON.stringify({ email }) });
+  },
+  async getCommunitySubscribers(): Promise<CommunitySubscriber[]> { return cloudflareJson<CommunitySubscriber[]>("/api/admin/community"); },
+  async deleteCommunitySubscriber(id: number): Promise<void> { await cloudflareJson(`/api/admin/community/${id}`, { method: "DELETE" }); },
+  async getPackagingCosts(): Promise<PackagingCost[]> { return cloudflareJson<PackagingCost[]>("/api/admin/packaging"); },
+  async addPackagingCost(item: { name: string; unitCost: number; quantity: number }): Promise<PackagingCost> {
+    return cloudflareJson<PackagingCost>("/api/admin/packaging", { method: "POST", body: JSON.stringify(item) });
+  },
+  async updatePackagingCost(id: number, updates: { name?: string; unitCost?: number; quantity?: number }): Promise<void> { await cloudflareJson(`/api/admin/packaging/${id}`, { method: "PATCH", body: JSON.stringify(updates) }); },
+  async deletePackagingCost(id: number): Promise<void> { await cloudflareJson(`/api/admin/packaging/${id}`, { method: "DELETE" }); },
+  async getProductReviews(productId: number): Promise<ProductReview[]> { return cloudflareJson<ProductReview[]>(`/api/catalog/reviews?productId=${productId}`); },
+  async getAllReviews(): Promise<ProductReview[]> { return cloudflareJson<ProductReview[]>("/api/admin/reviews"); },
+  async addProductReview(productId: number, _clientId: number, rating: number, comment: string): Promise<ProductReview> {
+    return cloudflareJson<ProductReview>("/api/customer/reviews", { method: "POST", body: JSON.stringify({ productId, rating, comment }) });
+  },
+  async deleteProductReview(reviewId: number): Promise<void> { await cloudflareJson(`/api/admin/reviews/${reviewId}`, { method: "DELETE" }); },
+  async getSetting(key: string): Promise<string | null> {
+    const data = await cloudflareJson<{ value: string | null }>(`/api/catalog/settings/${encodeURIComponent(key)}`);
+    return data.value;
+  },
+  async setSetting(key: string, value: string): Promise<void> {
+    await cloudflareJson(`/api/admin/settings/${encodeURIComponent(key)}`, { method: "PUT", body: JSON.stringify({ value }) });
+  },
+};
+
+export const api = { ...supabaseApi, ...cloudflareApi };
+
 function mapClient(row: any): Client {
   return {
     id: row.id,
@@ -1006,7 +1236,7 @@ function normalizeProductStorageUrls(row: any) {
 function normalizeStoragePublicUrl(value: unknown) {
   if (typeof value !== "string") return "";
   const image = value.trim();
-  if (!image || image.startsWith("data:image/") || /^https?:\/\//i.test(image)) return image;
+  if (!image || image.startsWith("data:image/") || image.startsWith("/media/") || /^https?:\/\//i.test(image)) return image;
   const { data } = supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(image);
   return data.publicUrl;
 }
@@ -1121,6 +1351,7 @@ function normalizeRenderableProductImage(image: unknown, allowStoragePublicUrl =
   const value = image.trim();
   if (!value) return "";
   if (value.startsWith("data:image/")) return value;
+  if (value.startsWith("/media/")) return value;
   if (/^https?:\/\//i.test(value)) {
     try {
       const url = new URL(value);

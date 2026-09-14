@@ -1092,14 +1092,6 @@ function App() {
       return product == null || product.stock < item.quantity;
     });
 
-  const deductStock = (items: OrderItem[]) => {
-    setProducts((prev) => prev.map((product) => {
-      const row = items.find((item) => item.productId === product.id);
-      if (!row) return product;
-      return { ...product, stock: Math.max(0, product.stock - row.quantity) };
-    }));
-  };
-
   const refreshOrders = async () => {
     const refreshedOrders = await api.getOrders();
     setOrders(refreshedOrders);
@@ -1134,11 +1126,7 @@ function App() {
 
       if (orderForm.status === "REALIZADO") {
         await refreshOrders();
-        for (const item of items) {
-          const prod = productMap.get(item.productId);
-          if (prod) await api.updateStock(prod.id, Math.max(0, prod.stock - item.quantity));
-        }
-        deductStock(items);
+        setProducts(await api.getProducts());
       }
 
       setOrderForm({ clientId: "", date: new Date().toISOString().slice(0, 10), status: "PENDIENTE", items: [] });
@@ -1161,11 +1149,7 @@ function App() {
       await api.updateOrderStatus(orderId, "REALIZADO");
       setOrders((prev) => prev.map((row) => (row.id === orderId ? { ...row, status: "REALIZADO" } : row)));
       await refreshOrders();
-      for (const item of order.items) {
-        const prod = productMap.get(item.productId);
-        if (prod) await api.updateStock(prod.id, Math.max(0, prod.stock - item.quantity));
-      }
-      deductStock(order.items);
+      setProducts(await api.getProducts());
     } catch (err) {
       console.error(err);
       setError("Error al actualizar pedido en base de datos.");
@@ -1187,18 +1171,7 @@ function App() {
       await api.deleteOrder(orderId);
 
       if (order.status === "REALIZADO") {
-        for (const item of order.items) {
-          const product = productMap.get(item.productId);
-          if (!product) continue;
-          const restoredStock = product.stock + item.quantity;
-          await api.updateStock(product.id, restoredStock);
-        }
-        setProducts((prev) =>
-          prev.map((product) => {
-            const row = order.items.find((item) => item.productId === product.id);
-            return row ? { ...product, stock: product.stock + row.quantity } : product;
-          }),
-        );
+        setProducts(await api.getProducts());
       }
 
       setOrders((prev) => prev.filter((row) => row.id !== orderId));

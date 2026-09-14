@@ -8,6 +8,7 @@ import path from 'node:path';
 export const schema = [
  readFileSync(new URL('../../cloudflare/migrations/0001_application.sql',import.meta.url),'utf8'),
  readFileSync(new URL('../../cloudflare/migrations/0002_reviews_settings.sql',import.meta.url),'utf8'),
+ readFileSync(new URL('../../cloudflare/migrations/0003_stock_guards.sql',import.meta.url),'utf8'),
 ].join('\n');
 export const tables = ['categories','clients','products','product_sizes','orders','order_items','favorites','restock_cart_items','finance_expenses','hero_banner','featured_panels','packaging_costs','community_subscribers','product_reviews','app_settings'];
 const primaryKeys = {app_settings:'key'};

@@ -4,6 +4,10 @@
   "compatibility_date": "2026-09-09",
   "main": "cloudflare/worker.js",
   "workers_dev": true,
+  "vars": {
+    "GOOGLE_CLIENT_ID": "151611162735-q8tstqvmk01d7kj4dec4v6jrvnt1djt0.apps.googleusercontent.com",
+    "PUBLIC_ORIGIN": "https://jumaaccessory.com.ar"
+  },
   "assets": {
     "directory": "./dist-cloudflare",
     "not_found_handling": "single-page-application",
@@ -13,7 +17,8 @@
   "d1_databases": [{
     "binding": "DB",
     "database_name": "juma-migration-db",
-    "database_id": "c4229704-edcd-4731-913f-1cf028497c3e"
+    "database_id": "c4229704-edcd-4731-913f-1cf028497c3e",
+    "migrations_dir": "cloudflare/migrations"
   }],
   "r2_buckets": [{
     "binding": "MEDIA",

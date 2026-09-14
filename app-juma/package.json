@@ -14,6 +14,7 @@
     "migration:prepare": "node scripts/migration/prepare.mjs",
     "migration:snapshot": "node scripts/migration/snapshot-supabase.mjs",
     "test:migration": "node --test scripts/migration/*.test.mjs cloudflare/*.test.mjs",
+    "test:cloudflare:integration": "node scripts/integration-cloudflare.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "optimize:images": "node ./scripts/optimize-storage-images.mjs",
