@@ -22,6 +22,8 @@ SELECT json_build_object(
   'featured_panels',(SELECT coalesce(json_agg(t ORDER BY id),'[]'::json) FROM public.featured_panels t),
   'packaging_costs',(SELECT coalesce(json_agg(t ORDER BY id),'[]'::json) FROM public.packaging_costs t),
   'community_subscribers',(SELECT coalesce(json_agg(t ORDER BY id),'[]'::json) FROM public.community_subscribers t)
+  ,'product_reviews',(SELECT coalesce(json_agg(t ORDER BY id),'[]'::json) FROM public.product_reviews t)
+  ,'app_settings',(SELECT coalesce(json_agg(t ORDER BY key),'[]'::json) FROM public.app_settings t)
  ),
  'storage',(SELECT coalesce(json_agg(json_build_object(
    'bucket',bucket_id,'name',name,'metadata',metadata

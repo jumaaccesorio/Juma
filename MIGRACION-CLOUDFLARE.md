@@ -155,6 +155,14 @@ final con escrituras pausadas antes del cambio definitivo.
 - `community_subscribers` no permite lectura mediante la clave pública. No se borró
   ni reemplazó su contenido en D1; se exportará con acceso privado durante el corte
   final.
+- La revisión funcional detectó `product_reviews` y `app_settings`, ausentes del
+  primer esquema. La migración `0002_reviews_settings.sql` creó ambas tablas en D1;
+  no había reseñas y se copiaron 2 configuraciones actuales.
+- El Worker versión `dbc20331-490f-492f-aeb2-af30a29e175b` incorporó una API
+  administrativa para categorías, productos, talles e imágenes. Todas sus rutas
+  requieren la cookie de sesión administrativa firmada; una comprobación anónima
+  en producción devuelve HTTP 401. El catálogo público continúa devolviendo HTTP
+  200 con 222 productos habilitados.
 
 Para repetir una sincronización sin borrados:
 

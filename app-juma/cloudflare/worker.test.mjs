@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import worker, { mediaKey } from "./worker.js";
+import worker, { mediaKey, productPayload } from "./worker.js";
 
 test("mediaKey acepta rutas válidas y bloquea traversal", () => {
   assert.equal(mediaKey("/media/products/products/thumbs/a.webp"), "products/products/thumbs/a.webp");
@@ -38,4 +38,31 @@ test("admin rechaza credenciales incorrectas", async () => {
     body: JSON.stringify({ user: "admin", password: "incorrecta" }),
   }), { ADMIN_PASSWORD: "clave-prueba", ADMIN_SESSION_SECRET: "secreto-de-prueba-suficientemente-largo" });
   assert.equal(response.status, 401);
+});
+
+test("la API de datos administrativos exige una sesión válida", async () => {
+  const response = await worker.fetch(new Request("https://juma.test/api/admin/catalog/products"), {
+    ADMIN_SESSION_SECRET: "secreto-de-prueba-suficientemente-largo",
+  });
+  assert.equal(response.status, 401);
+  assert.deepEqual(await response.json(), { error: "Sesión administrativa requerida." });
+});
+
+test("normaliza y valida productos antes de escribir en D1", () => {
+  const payload = productPayload({
+    name: "  Aro nuevo  ",
+    subName: "Plata",
+    categoryId: 3,
+    isFeatured: true,
+    purchasePrice: 123.45,
+    salePrice: 250,
+    stock: 4,
+    enabled: true,
+  });
+  assert.equal(payload.name, "Aro nuevo");
+  assert.equal(payload.purchase_price_cents, 12345);
+  assert.equal(payload.sale_price_cents, 25000);
+  assert.equal(payload.stock, 4);
+  assert.equal(payload.is_featured, 1);
+  assert.throws(() => productPayload({ name: "", salePrice: -1 }), /obligatorio|inválido/);
 });

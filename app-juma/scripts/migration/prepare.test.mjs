@@ -60,6 +60,20 @@ test('generates a non-destructive upsert for an existing D1 copy',()=>{
   assert.equal(db.prepare('SELECT name FROM categories WHERE id=99').get().name,'Solo D1');
  } finally { db.close(); }
 });
+
+test('upserts settings using their text primary key',()=>{
+ const data=fixture();
+ data.tables.app_settings=[{key:'catalog_sort_order',value:'precio_asc'}];
+ const result=prepare(data);
+ const db=new DatabaseSync(':memory:');
+ try {
+  db.exec(schema);
+  db.exec("INSERT INTO app_settings(key,value) VALUES ('catalog_sort_order','recientes'),('only_d1','kept')");
+  db.exec(result.upsertSql);
+  assert.equal(db.prepare("SELECT value FROM app_settings WHERE key='catalog_sort_order'").get().value,'precio_asc');
+  assert.equal(db.prepare("SELECT value FROM app_settings WHERE key='only_d1'").get().value,'kept');
+ } finally { db.close(); }
+});
 test('fails closed on unknown columns, missing tables, duplicate IDs and orphaned relationships',()=>{
  const unknown=fixture(); unknown.tables.products=[{id:1,name:'Test',surprise:'value'}];
  assert.throws(()=>prepare(unknown),/Columna sin migrar/);

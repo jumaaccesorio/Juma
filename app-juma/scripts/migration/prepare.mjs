@@ -5,8 +5,12 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
 
-export const schema = readFileSync(new URL('../../cloudflare/migrations/0001_application.sql',import.meta.url),'utf8');
-export const tables = ['categories','clients','products','product_sizes','orders','order_items','favorites','restock_cart_items','finance_expenses','hero_banner','featured_panels','packaging_costs','community_subscribers'];
+export const schema = [
+ readFileSync(new URL('../../cloudflare/migrations/0001_application.sql',import.meta.url),'utf8'),
+ readFileSync(new URL('../../cloudflare/migrations/0002_reviews_settings.sql',import.meta.url),'utf8'),
+].join('\n');
+export const tables = ['categories','clients','products','product_sizes','orders','order_items','favorites','restock_cart_items','finance_expenses','hero_banner','featured_panels','packaging_costs','community_subscribers','product_reviews','app_settings'];
+const primaryKeys = {app_settings:'key'};
 const money = new Set(['purchase_price','sale_price','unit_sale_price','unit_purchase_price','amount','unit_cost']);
 const images = {products:['image','image_thumb','image_card','image_full'],hero_banner:['image'],featured_panels:['image']};
 export const hash = value => createHash('sha256').update(value).digest('hex');
@@ -55,9 +59,10 @@ export function prepare(snapshot) {
    const rows=snapshot.tables[table];
    if (!Array.isArray(rows)) throw new Error(`Falta la tabla ${table}.`);
    const columns=new Set(db.prepare(`PRAGMA table_info(${table})`).all().map(c=>c.name));
-   counts[table]=rows.length;
-   for (const source of rows) {
-    if (source.id===null || source.id===undefined) throw new Error(`Falta id en ${table}.`);
+  counts[table]=rows.length;
+  for (const source of rows) {
+    const primaryKey=primaryKeys[table]??'id';
+    if (source[primaryKey]===null || source[primaryKey]===undefined) throw new Error(`Falta ${primaryKey} en ${table}.`);
     const row={};
     for (let [name,value] of Object.entries(source)) {
      if (money.has(name)) { name+='_cents'; value=cents(value); }
@@ -80,8 +85,8 @@ export function prepare(snapshot) {
     const sql=`INSERT INTO ${table} (${names.join(',')}) VALUES (${names.map(n=>literal(row[n])).join(',')});`;
     if (Buffer.byteLength(sql)>90000) throw new Error(`Fila demasiado grande para D1: ${table}/${source.id}`);
     statements.push(sql);
-    const updateNames=names.filter(name=>name!=='id');
-    const upsert=`${sql.slice(0,-1)} ON CONFLICT(id) DO ${updateNames.length ? `UPDATE SET ${updateNames.map(name=>`${name}=excluded.${name}`).join(',')}` : 'NOTHING'};`;
+    const updateNames=names.filter(name=>name!==primaryKey);
+    const upsert=`${sql.slice(0,-1)} ON CONFLICT(${primaryKey}) DO ${updateNames.length ? `UPDATE SET ${updateNames.map(name=>`${name}=excluded.${name}`).join(',')}` : 'NOTHING'};`;
     if (Buffer.byteLength(upsert)>90000) throw new Error(`Fila demasiado grande para sincronizar en D1: ${table}/${source.id}`);
     upsertStatements.push(upsert);
    }

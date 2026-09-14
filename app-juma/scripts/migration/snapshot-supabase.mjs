@@ -1,4 +1,4 @@
-import { readFile, mkdir, writeFile } from 'node:fs/promises';
+import { readFile, readdir, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -7,6 +7,7 @@ const tables = [
   'categories','clients','products','product_sizes','orders','order_items','favorites',
   'restock_cart_items','finance_expenses','hero_banner','featured_panels',
   'packaging_costs','community_subscribers'
+  ,'product_reviews','app_settings'
 ];
 const imageColumns = {
   products: ['image','image_thumb','image_card','image_full'],
@@ -47,7 +48,8 @@ async function request(url, options = {}) {
 async function readTable(table, headers) {
   const rows = [];
   for (let offset = 0; ; offset += 1000) {
-    const url = `${projectUrl}/rest/v1/${table}?select=*&order=id.asc&limit=1000&offset=${offset}`;
+    const orderColumn = table === 'app_settings' ? 'key' : 'id';
+    const url = `${projectUrl}/rest/v1/${table}?select=*&order=${orderColumn}.asc&limit=1000&offset=${offset}`;
     const response = await request(url, { headers });
     if (!response.ok) throw new Error(`No se pudo leer ${table}: HTTP ${response.status}`);
     const page = await response.json();
@@ -125,7 +127,14 @@ for (const [table, columns] of Object.entries(imageColumns)) {
 const migrationRoot = path.join(root, 'migration-data');
 const previousStorage = new Map();
 try {
-  const previous = JSON.parse(await readFile(path.join(migrationRoot, 'snapshot-2026-09-08.json'), 'utf8'));
+  const snapshotFiles = (await readdir(migrationRoot, { withFileTypes: true }))
+    .filter(entry => entry.isFile() && /^snapshot-.*\.json$/.test(entry.name))
+    .map(entry => entry.name)
+    .sort()
+    .reverse();
+  const previous = snapshotFiles.length
+    ? JSON.parse(await readFile(path.join(migrationRoot, snapshotFiles[0]), 'utf8'))
+    : { storage: [] };
   for (const item of previous.storage ?? []) if (item.bucket === 'products') previousStorage.set(item.name, item);
 } catch (error) {
   if (error.code !== 'ENOENT') throw error;
