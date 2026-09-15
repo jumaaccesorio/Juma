@@ -272,7 +272,7 @@ function productResult(row) {
   };
 }
 
-function orderPayload(body) {
+function orderPayload(body, { requireBuyer = true } = {}) {
   const status = body?.status === "REALIZADO" ? "REALIZADO" : body?.status === "PENDIENTE" ? "PENDIENTE" : null;
   if (!status) throw new Error("Estado de pedido inválido.");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(body?.date || "")) throw new Error("Fecha de pedido inválida.");
@@ -281,7 +281,7 @@ function orderPayload(body) {
   const guestName = textValue(body.guestName, "Nombre", { max: 160 });
   const guestEmail = textValue(body.guestEmail, "Email", { max: 320 }).toLowerCase();
   const guestPhone = textValue(body.guestPhone, "Teléfono", { max: 80 });
-  if (!clientId && !guestName) throw new Error("Seleccioná un cliente o indicá el nombre del comprador.");
+  if (requireBuyer && !clientId && !guestName) throw new Error("Seleccioná un cliente o indicá el nombre del comprador.");
   const items = body.items.map(item => ({
     productId: integer(item?.productId, "Producto", { min: 1 }),
     quantity: integer(item?.quantity, "Cantidad", { min: 1 }),
@@ -338,7 +338,7 @@ async function adminOrders(request, env, pathname) {
     return privateJson(orders.results.map(row => orderResult(row, byOrder.get(row.id) ?? [])));
   }
   if (pathname === base && request.method === "POST") {
-    const order = orderPayload(await requestBody(request));
+    const order = orderPayload(await requestBody(request), { requireBuyer: false });
     const orderId = Date.now() * 1000 + crypto.getRandomValues(new Uint32Array(1))[0] % 1000;
     const statements = [env.DB.prepare("INSERT INTO orders(id,client_id,guest_name,guest_email,guest_phone,date,status) VALUES(?1,?2,?3,?4,?5,?6,?7)").bind(orderId, order.clientId, order.guestName || null, order.guestEmail || null, order.guestPhone || null, order.date, order.status)];
     for (const item of order.items) statements.push(env.DB.prepare("INSERT INTO order_items(order_id,product_id,quantity,size,unit_sale_price_cents,unit_purchase_price_cents) VALUES(?1,?2,?3,?4,?5,?6)").bind(orderId, item.productId, item.quantity, item.size, item.unitSalePriceCents, item.unitPurchasePriceCents));
@@ -370,8 +370,18 @@ async function adminOrders(request, env, pathname) {
   return null;
 }
 
+const CLIENT_WITHOUT_EMAIL_SUFFIX = "@sin-email.juma.invalid";
+
+function clientEmailForStorage(value) {
+  const email = textValue(value, "Email", { max: 320 }).toLowerCase();
+  if (!email) return `cliente-${crypto.randomUUID()}${CLIENT_WITHOUT_EMAIL_SUFFIX}`;
+  if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error("Email inválido.");
+  return email;
+}
+
 function clientResult(row) {
-  return { id: row.id, authId: row.auth_id ?? undefined, name: row.name, email: row.email, phone: row.phone, isActive: Boolean(row.is_active), createdAt: row.created_at };
+  const email = typeof row.email === "string" && row.email.endsWith(CLIENT_WITHOUT_EMAIL_SUFFIX) ? "" : row.email;
+  return { id: row.id, authId: row.auth_id ?? undefined, name: row.name, email, phone: row.phone, isActive: Boolean(row.is_active), createdAt: row.created_at };
 }
 
 async function adminClients(request, env, pathname) {
@@ -383,9 +393,8 @@ async function adminClients(request, env, pathname) {
   if (pathname === base && request.method === "POST") {
     const body = await requestBody(request);
     const name = textValue(body.name, "Nombre", { required: true, max: 160 });
-    const email = textValue(body.email, "Email", { required: true, max: 320 }).toLowerCase();
+    const email = clientEmailForStorage(body.email);
     const phone = textValue(body.phone, "Teléfono", { max: 80 });
-    if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error("Email inválido.");
     const row = await env.DB.prepare("INSERT INTO clients(name,email,phone,is_active) VALUES(?1,?2,?3,1) RETURNING *").bind(name, email, phone).first();
     return privateJson(clientResult(row), 201);
   }
@@ -397,11 +406,7 @@ async function adminClients(request, env, pathname) {
     const allowed = {
       authId: ["auth_id", value => textValue(value, "Identidad", { max: 200 }) || null],
       name: ["name", value => textValue(value, "Nombre", { required: true, max: 160 })],
-      email: ["email", value => {
-        const email = textValue(value, "Email", { required: true, max: 320 }).toLowerCase();
-        if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error("Email inválido.");
-        return email;
-      }],
+      email: ["email", value => clientEmailForStorage(value)],
       phone: ["phone", value => textValue(value, "Teléfono", { max: 80 })],
       isActive: ["is_active", value => value ? 1 : 0],
     };
@@ -830,4 +835,4 @@ export default {
   },
 };
 
-export { mediaKey, productPayload, orderPayload };
+export { clientEmailForStorage, mediaKey, productPayload, orderPayload };

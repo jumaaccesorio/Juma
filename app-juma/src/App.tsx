@@ -920,6 +920,14 @@ function App() {
     }
   };
 
+  const addQuickSaleClient = async (client: { name: string; phone: string; email: string }) => {
+    setError("");
+    const newClient = await api.addClient(client);
+    setClients((prev) => [newClient, ...prev]);
+    setLoadedAdminSlices((prev) => ({ ...prev, clients: true }));
+    return newClient;
+  };
+
   const deleteUser = async (id: number) => {
     if (!window.confirm("¿Estás seguro de que deseas eliminar este usuario?")) return;
     try {
@@ -1116,7 +1124,7 @@ function App() {
     }
     
     try {
-      const newOrder = await api.addOrder({
+      const newOrder = await api.addAdminOrder({
         clientId,
         date: orderForm.date,
         status: orderForm.status,
@@ -1981,11 +1989,12 @@ function App() {
             )}
 
             {activeTab === "venta_rapida" && (
-              <div className="px-4 pb-6 pt-20 sm:px-6 lg:px-10 lg:pb-10">
+              <div className="px-4 pb-6 pt-20 sm:px-6 md:h-dvh md:overflow-hidden md:pb-0 lg:px-10 lg:pb-10">
                 <QuickSalePanel
                   products={products}
                   categories={categories}
                   clients={clients}
+                  onAddClient={addQuickSaleClient}
                   onRequestProductImages={requestProductImages}
                   onOrderPlaced={handleQuickSalePlaced}
                   onUpdateStock={(productId, newStock) => setProducts(prev => prev.map(p => p.id === productId ? { ...p, stock: newStock } : p))}

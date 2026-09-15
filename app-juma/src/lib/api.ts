@@ -1116,13 +1116,11 @@ const cloudflareApi = {
   async getOrders(): Promise<Order[]> {
     return cloudflareJson<Order[]>("/api/admin/orders");
   },
+  async addAdminOrder(order: { clientId?: number; guestName?: string; guestEmail?: string; guestPhone?: string; date: string; status: string; items: OrderItem[] }): Promise<Order> {
+    return cloudflareJson<Order>("/api/admin/orders", { method: "POST", body: JSON.stringify(order) });
+  },
   async addOrder(order: { clientId?: number; guestName?: string; guestEmail?: string; guestPhone?: string; date: string; status: string; items: OrderItem[] }): Promise<Order> {
-    try {
-      return await cloudflareJson<Order>("/api/admin/orders", { method: "POST", body: JSON.stringify(order) });
-    } catch (error) {
-      if (!(error instanceof CloudflareApiError) || error.status !== 401) throw error;
-      return cloudflareJson<Order>("/api/orders", { method: "POST", body: JSON.stringify(order) });
-    }
+    return cloudflareJson<Order>("/api/orders", { method: "POST", body: JSON.stringify(order) });
   },
   async updateOrderStatus(id: number, status: string): Promise<void> {
     await cloudflareJson(`/api/admin/orders/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });

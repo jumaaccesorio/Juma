@@ -16,12 +16,13 @@ type QuickSalePanelProps = {
   products: Product[];
   categories: Category[];
   clients: Client[];
+  onAddClient: (client: { name: string; phone: string; email: string }) => Promise<Client>;
   onOrderPlaced: (order: Order) => void;
   onUpdateStock: (productId: number, newStock: number) => void;
   onRequestProductImages: (productIds: number[]) => void;
 };
 
-function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdateStock, onRequestProductImages }: QuickSalePanelProps) {
+function QuickSalePanel({ products, categories, clients, onAddClient, onOrderPlaced, onUpdateStock, onRequestProductImages }: QuickSalePanelProps) {
   const MOBILE_PRODUCTS_PER_PAGE = 12;
   const DESKTOP_PRODUCTS_PER_PAGE = 24;
   const [isDesktopLayout, setIsDesktopLayout] = useState(
@@ -39,13 +40,35 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
   const [mobilePage, setMobilePage] = useState(1);
   const [desktopPage, setDesktopPage] = useState(1);
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  const [isCreatingClient, setIsCreatingClient] = useState(false);
+  const [clientError, setClientError] = useState("");
+  const [quickClient, setQuickClient] = useState({ name: "", phone: "", email: "" });
   const mobileCatalogRef = useRef<HTMLElement | null>(null);
   const desktopCatalogRef = useRef<HTMLElement | null>(null);
 
   const [discountType, setDiscountType] = useState<"percent" | "fixed">("percent");
   const [discountInput, setDiscountInput] = useState<string>("");
   const [customTotalInput, setCustomTotalInput] = useState<string>("");
-  useBodyScrollLock(isMobileCartOpen);
+  useBodyScrollLock(isMobileCartOpen || isClientModalOpen);
+
+  const handleCreateClient = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const name = quickClient.name.trim();
+    if (!name || isCreatingClient) return;
+    setIsCreatingClient(true);
+    setClientError("");
+    try {
+      const newClient = await onAddClient({ name, phone: quickClient.phone.trim(), email: quickClient.email.trim() });
+      setSelectedClientId(String(newClient.id));
+      setQuickClient({ name: "", phone: "", email: "" });
+      setIsClientModalOpen(false);
+    } catch (error) {
+      setClientError(error instanceof Error ? error.message : "No se pudo agregar el cliente.");
+    } finally {
+      setIsCreatingClient(false);
+    }
+  };
 
   const handleDiscountChange = (val: string) => {
     const sanitized = val.replace(/[^0-9]/g, "");
@@ -263,7 +286,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
       });
 
       const clientId = selectedClientId ? Number(selectedClientId) : undefined;
-      const newOrder = await api.addOrder({
+      const newOrder = await api.addAdminOrder({
         clientId,
         date: new Date().toISOString().slice(0, 10),
         status: "REALIZADO",
@@ -289,7 +312,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
       console.error(err);
       const message = err && typeof err === "object" && "message" in err && typeof (err as { message?: unknown }).message === "string"
         ? (err as { message: string }).message
-        : "Error al procesar la venta. Revisá la conexión o los permisos de Supabase.";
+        : "Error al procesar la venta. Revisá la conexión o volvé a iniciar la sesión administrativa.";
       setErrorMsg(message);
       setTimeout(() => setErrorMsg(""), 8000);
     } finally {
@@ -324,7 +347,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
           <div className="flex min-w-0 flex-col">
             <h2 className="font-headline text-xl text-ink leading-tight">Venta Rápida</h2>
           </div>
-          <div className="relative w-full sm:w-[160px] sm:shrink-0">
+          <div className="flex w-full gap-2 sm:w-auto sm:shrink-0">
+            <div className="relative min-w-0 flex-1 sm:w-[160px]">
             <select
               className="w-full appearance-none rounded-lg border border-line bg-white py-1.5 pl-3 pr-8 text-[11px] font-bold text-ink/80 outline-none focus:border-primary/50 shadow-sm truncate"
               value={selectedClientId}
@@ -348,6 +372,16 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
             ) : (
               <span translate="no" className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-muted pointer-events-none">expand_more</span>
             )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsClientModalOpen(true)}
+              className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-white text-primary shadow-sm transition-colors hover:bg-primary hover:text-white"
+              aria-label="Agregar cliente"
+              title="Agregar cliente"
+            >
+              <span translate="no" className="material-symbols-outlined text-[17px]">person_add</span>
+            </button>
           </div>
         </section>
 
@@ -775,7 +809,8 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
 
         {/* Search + Client row */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="relative">
+          <div className="flex gap-2">
+            <div className="relative min-w-0 flex-1">
             <span translate="no" className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary pointer-events-none">person_search</span>
             <select
               className="w-full pl-12 pr-4 h-14 bg-white border border-line rounded-xl appearance-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-ink font-medium"
@@ -787,6 +822,16 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsClientModalOpen(true)}
+              className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-white text-primary shadow-sm transition-colors hover:bg-primary hover:text-white"
+              aria-label="Agregar cliente"
+              title="Agregar cliente"
+            >
+              <span translate="no" className="material-symbols-outlined">person_add</span>
+            </button>
           </div>
           <div className="relative">
             <span translate="no" className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary pointer-events-none">search</span>
@@ -919,7 +964,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
       </section>
 
       {/* Right: Order Summary */}
-      <aside className="flex w-full flex-col border-t border-line bg-white shadow-xl xl:w-80 xl:shrink-0 xl:border-l xl:border-t-0 2xl:w-96">
+      <aside className="flex min-h-0 w-full flex-col overflow-hidden border-t border-line bg-white shadow-xl xl:w-80 xl:shrink-0 xl:border-l xl:border-t-0 2xl:w-96">
         <div className="border-b border-line p-4 md:p-6">
           <h3 className="font-headline text-xl font-bold text-ink flex items-center gap-2">
             <span translate="no" className="material-symbols-outlined text-primary">point_of_sale</span>
@@ -928,7 +973,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto space-y-4 p-4 md:p-6 admin-scrollbar">
+        <div className="min-h-0 flex-1 overflow-y-auto space-y-4 p-4 md:p-6 admin-scrollbar">
           {cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 text-muted/30 gap-3">
               <span translate="no" className="material-symbols-outlined text-5xl">shopping_cart</span>
@@ -972,7 +1017,7 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         </div>
 
         {/* Totals + Payment */}
-        <div className="space-y-6 bg-secondary/60 p-4 md:p-6 border-t border-line/50">
+        <div className="shrink-0 space-y-6 bg-secondary/60 p-4 md:p-6 border-t border-line/50">
           <div className="space-y-3 border-b border-line/50 pb-4">
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted">Subtotal</span>
@@ -1080,6 +1125,61 @@ function QuickSalePanel({ products, categories, clients, onOrderPlaced, onUpdate
         </div>
       </aside>
       </div>
+
+      {isClientModalOpen && (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center bg-ink/45 p-4 backdrop-blur-sm" onMouseDown={() => setIsClientModalOpen(false)}>
+          <form
+            className="w-full max-w-md space-y-4 rounded-2xl border border-line bg-white p-5 shadow-2xl sm:p-6"
+            onSubmit={handleCreateClient}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="font-headline text-xl font-bold text-ink">Agregar cliente</h3>
+                <p className="mt-1 text-xs text-muted">Se seleccionará automáticamente para esta venta.</p>
+              </div>
+              <button type="button" onClick={() => setIsClientModalOpen(false)} className="rounded-lg p-1 text-muted hover:bg-secondary hover:text-ink" aria-label="Cerrar">
+                <span translate="no" className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-muted">
+              Nombre completo
+              <input
+                autoFocus
+                required
+                value={quickClient.name}
+                onChange={(event) => setQuickClient((prev) => ({ ...prev, name: event.target.value }))}
+                className="mt-1.5 w-full rounded-xl border border-line px-4 py-3 text-sm font-normal normal-case tracking-normal text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                placeholder="Ej. María García"
+              />
+            </label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-muted">
+              Teléfono
+              <input
+                value={quickClient.phone}
+                onChange={(event) => setQuickClient((prev) => ({ ...prev, phone: event.target.value }))}
+                className="mt-1.5 w-full rounded-xl border border-line px-4 py-3 text-sm font-normal normal-case tracking-normal text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                placeholder="Opcional"
+              />
+            </label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-muted">
+              Email
+              <input
+                type="email"
+                value={quickClient.email}
+                onChange={(event) => setQuickClient((prev) => ({ ...prev, email: event.target.value }))}
+                className="mt-1.5 w-full rounded-xl border border-line px-4 py-3 text-sm font-normal normal-case tracking-normal text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                placeholder="Opcional"
+              />
+            </label>
+            {clientError && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">{clientError}</p>}
+            <button type="submit" disabled={!quickClient.name.trim() || isCreatingClient} className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-white transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50">
+              <span translate="no" className="material-symbols-outlined text-[19px]">person_add</span>
+              {isCreatingClient ? "Guardando..." : "Agregar y seleccionar"}
+            </button>
+          </form>
+        </div>
+      )}
     </>
   );
 }

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import worker, { mediaKey, productPayload, orderPayload } from "./worker.js";
+import worker, { clientEmailForStorage, mediaKey, productPayload, orderPayload } from "./worker.js";
 
 test("mediaKey acepta rutas válidas y bloquea traversal", () => {
   assert.equal(mediaKey("/media/products/products/thumbs/a.webp"), "products/products/thumbs/a.webp");
@@ -81,6 +81,19 @@ test("valida pedidos antes de ejecutar el lote atómico", () => {
     { productId: 10, quantity: 1, unitSalePrice: 1, unitPurchasePrice: 1 },
     { productId: 10, quantity: 1, unitSalePrice: 1, unitPurchasePrice: 1 },
   ] }), /repetidos/);
+  const walkInOrder = orderPayload({ date: "2026-09-14", status: "REALIZADO", items: [
+    { productId: 10, quantity: 1, unitSalePrice: 1, unitPurchasePrice: 1 },
+  ] }, { requireBuyer: false });
+  assert.equal(walkInOrder.clientId, null);
+  assert.throws(() => orderPayload({ date: "2026-09-14", status: "PENDIENTE", items: [
+    { productId: 10, quantity: 1, unitSalePrice: 1, unitPurchasePrice: 1 },
+  ] }), /cliente|comprador/i);
+});
+
+test("permite clientes administrativos sin email real", () => {
+  assert.match(clientEmailForStorage(""), /^cliente-.+@sin-email\.juma\.invalid$/);
+  assert.equal(clientEmailForStorage(" CLIENTE@EJEMPLO.COM "), "cliente@ejemplo.com");
+  assert.throws(() => clientEmailForStorage("email-invalido"), /Email inválido/);
 });
 
 test("auth de Cloudflare falla de forma explícita hasta configurar Google", async () => {
