@@ -339,11 +339,11 @@ async function adminOrders(request, env, pathname) {
   }
   if (pathname === base && request.method === "POST") {
     const order = orderPayload(await requestBody(request), { requireBuyer: false });
-    const orderId = Date.now() * 1000 + crypto.getRandomValues(new Uint32Array(1))[0] % 1000;
-    const statements = [env.DB.prepare("INSERT INTO orders(id,client_id,guest_name,guest_email,guest_phone,date,status) VALUES(?1,?2,?3,?4,?5,?6,?7)").bind(orderId, order.clientId, order.guestName || null, order.guestEmail || null, order.guestPhone || null, order.date, order.status)];
-    for (const item of order.items) statements.push(env.DB.prepare("INSERT INTO order_items(order_id,product_id,quantity,size,unit_sale_price_cents,unit_purchase_price_cents) VALUES(?1,?2,?3,?4,?5,?6)").bind(orderId, item.productId, item.quantity, item.size, item.unitSalePriceCents, item.unitPurchasePriceCents));
+    const statements = [env.DB.prepare("INSERT INTO orders(client_id,guest_name,guest_email,guest_phone,date,status) VALUES(?1,?2,?3,?4,?5,?6) RETURNING id").bind(order.clientId, order.guestName || null, order.guestEmail || null, order.guestPhone || null, order.date, order.status)];
+    for (const item of order.items) statements.push(env.DB.prepare("INSERT INTO order_items(order_id,product_id,quantity,size,unit_sale_price_cents,unit_purchase_price_cents) VALUES((SELECT seq FROM sqlite_sequence WHERE name='orders'),?1,?2,?3,?4,?5)").bind(item.productId, item.quantity, item.size, item.unitSalePriceCents, item.unitPurchasePriceCents));
     if (order.status === "REALIZADO") statements.push(...await changeOrderStock(env, order.items.map(item => ({ ...item, product_id: item.productId })), -1));
-    await env.DB.batch(statements);
+    const results = await env.DB.batch(statements);
+    const orderId = results[0].results[0].id;
     return privateJson({ id: orderId, ...order, items: order.items.map(item => ({ productId: item.productId, quantity: item.quantity, size: item.size ?? undefined, unitSalePrice: item.unitSalePriceCents / 100, unitPurchasePrice: item.unitPurchasePriceCents / 100 })) }, 201);
   }
   const match = pathname.match(/^\/api\/admin\/orders\/(\d+)$/);
@@ -554,10 +554,10 @@ async function publicOrders(request, env, pathname) {
     if (available < item.quantity) throw new Error("No hay stock suficiente para completar el pedido.");
     return { ...item, unitSalePriceCents: product.sale_price_cents, unitPurchasePriceCents: product.purchase_price_cents };
   });
-  const orderId = Date.now() * 1000 + crypto.getRandomValues(new Uint32Array(1))[0] % 1000;
-  const statements = [env.DB.prepare("INSERT INTO orders(id,client_id,guest_name,guest_email,guest_phone,date,status) VALUES(?1,?2,?3,?4,?5,?6,'PENDIENTE')").bind(orderId, order.clientId, order.guestName || null, order.guestEmail || null, order.guestPhone || null, order.date)];
-  for (const item of order.items) statements.push(env.DB.prepare("INSERT INTO order_items(order_id,product_id,quantity,size,unit_sale_price_cents,unit_purchase_price_cents) VALUES(?1,?2,?3,?4,?5,?6)").bind(orderId, item.productId, item.quantity, item.size, item.unitSalePriceCents, item.unitPurchasePriceCents));
-  await env.DB.batch(statements);
+  const statements = [env.DB.prepare("INSERT INTO orders(client_id,guest_name,guest_email,guest_phone,date,status) VALUES(?1,?2,?3,?4,?5,'PENDIENTE') RETURNING id").bind(order.clientId, order.guestName || null, order.guestEmail || null, order.guestPhone || null, order.date)];
+  for (const item of order.items) statements.push(env.DB.prepare("INSERT INTO order_items(order_id,product_id,quantity,size,unit_sale_price_cents,unit_purchase_price_cents) VALUES((SELECT seq FROM sqlite_sequence WHERE name='orders'),?1,?2,?3,?4,?5)").bind(item.productId, item.quantity, item.size, item.unitSalePriceCents, item.unitPurchasePriceCents));
+  const results = await env.DB.batch(statements);
+  const orderId = results[0].results[0].id;
   return privateJson({ id: orderId, ...order, status: "PENDIENTE", items: order.items.map(item => ({ productId: item.productId, quantity: item.quantity, size: item.size ?? undefined, unitSalePrice: item.unitSalePriceCents / 100, unitPurchasePrice: item.unitPurchasePriceCents / 100 })) }, 201);
 }
 
