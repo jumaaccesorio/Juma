@@ -149,12 +149,12 @@ function ProductDetailPanel({ product, onBack, onAddToCart, reviews, averageRati
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="overflow-hidden rounded bg-white p-4 shadow-subtle">
           <div className="mx-auto w-full max-w-[560px] overflow-hidden rounded bg-white">
-            <div className="aspect-[4/5] overflow-hidden rounded bg-white">
+            <div className="aspect-square overflow-hidden rounded bg-secondary/30">
             {product.image ? (
               <ProductImage
                 product={product}
                 alt={getProductDisplayName(product)}
-                className="h-full w-full object-cover object-center"
+                className="h-full w-full object-contain object-center"
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
