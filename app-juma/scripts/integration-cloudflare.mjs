@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 
 const origin = process.env.JUMA_INTEGRATION_ORIGIN || "http://127.0.0.1:8788";
 const adminCookieJar = { value: "" };
@@ -65,7 +66,9 @@ try {
   assert.equal(savedProduct.stock, 10);
   assert.equal(savedProduct.sizes.find(item => item.size === "M").stock, 6);
 
-  const customerOrder = await request("/api/orders", { method: "POST", body: { ...orderBody, clientId: 999999, status: "REALIZADO" }, cookie: customerCookie });
+  const customerOrder = await request("/api/orders", { method: "POST", body: { ...orderBody, clientId: 999999, status: "REALIZADO", requestId: randomUUID(), delivery: {
+    name: "Cliente integración", email: "checkout@example.com", phone: "3510000000", street: "Calle de prueba", streetNumber: "123", apartment: "", city: "Córdoba", province: "Córdoba", postalCode: "5000", notes: "",
+  } }, cookie: customerCookie });
   orderIds.push(customerOrder.id);
   assert.equal(customerOrder.status, "PENDIENTE");
 

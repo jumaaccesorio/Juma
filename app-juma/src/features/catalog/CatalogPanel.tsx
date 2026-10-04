@@ -299,7 +299,7 @@ function CatalogPanel({
         </div>
         {featuredProducts.length === 0 ? (
           <div className="rounded border border-dashed border-line bg-secondary/35 px-6 py-14 text-center text-sm text-muted">
-            Todavia no hay productos destacados para mostrar en el inicio.
+            {isHomeContentLoaded ? "Todavía no hay productos destacados para mostrar en el inicio." : "Cargando nuestras piezas destacadas…"}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2.5 sm:gap-6 lg:grid-cols-4">

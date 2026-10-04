@@ -143,7 +143,7 @@ export default function StoreHeader({
     <>
       <div className="w-full bg-primary px-4 py-2 text-center">
         <p className="flex flex-col items-center justify-center gap-1 text-[10px] font-medium uppercase tracking-wider text-white sm:flex-row sm:gap-4 sm:text-xs">
-          <span>Envio gratis en compras superiores a $50.000</span>
+          <span>Envio gratis en compras desde $50.000</span>
           <a
             className="inline-flex items-center gap-1 decoration-white/50 hover:underline"
             href="https://www.instagram.com/juma.accessory/"
@@ -172,7 +172,10 @@ export default function StoreHeader({
           <span className="mt-1 block whitespace-nowrap text-[7px] font-bold uppercase tracking-[0.16em] text-primary/60">Plata 925 · Acero blanco y dorado</span>
         </button>
 
-        <span className="size-11" aria-hidden="true" />
+        <button type="button" onClick={() => onSetActiveTab("carrito")} className="relative flex size-11 items-center justify-end text-carbon" aria-label={`Ver carrito, ${cartItemsCount} productos`}>
+          <span translate="no" aria-hidden="true" className="material-symbols-outlined">shopping_bag</span>
+          {cartItemsCount > 0 && <span className="absolute -right-1 top-0 rounded-full bg-primary px-1.5 text-[10px] font-bold text-white">{cartItemsCount}</span>}
+        </button>
       </header>
 
       <header className="sticky top-0 z-50 hidden max-w-full flex-col items-center gap-4 border-b border-primary/10 bg-background/80 px-4 py-4 shadow-sm backdrop-blur-md sm:px-6 md:flex md:px-20">

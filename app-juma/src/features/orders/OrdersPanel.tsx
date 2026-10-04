@@ -1,3 +1,4 @@
+import DeliveryDetails from "../cart/DeliveryDetails";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { Client, NewOrderItem, Order, OrderStatus, Product } from "../../types";
@@ -521,6 +522,7 @@ function OrdersPanel({
                   {isExpanded && (
                     <div className="border-t border-slate-200/60 bg-white p-3 space-y-2">
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Productos</div>
+                      <DeliveryDetails delivery={order.delivery} />
                       {itemsDetail.map((item, itemIndex) => (
                         <button
                           key={`${order.id}-mobile-item-${itemIndex}`}
@@ -688,6 +690,7 @@ function OrdersPanel({
                               <span>Detalle de productos en pedido #{String(order.id).padStart(5, "0")}</span>
                               <span>Total: ${getOrderTotal(order).toLocaleString("es-AR")}</span>
                             </div>
+                            <DeliveryDetails delivery={order.delivery} />
                             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                               {itemsDetail.map((item, itemIndex) => (
                                 <button

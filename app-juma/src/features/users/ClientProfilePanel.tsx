@@ -1,3 +1,4 @@
+import DeliveryDetails from "../cart/DeliveryDetails";
 import { useState } from "react";
 import type { Order, Product } from "../../types";
 import { getProductDisplayName } from "../../lib/productLabel";
@@ -56,13 +57,13 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
                     </div>
                     <p className="text-slate-500 text-sm flex items-center gap-2">
                       <span translate="no" className="material-symbols-outlined text-[16px]">calendar_month</span>
-                      {new Date(order.date).toLocaleDateString("es-AR", { year: 'numeric', month: 'long', day: 'numeric' })}
+                      {new Date(`${order.date.slice(0, 10)}T12:00:00`).toLocaleDateString("es-AR", { year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                   </div>
                   
                   <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
                     <div className="flex flex-col items-start md:items-end">
-                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total</span>
+                      <span className="text-xs font-bold text-slate-500">Subtotal de productos</span>
                       <span className="text-xl font-black text-primary">${order.items.reduce((acc, item) => acc + item.quantity * item.unitSalePrice, 0).toLocaleString("es-AR")}</span>
                     </div>
                     <button className="text-slate-400 group-hover:text-primary transition-colors flex items-center justify-center p-2 rounded-full group-hover:bg-primary/5">
@@ -73,6 +74,7 @@ export default function ClientProfilePanel({ clientName, myOrders, myFavorites, 
 
                 {expandedOrderId === order.id && (
                   <div className="animate-fade-in border-t border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/80 sm:p-6">
+                    <DeliveryDetails delivery={order.delivery} />
                     <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
                       <span translate="no" className="material-symbols-outlined text-[18px] text-primary">shopping_bag</span>
                       Detalle de productos

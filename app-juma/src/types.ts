@@ -71,9 +71,23 @@ export type Order = {
   guestName?: string;
   guestEmail?: string;
   guestPhone?: string;
+  delivery?: CheckoutDetails;
   date: string;
   status: OrderStatus;
   items: OrderItem[];
+};
+
+export type CheckoutDetails = {
+  name: string;
+  email: string;
+  phone: string;
+  street: string;
+  streetNumber: string;
+  apartment: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  notes: string;
 };
 
 export type RestockCartItem = {

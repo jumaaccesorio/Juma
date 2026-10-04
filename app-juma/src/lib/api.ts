@@ -1,3 +1,4 @@
+import type { CheckoutDetails } from "../types";
 import type { Category, Client, CommunitySubscriber, Favorite, FeaturedPanel, FinanceExpense, HeroBanner, Order, OrderItem, PackagingCost, Product, ProductReview, ProductSize, RestockCartItem } from "../types";
 import { supabase } from "./supabase";
 import { dataUrlToOptimizedFile, optimizeImageFile, type UploadImageVariant } from "./imageUpload";
@@ -1113,13 +1114,16 @@ const cloudflareApi = {
   async deleteProduct(id: number): Promise<void> {
     await cloudflareJson(`/api/admin/catalog/products/${id}`, { method: "DELETE" });
   },
+  async getCustomerOrders(): Promise<Order[]> {
+    return cloudflareJson<Order[]>("/api/customer/orders");
+  },
   async getOrders(): Promise<Order[]> {
     return cloudflareJson<Order[]>("/api/admin/orders");
   },
   async addAdminOrder(order: { clientId?: number; guestName?: string; guestEmail?: string; guestPhone?: string; date: string; status: string; items: OrderItem[] }): Promise<Order> {
     return cloudflareJson<Order>("/api/admin/orders", { method: "POST", body: JSON.stringify(order) });
   },
-  async addOrder(order: { clientId?: number; guestName?: string; guestEmail?: string; guestPhone?: string; date: string; status: string; items: OrderItem[] }): Promise<Order> {
+  async addOrder(order: { clientId?: number; guestName?: string; guestEmail?: string; guestPhone?: string; delivery: CheckoutDetails; requestId: string; date: string; status: string; items: OrderItem[] }): Promise<Order> {
     return cloudflareJson<Order>("/api/orders", { method: "POST", body: JSON.stringify(order) });
   },
   async updateOrderStatus(id: number, status: string): Promise<void> {

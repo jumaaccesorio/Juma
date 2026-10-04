@@ -1,3 +1,6 @@
+import { deliveryPayload, checkoutKey } from "./checkout.js";
+import { scheduleDiscordOrder } from "./discord.js";
+
 const jsonHeaders = {
   "content-type": "application/json; charset=utf-8",
   "cache-control": "public, max-age=60",
@@ -301,6 +304,7 @@ function orderResult(row, items) {
     guestName: row.guest_name ?? undefined,
     guestEmail: row.guest_email ?? undefined,
     guestPhone: row.guest_phone ?? undefined,
+    delivery: row.delivery_json ? JSON.parse(row.delivery_json) : undefined,
     date: row.date,
     status: row.status,
     items: items.map(item => ({
@@ -322,11 +326,11 @@ async function changeOrderStock(env, items, direction) {
   return statements;
 }
 
-async function adminOrders(request, env, pathname) {
+async function adminOrders(request, env, pathname, ctx) {
   const base = "/api/admin/orders";
   if (pathname === base && request.method === "GET") {
     const [orders, items] = await env.DB.batch([
-      env.DB.prepare("SELECT id,client_id,guest_name,guest_email,guest_phone,date,status FROM orders ORDER BY date DESC,id DESC"),
+      env.DB.prepare("SELECT id,client_id,guest_name,guest_email,guest_phone,delivery_json,date,status FROM orders ORDER BY date DESC,id DESC"),
       env.DB.prepare("SELECT order_id,product_id,quantity,size,unit_sale_price_cents,unit_purchase_price_cents FROM order_items ORDER BY id"),
     ]);
     const byOrder = new Map();
@@ -344,6 +348,7 @@ async function adminOrders(request, env, pathname) {
     if (order.status === "REALIZADO") statements.push(...await changeOrderStock(env, order.items.map(item => ({ ...item, product_id: item.productId })), -1));
     const results = await env.DB.batch(statements);
     const orderId = results[0].results[0].id;
+  await scheduleDiscordOrder(env, ctx, orderId, order);
     return privateJson({ id: orderId, ...order, items: order.items.map(item => ({ productId: item.productId, quantity: item.quantity, size: item.size ?? undefined, unitSalePrice: item.unitSalePriceCents / 100, unitPurchasePrice: item.unitPurchasePriceCents / 100 })) }, 201);
   }
   const match = pathname.match(/^\/api\/admin\/orders\/(\d+)$/);
@@ -512,6 +517,17 @@ async function customerData(request, env, url) {
   if (!current) return privateJson({ error: "Iniciá sesión para continuar." }, 401);
   const pathname = url.pathname;
 
+  if (pathname === "/api/customer/orders" && request.method === "GET") {
+    const [orders, items] = await env.DB.batch([
+      env.DB.prepare("SELECT id,client_id,guest_name,guest_email,guest_phone,delivery_json,date,status FROM orders WHERE client_id=?1 ORDER BY date DESC,id DESC").bind(current.client.id),
+      env.DB.prepare("SELECT i.* FROM order_items i JOIN orders o ON o.id=i.order_id WHERE o.client_id=?1 ORDER BY i.id").bind(current.client.id),
+    ]);
+    return privateJson(orders.results.map(row => {
+      const result = orderResult(row, items.results.filter(item => item.order_id === row.id));
+      result.items = result.items.map(({ unitPurchasePrice, ...item }) => item);
+      return result;
+    }));
+  }
   if (pathname === "/api/customer/favorites" && request.method === "GET") {
     const rows = await env.DB.prepare("SELECT id,client_id,product_id,created_at FROM favorites WHERE client_id=?1 ORDER BY created_at DESC").bind(current.client.id).all();
     return privateJson(rows.results.map(row => ({ id: row.id, clientId: row.client_id, productId: row.product_id, createdAt: row.created_at })));
@@ -540,25 +556,51 @@ async function customerData(request, env, url) {
   return privateJson({ error: "Not Found" }, 404);
 }
 
-async function publicOrders(request, env, pathname) {
+async function publicOrders(request, env, pathname, ctx) {
   if (pathname !== "/api/orders" || request.method !== "POST") return null;
   const body = await requestBody(request);
   const current = await currentCustomer(request, env);
-  const order = orderPayload({ ...body, clientId: current?.client.id ?? null, status: "PENDIENTE" });
+  const delivery = deliveryPayload(body.delivery);
+  const requestId = checkoutKey(body.requestId);
+  const order = orderPayload({ ...body, clientId: current?.client.id ?? null, guestName: delivery.name, guestEmail: delivery.email, guestPhone: delivery.phone, status: "PENDIENTE" });
+  order.delivery = delivery;
+  const fingerprint = JSON.stringify({ clientId: order.clientId, delivery, items: order.items.map(item => ({ productId: item.productId, quantity: item.quantity, size: item.size })) });
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fingerprint));
+  const hash = [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, "0")).join("");
+  const replay = async () => {
+    const saved = await env.DB.prepare("SELECT * FROM orders WHERE checkout_key=?1").bind(requestId).first();
+    if (!saved) return null;
+    if (saved.checkout_hash !== hash) return privateJson({ error: "Este envío ya corresponde a otro pedido. Volvé a revisar los datos." }, 409);
+    const items = (await env.DB.prepare("SELECT * FROM order_items WHERE order_id=?1 ORDER BY id").bind(saved.id).all()).results;
+    const result = orderResult(saved, items);
+    result.items = result.items.map(({ unitPurchasePrice, ...item }) => item);
+    return privateJson(result);
+  };
+  const previous = await replay();
+  if (previous) return previous;
   const productRows = await env.DB.batch(order.items.map(item => env.DB.prepare("SELECT p.id,p.enabled,p.stock,p.purchase_price_cents,p.sale_price_cents,(SELECT COUNT(*) FROM product_sizes ps WHERE ps.product_id=p.id) AS size_count,(SELECT ps.stock FROM product_sizes ps WHERE ps.product_id=p.id AND ps.size=?2) AS selected_size_stock FROM products p WHERE p.id=?1").bind(item.productId, item.size)));
   order.items = order.items.map((item, index) => {
     const product = productRows[index].results[0];
     if (!product || !product.enabled) throw new Error("Uno de los productos ya no está disponible.");
     if (product.size_count > 0 && (!item.size || product.selected_size_stock === null || product.selected_size_stock === undefined)) throw new Error("Seleccioná un talle disponible.");
-    const available = product.size_count > 0 ? product.selected_size_stock : product.stock;
-    if (available < item.quantity) throw new Error("No hay stock suficiente para completar el pedido.");
+    if (item.quantity > 99) throw new Error("La cantidad máxima por artículo es 99.");
+    // Pending orders may include backorders; stock changes only upon admin completion.
     return { ...item, unitSalePriceCents: product.sale_price_cents, unitPurchasePriceCents: product.purchase_price_cents };
   });
-  const statements = [env.DB.prepare("INSERT INTO orders(client_id,guest_name,guest_email,guest_phone,date,status) VALUES(?1,?2,?3,?4,?5,'PENDIENTE') RETURNING id").bind(order.clientId, order.guestName || null, order.guestEmail || null, order.guestPhone || null, order.date)];
+  const statements = [env.DB.prepare("INSERT INTO orders(client_id,guest_name,guest_email,guest_phone,delivery_json,checkout_key,checkout_hash,date,status) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,'PENDIENTE') RETURNING id").bind(order.clientId, order.guestName, order.guestEmail, order.guestPhone, JSON.stringify(delivery), requestId, hash, order.date)];
   for (const item of order.items) statements.push(env.DB.prepare("INSERT INTO order_items(order_id,product_id,quantity,size,unit_sale_price_cents,unit_purchase_price_cents) VALUES((SELECT seq FROM sqlite_sequence WHERE name='orders'),?1,?2,?3,?4,?5)").bind(item.productId, item.quantity, item.size, item.unitSalePriceCents, item.unitPurchasePriceCents));
-  const results = await env.DB.batch(statements);
+  let results;
+  try {
+    results = await env.DB.batch(statements);
+  } catch (error) {
+    // A concurrent duplicate loses the unique-key race. Its entire batch rolls back.
+    const duplicate = await replay();
+    if (duplicate) return duplicate;
+    throw error;
+  }
   const orderId = results[0].results[0].id;
-  return privateJson({ id: orderId, ...order, status: "PENDIENTE", items: order.items.map(item => ({ productId: item.productId, quantity: item.quantity, size: item.size ?? undefined, unitSalePrice: item.unitSalePriceCents / 100, unitPurchasePrice: item.unitPurchasePriceCents / 100 })) }, 201);
+  await scheduleDiscordOrder(env, ctx, orderId, order);
+  return privateJson({ id: orderId, ...order, status: "PENDIENTE", items: order.items.map(item => ({ productId: item.productId, quantity: item.quantity, size: item.size ?? undefined, unitSalePrice: item.unitSalePriceCents / 100 })) }, 201);
 }
 
 async function adminCommunity(request, env, pathname) {
@@ -725,9 +767,9 @@ async function adminMedia(request, env, pathname) {
   return privateJson({ path: `/media/${key}` }, 201);
 }
 
-async function adminData(request, env, pathname) {
+async function adminData(request, env, pathname, ctx) {
   for (const handler of [adminCategories, adminProducts, adminOrders, adminClients, adminFinance, adminPackaging, adminRestock, adminCommunity, adminReviews, adminContent, adminMedia]) {
-    const response = await handler(request, env, pathname);
+    const response = await handler(request, env, pathname, ctx);
     if (response) return response;
   }
   return privateJson({ error: "Not Found" }, 404);
@@ -794,7 +836,7 @@ async function catalog(env, pathname, url) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname.startsWith("/api/auth/")) {
       try {
@@ -811,7 +853,7 @@ export default {
         const authResponse = await adminAuth(request, env, url.pathname);
         if (authResponse) return authResponse;
         if (!await hasValidAdminSession(request, env)) return privateJson({ error: "Sesión administrativa requerida." }, 401);
-        return await adminData(request, env, url.pathname);
+        return await adminData(request, env, url.pathname, ctx);
       } catch (error) {
         return privateJson({ error: error instanceof Error ? error.message : "Solicitud inválida." }, 400);
       }
@@ -825,7 +867,7 @@ export default {
     const communityResponse = await communityApi(request, env, url.pathname);
     if (communityResponse) return communityResponse;
     try {
-      const orderResponse = await publicOrders(request, env, url.pathname);
+      const orderResponse = await publicOrders(request, env, url.pathname, ctx);
       if (orderResponse) return orderResponse;
     } catch (error) {
       return privateJson({ error: error instanceof Error ? error.message : "Solicitud inválida." }, 400);

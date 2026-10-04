@@ -12,7 +12,7 @@ import AdminTopNav from "./features/admin/AdminTopNav";
 import QuickSalePanel from "./features/admin/QuickSalePanel";
 import RestockCartPanel from "./features/admin/RestockCartPanel";
 import CommunityPanel from "./features/admin/CommunityPanel";
-import CartPanel from "./features/cart/CartPanel";
+import CartPanel, { type OrderConfirmation } from "./features/cart/CartPanel";
 import CatalogPanel from "./features/catalog/CatalogPanel";
 import ProductDetailPanel from "./features/catalog/ProductDetailPanel";
 import ProductsPanel from "./features/catalog/ProductsPanel";
@@ -25,7 +25,7 @@ import CustomerAuthModal from "./features/users/CustomerAuthModal";
 import AuthConfirmPanel from "./features/users/AuthConfirmPanel";
 import ResetPasswordPanel from "./features/users/ResetPasswordPanel";
 import LegalPage from "./features/users/LegalPage";
-import type { CartItem, Client, CommunitySubscriber, Favorite, FeaturedPanel, CatalogSortOrder, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, PackagingCost, Product, ProductReview, Tab, Category } from "./types";
+import type { CheckoutDetails, CartItem, Client, CommunitySubscriber, Favorite, FeaturedPanel, CatalogSortOrder, FinanceExpense, HeroBanner, NewOrderItem, Order, OrderItem, PackagingCost, Product, ProductReview, Tab, Category } from "./types";
 import { api } from "./lib/api";
 import { getProductDisplayName } from "./lib/productLabel";
 import { optimizeFileForPreview } from "./lib/imageUpload";
@@ -250,6 +250,7 @@ function App() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
   const [financeExpenses, setFinanceExpenses] = useState<FinanceExpense[]>([]);
   const [packagingCosts, setPackagingCosts] = useState<PackagingCost[]>([]);
   const [communitySubscribers, setCommunitySubscribers] = useState<CommunitySubscriber[]>([]);
@@ -277,8 +278,8 @@ function App() {
     return raw ? JSON.parse(raw) : null;
   });
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState<"login" | "register" | "checkout">("login");
-  const [lastOrderConfirmation, setLastOrderConfirmation] = useState<{ orderId: number; customerName?: string } | null>(null);
+  const [authModalMode, setAuthModalMode] = useState<"login" | "register">("login");
+  const [lastOrderConfirmation, setLastOrderConfirmation] = useState<OrderConfirmation | null>(null);
   const [cartSuccessToast, setCartSuccessToast] = useState<{
     productId: number;
     name: string;
@@ -565,12 +566,6 @@ function App() {
   }, [isAdminLogged, adminLockedUntil]);
 
   useEffect(() => {
-    if (!cartSuccessToast) return;
-    const timeoutId = window.setTimeout(() => setCartSuccessToast(null), 3200);
-    return () => window.clearTimeout(timeoutId);
-  }, [cartSuccessToast]);
-
-  useEffect(() => {
     const handlePopState = () => {
       setAuthRoute(getAuthRoute(window.location.pathname));
     };
@@ -630,7 +625,7 @@ function App() {
 
   useEffect(() => {
     if (isAdminLogged) return;
-    if (activeTab !== "catalogo" && activeTab !== "carrito") return;
+    if (activeTab !== "catalogo" && activeTab !== "carrito" && activeTab !== "perfil") return;
 
     window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -718,7 +713,14 @@ function App() {
 
   const productMap = useMemo(() => new Map(products.map((product) => [product.id, product])), [products]);
   const clientMap = useMemo(() => new Map(clients.map((client) => [client.id, client])), [clients]);
-  const isRestrictedTab = !isAdminLogged && activeTab !== "catalogo" && activeTab !== "carrito";
+  useEffect(() => {
+    if (activeTab !== "perfil" || !currentClient) return;
+    let cancelled = false;
+    api.getCustomerOrders().then(rows => { if (!cancelled) setCustomerOrders(rows); }).catch(err => { if (!cancelled) setError(getErrorMessage(err, "No pudimos cargar tus pedidos.")); });
+    return () => { cancelled = true; };
+  }, [activeTab, currentClient]);
+
+  const isRestrictedTab = !isAdminLogged && activeTab !== "catalogo" && activeTab !== "carrito" && activeTab !== "perfil";
 
   useEffect(() => {
     if (isAdminSessionChecked && !isAdminLogged && isRestrictedTab) {
@@ -1867,37 +1869,33 @@ function App() {
     setActiveTab("productos");
   };
 
-  const handleCustomerCheckout = async (guestData?: { name: string, email: string, phone: string }) => {
-    try {
-      setError("");
-      if (cartItems.length === 0) return;
-      
-      const orderItems = buildOrderItems(cartItems.map(c => ({ productId: String(c.productId), quantity: String(c.quantity), size: c.size })));
-      if (orderItems.length === 0) {
-        setError("No hay productos válidos en el carrito para procesar.");
-        return;
-      }
-      const newOrder = await api.addOrder({
-        clientId: currentClient?.id,
-        guestName: guestData?.name,
-        guestEmail: guestData?.email,
-        guestPhone: guestData?.phone,
-        date: new Date().toISOString().slice(0, 10),
-        status: "PENDIENTE",
-        items: orderItems,
-      });
-      
-      setOrders(prev => [newOrder, ...prev]);
-      setCartItems([]);
-      setLastOrderConfirmation({
-        orderId: newOrder.id,
-        customerName: currentClient?.name || guestData?.name,
-      });
-      setActiveTab("carrito");
-    } catch(err) {
-      console.error(err);
-      setError(getErrorMessage(err, "Error al procesar el pedido. Revisá la conexión o intentá de nuevo."));
-    }
+  const handleCustomerCheckout = async (details: CheckoutDetails, requestId: string) => {
+    const orderItems = buildOrderItems(cartItems.map(c => ({ productId: String(c.productId), quantity: String(c.quantity), size: c.size })));
+    if (!orderItems.length) throw new Error("No hay productos válidos en el carrito para procesar.");
+    const newOrder = await api.addOrder({
+      clientId: currentClient?.id,
+      guestName: details.name,
+      guestEmail: details.email,
+      guestPhone: details.phone,
+      delivery: details,
+      requestId,
+      date: new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()),
+      status: "PENDIENTE",
+      items: orderItems,
+    });
+    setOrders(prev => [newOrder, ...prev.filter(order => order.id !== newOrder.id)]);
+    if (currentClient) setCustomerOrders(prev => [newOrder, ...prev.filter(order => order.id !== newOrder.id)]);
+    setLastOrderConfirmation({
+      orderId: newOrder.id,
+      customerName: details.name,
+      delivery: details,
+      rows: newOrder.items.map(item => ({ name: productMap.has(item.productId) ? getProductDisplayName(productMap.get(item.productId)!) : `Producto #${item.productId}`, quantity: item.quantity, size: item.size, subtotal: item.quantity * item.unitSalePrice })),
+      total: newOrder.items.reduce((sum, item) => sum + item.quantity * item.unitSalePrice, 0),
+    });
+    setCartItems([]);
+    setCartSuccessToast(null);
+    setActiveTab("carrito");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleQuickSalePlaced = async (newOrder: Order) => {
@@ -2292,23 +2290,14 @@ function App() {
       {showAuthModal && (
         <CustomerAuthModal
           initialTab={authModalMode === "register" ? "register" : "login"}
-          allowGuest={authModalMode === "checkout"}
           onClose={() => setShowAuthModal(false)}
           onSuccess={(client) => {
             localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(client));
             setCurrentClient(client);
             api.getFavorites(client.id).then(setFavorites).catch(() => {});
             setShowAuthModal(false);
-            if (authModalMode === "checkout") {
-              handleCustomerCheckout();
-            } else {
-              setActiveTab("perfil");
-            }
+            setActiveTab("perfil");
           }}
-          onGuestContinue={authModalMode === "checkout" ? (guestData) => {
-            setShowAuthModal(false);
-            handleCustomerCheckout(guestData);
-          } : undefined}
         />
       )}
 
@@ -2401,17 +2390,12 @@ function App() {
           onUpdateCartQuantity={updateCartQuantity}
           onRemoveFromCart={removeFromCart}
           onClearCart={clearCart}
-          onCheckoutClick={() => {
-            if (currentClient) {
-              handleCustomerCheckout();
-            } else {
-              setAuthModalMode("checkout");
-              setShowAuthModal(true);
-            }
-          }}
+          client={currentClient}
+          isLoading={!isHomeContentLoaded}
+          onCheckout={handleCustomerCheckout}
           onBackToCatalog={() => {
             setLastOrderConfirmation(null);
-            setActiveTab("catalogo");
+            openFullCatalog();
           }}
         />
       ) : null}
@@ -2419,7 +2403,7 @@ function App() {
       {activeTab === "perfil" && currentClient ? (
         <ClientProfilePanel
           clientName={currentClient.name}
-          myOrders={orders.filter(o => o.clientId === currentClient.id)}
+          myOrders={customerOrders.filter(o => o.clientId === currentClient.id)}
           myFavorites={products.filter(p => favorites.some(f => f.productId === p.id))}
           products={products}
           onLogout={() => {
@@ -2435,7 +2419,7 @@ function App() {
       </main>
       )}
 
-      <footer id="site-contact" className="bg-background-dark text-slate-400 px-6 md:px-20 py-16 mt-auto">
+      <footer id="site-contact" className="bg-[#292522] text-slate-200 px-6 md:px-20 py-16 mt-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-white/10 pb-16">
           <div className="col-span-1 md:col-span-1">
             <h3 className="text-white text-xl font-black uppercase mb-4">Juma Accessory</h3>
