@@ -5,6 +5,21 @@ import ProductImage from "../../components/ProductImage";
 
 const CATALOG_PAGE_SIZE = 24;
 
+// "chips" = opción A (chips con borde) · "tabs" = opción B (pestañas subrayadas con cantidad)
+const SUBCATEGORY_STYLE: "chips" | "tabs" = "tabs";
+
+/** "Aros AD" dentro de "Acero Dorado" -> "Aros" (la categoría padre ya da el contexto) */
+function shortSubcategoryName(name: string, parentName: string | null) {
+  if (!parentName) return name;
+  const initials = parentName
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word[0]!.toUpperCase())
+    .join("");
+  const suffix = ` ${initials}`;
+  return initials.length > 1 && name.toUpperCase().endsWith(suffix) ? name.slice(0, -suffix.length) : name;
+}
+
 type CatalogPanelProps = {
   products: Product[];
   categories: Category[];
@@ -104,6 +119,21 @@ function CatalogPanel({
     setSelectedSubcategory(category);
     onCategoryChange(category ?? selectedRootCategory);
   };
+
+  const selectedRootName = selectedRootCategory
+    ? categories.find((category) => category.id === selectedRootCategory)?.name ?? null
+    : null;
+  const subcategoryCounts = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const product of products) {
+      if (product.categoryId != null) counts.set(product.categoryId, (counts.get(product.categoryId) ?? 0) + 1);
+    }
+    return counts;
+  }, [products]);
+  const rootProductCount = selectedRootCategory
+    ? (subcategoryCounts.get(selectedRootCategory) ?? 0) +
+      subcategories.reduce((total, category) => total + (subcategoryCounts.get(category.id) ?? 0), 0)
+    : 0;
 
   const heroTitleLines = heroBanner?.title.split("\n") ?? [];
   const selectedCategoryName = selectedSubcategory
@@ -403,54 +433,78 @@ function CatalogPanel({
             </div>
           </label>
         </div>
-        <div className="mb-10 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => handleCategoryChange(null)}
-            className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
-              selectedRootCategory == null ? "border-primary bg-primary text-white" : "border-primary/20 bg-white text-primary hover:border-primary"
-            }`}
-          >
-            Todas
-          </button>
-          {rootCategories.map((category) => (
-            <button
-              key={category.id}
-              type="button"
-              onClick={() => handleCategoryChange(category.id)}
-              className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
-                selectedRootCategory === category.id ? "border-primary bg-primary text-white" : "border-primary/20 bg-white text-primary hover:border-primary"
-              }`}
-            >
-              {category.name}
-            </button>
-          ))}
-        </div>
-        {selectedRootCategory && subcategories.length > 0 ? (
-          <div className="mb-10 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => handleSubcategoryChange(null)}
-              className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
-                selectedSubcategory == null ? "border-carbon bg-carbon text-white" : "border-carbon/20 bg-white text-carbon hover:border-carbon"
-              }`}
-            >
-              Todas las de {categories.find((category) => category.id === selectedRootCategory)?.name ?? "esta categoría"}
-            </button>
-            {subcategories.map((category) => (
-              <button
-                key={category.id}
-                type="button"
-                onClick={() => handleSubcategoryChange(category.id)}
-                className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
-                  selectedSubcategory === category.id ? "border-carbon bg-carbon text-white" : "border-carbon/20 bg-white text-carbon hover:border-carbon"
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
+        <div className="mb-8 border-b border-primary/15 pb-4">
+          {/* Categorías principales: texto simple, la activa en pastilla oscura */}
+          <div className="no-scrollbar -mx-1 flex gap-1 overflow-x-auto px-1">
+            {[{ id: null as number | null, name: "Todo" }, ...rootCategories].map((category) => {
+              const active = selectedRootCategory === category.id;
+              return (
+                <button
+                  key={category.id ?? "all"}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => handleCategoryChange(category.id)}
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-[15px] transition-colors duration-150 active:scale-[0.97] ${
+                    active ? "bg-primary text-white" : "text-primary hover:bg-primary/10"
+                  }`}
+                >
+                  {category.name}
+                </button>
+              );
+            })}
           </div>
-        ) : null}
+
+          {selectedRootCategory && subcategories.length > 0 ? (
+            SUBCATEGORY_STYLE === "chips" ? (
+              /* Opción A: chips con borde */
+              <div className="no-scrollbar -mx-1 mt-3 flex gap-2 overflow-x-auto px-1">
+                {[{ id: null as number | null, name: "Todas" }, ...subcategories].map((category) => {
+                  const active = selectedSubcategory === category.id;
+                  return (
+                    <button
+                      key={category.id ?? "all-sub"}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => handleSubcategoryChange(category.id)}
+                      className={`shrink-0 rounded-full border px-4 py-1.5 text-sm transition-colors duration-150 active:scale-[0.97] ${
+                        active ? "border-carbon text-carbon" : "border-line text-muted hover:border-carbon/30 hover:text-carbon"
+                      }`}
+                    >
+                      {category.name}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Opción B: pestañas subrayadas con nombre corto y cantidad */
+              <div className="no-scrollbar -mx-1 mt-4 flex gap-6 overflow-x-auto px-1">
+                {[{ id: null as number | null, name: "Todas" }, ...subcategories].map((category) => {
+                  const active = selectedSubcategory === category.id;
+                  const count = category.id == null ? rootProductCount : subcategoryCounts.get(category.id) ?? 0;
+                  return (
+                    <button
+                      key={category.id ?? "all-sub"}
+                      type="button"
+                      aria-pressed={active}
+                      disabled={count === 0}
+                      onClick={() => handleSubcategoryChange(category.id)}
+                      className={`relative shrink-0 pb-2 text-sm transition-colors duration-150 disabled:cursor-default disabled:opacity-40 ${
+                        active ? "text-carbon" : "text-carbon/60 hover:text-carbon"
+                      }`}
+                    >
+                      {category.id == null ? category.name : shortSubcategoryName(category.name, selectedRootName)}
+                      <span className="ml-1.5 text-xs text-primary">{count}</span>
+                      <span
+                        aria-hidden="true"
+                        className={`absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-primary transition-transform duration-200 ${active ? "scale-x-100" : "scale-x-0"}`}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            )
+          ) : null}
+        </div>
         <div className="grid grid-cols-2 gap-2.5 sm:gap-6 lg:grid-cols-4 lg:gap-8">
           {filteredProducts.length === 0 ? (
             <div className="col-span-full text-center py-20 text-muted">No hay productos cargados en el catalogo.</div>
