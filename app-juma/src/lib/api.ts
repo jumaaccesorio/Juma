@@ -1260,7 +1260,7 @@ function mapProduct(row: any): Product {
     id: row.id,
     name: rawName || rawSubName,
     subName: rawSubName,
-    description: meta.description,
+    description: meta.description || (typeof row.description === "string" ? row.description.trim() : ""),
     size: rawSize || undefined,
     sizes,
     categoryId: row.category_id ?? null,

@@ -797,23 +797,37 @@ async function serveMedia(request, env, pathname) {
   return new Response(request.method === "HEAD" ? null : object.body, { headers });
 }
 
+// Public catalog only exposes the description, never the supplier URL stored alongside it.
+function productDescription(sourceUrl) {
+  const raw = String(sourceUrl ?? "");
+  if (!raw.startsWith("__JUMA_META__:")) return "";
+  try {
+    const parsed = JSON.parse(raw.slice("__JUMA_META__:".length));
+    return typeof parsed?.description === "string" ? parsed.description.trim() : "";
+  } catch {
+    return "";
+  }
+}
+
 async function catalog(env, pathname, url) {
   if (pathname === "/api/catalog/categories") {
     const data = await env.DB.prepare("SELECT id,name,parent_id,created_at FROM categories ORDER BY name").all();
     return json(data.results);
   }
   if (pathname === "/api/catalog/products") {
-    const [products, sizes] = await env.DB.batch([
+    const [products, sizes, metas] = await env.DB.batch([
       env.DB.prepare("SELECT id,name,sub_name,category_id,category_name,is_featured,sale_price,stock,enabled,image,image_thumb,image_card,image_full,created_at FROM catalog_products ORDER BY created_at DESC"),
       env.DB.prepare("SELECT id,product_id,size,stock FROM product_sizes ORDER BY size"),
+      env.DB.prepare("SELECT id,source_url FROM products WHERE enabled=1"),
     ]);
+    const descriptions = new Map(metas.results.map(row => [row.id, productDescription(row.source_url)]));
     const byProduct = new Map();
     for (const size of sizes.results) {
       const list = byProduct.get(size.product_id) ?? [];
       list.push(size);
       byProduct.set(size.product_id, list);
     }
-    return json(products.results.map(row => ({ ...row, product_sizes: byProduct.get(row.id) ?? [] })));
+    return json(products.results.map(row => ({ ...row, description: descriptions.get(row.id) ?? "", product_sizes: byProduct.get(row.id) ?? [] })));
   }
   if (pathname === "/api/catalog/home") {
     const [hero, panels] = await env.DB.batch([
